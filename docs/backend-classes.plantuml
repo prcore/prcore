@@ -1,0 +1,101 @@
+@startuml backend-classes
+
+class Dashboard {
+    id: int
+    date: datetime
+    name: string
+    description: string
+    previous_eventlog: PreviousEventLog
+    current_eventlog: CurrentEventLog
+    algorithms: List[Algorithm]
+    training_tasks: List[TrainingTask]
+    prescribing_tasks: List[PrescribingTask]
+}
+
+class EventLog {
+    id: int
+    date: datetime
+    name: string
+    dashboard: Dashboard
+}
+
+class PreviousEventLog {
+}
+
+class CurrentEventLog {
+    events: List[Event]
+}
+
+class Event{
+    id: int
+    date: datetime
+    case_id: string
+    activity: string
+    attributes: dict
+    case: Case
+}
+
+class Case{
+    id: int
+    case_id: string
+    status: string
+    events: List[Event]
+    results: List[Result]
+}
+
+class Algorithm {
+    id: int
+    name: string
+    description: string
+    parameters: dict
+    training_task: TrainingTask
+    model: Model
+}
+
+class TrainingTask {
+    id: int
+    date: datetime
+    status: string
+}
+
+class Model {
+    id: int
+    name: string
+    date: datetime
+    path: string
+}
+
+class PrescribingTask {
+    id: int
+    date: datetime
+    status: string
+    case_id: string
+    algorithm: Algorithm
+    result: Result
+}
+
+class Result {
+    id: int
+    date: datetime
+    case_id: string
+    output: string
+}
+
+EventLog <|-- PreviousEventLog
+EventLog <|-- CurrentEventLog
+Dashboard "1" -- "1" PreviousEventLog
+Dashboard "1" -- "1" CurrentEventLog
+CurrentEventLog "1" -- "n" Event
+Event "n" -- "1" Case
+Dashboard "1" -- "n" Algorithm
+Dashboard "1" -- "n" TrainingTask
+Case "1" -- "n" PrescribingTask
+Dashboard "1" -- "n" PrescribingTask
+Algorithm "1" -- "1" TrainingTask
+TrainingTask "1" -- "1" Model
+Algorithm "1" -- "1" Model
+Algorithm "1" -- "n" PrescribingTask
+PrescribingTask "1" -- "1" Result
+Case "1" -- "n" Result
+
+@enduml
