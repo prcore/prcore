@@ -1,4 +1,5 @@
 from time import sleep
+from typing import Any
 
 
 class Algorithm:
@@ -6,6 +7,7 @@ class Algorithm:
         "param1": "value1",
         "param2": "value2",
     }
+    training_task = Any
 
     def __init__(self, data_path):
         self.data_path = data_path
@@ -27,7 +29,10 @@ class Algorithm:
 
     def train(self):
         # train the algorithm on the data
-        pass
+        print(self.name + " is training...")
+        sleep(5)
+        print(self.name + " has finished training")
+        self.training_task.status = "finished"
 
     def save_model(self):
         # save the model to a file

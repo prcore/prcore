@@ -1,4 +1,5 @@
 import logging
+from threading import Thread
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -7,6 +8,7 @@ from blupee import confs, glovar
 from blupee.models import PreviousEventLog, CurrentEventLog
 from blupee.models.dashboard import Dashboard
 from blupee.models.identifier import get_identifier
+from blupee.models.training_task import TrainingTask
 from blupee.utils.file import get_new_path
 
 # Enable logging
@@ -54,6 +56,20 @@ def new_dashboard(request: Request):
     )
     current_event_log.save()
 
+    # Create new training task
+    trainings = []
+    for algorithm in algorithms:
+        training_task = TrainingTask(
+            id=get_identifier(),
+            status="training",
+        )
+        training_task.save()
+        trainings.append(training_task)
+        algorithm.training_task = training_task
+        t = Thread(target=algorithm.train)
+        t.daemon = True
+        t.start()
+
     # Create new dashboard
     new_dashboard_obj = Dashboard(
         id=get_identifier(),
@@ -62,9 +78,18 @@ def new_dashboard(request: Request):
         previous_event_log=previous_event_log,
         current_event_log=current_event_log,
         algorithms=algorithms,
-        training_tasks=[],
+        training_tasks=trainings,
         prescribing_tasks=[],
     )
     new_dashboard_obj.save()
 
     return {"message": "Dashboard created", "dashboard": new_dashboard_obj}
+
+
+@router.get("/{dashboard_id}")
+def get_dashboard_by_id(dashboard_id: int):
+    for dashboard in glovar.dashboards:
+        if dashboard.id == dashboard_id:
+            return {"message": "Dashboard found", "dashboard": dashboard}
+
+    return {"message": "Dashboard not found"}

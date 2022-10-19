@@ -4,7 +4,7 @@ from typing import Union
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from blupee.routers import event_log, dashboard
+from blupee.routers import event_log, dashboard, event, case
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(root_path="/api")
 app.include_router(event_log.router)
 app.include_router(dashboard.router)
+app.include_router(event.router)
+app.include_router(case.router)
 
 
 class Item(BaseModel):
