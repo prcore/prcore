@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 
 from fastapi import FastAPI
@@ -5,7 +6,11 @@ from pydantic import BaseModel
 
 from blupee.routers import event_log
 
-app = FastAPI()
+# Enable logging
+logger = logging.getLogger(__name__)
+
+# Create the app
+app = FastAPI(root_path="/api")
 app.include_router(event_log.router)
 
 
