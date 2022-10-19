@@ -12,7 +12,7 @@ class EventLog(BaseModel):
     id: int
     name: str
     path: str
-    data: dict
+    cases: list
 
 
 class PreviousEventLog(EventLog):

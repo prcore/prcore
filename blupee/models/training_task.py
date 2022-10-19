@@ -3,6 +3,7 @@ import logging
 from pydantic import BaseModel
 
 from blupee import glovar
+from blupee.models.model import Model
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -11,6 +12,7 @@ logger = logging.getLogger(__name__)
 class TrainingTask(BaseModel):
     id: int
     status: str
+    model: Model = None
 
     def save(self):
         with glovar.save_lock:

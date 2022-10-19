@@ -6,6 +6,8 @@ from pm4py import read_xes, write_xes
 
 from blupee import confs, glovar
 from blupee.models import PreviousEventLog
+from blupee.models.case import Case
+from blupee.models.event import Event
 from blupee.models.identifier import get_identifier
 from blupee.utils.file import get_extension, get_new_path
 
@@ -48,19 +50,51 @@ def upload_event_log(file: Union[UploadFile, None] = None):
     )
     write_xes(event_log, new_path)
 
-    data = {}
+    cases = []
 
     for i in range(len(event_log)):
-        data[i] = []
+        new_case = Case(
+            id=get_identifier(),
+            name=f"Case {i}",
+            status="closed",
+            events=[]
+        )
+        new_case.save()
         for j in event_log[i]:
-            data[i].append(j)
+            event_dict = {
+                "id": get_identifier(),
+                "activity": "",
+                "timestamp": "",
+                "resource": "",
+                "attributes": {}
+            }
+            for key in j:
+                if "activity" in key.lower():
+                    event_dict["activity"] = j[key]
+                elif "timestamp" in key.lower():
+                    event_dict["timestamp"] = str(j[key])
+                elif "resource" in key.lower():
+                    event_dict["resource"] = j[key]
+                else:
+                    event_dict["attributes"][key] = j[key]
+            new_event = Event(
+                id=event_dict["id"],
+                activity=event_dict["activity"],
+                timestamp=event_dict["timestamp"],
+                resource=event_dict["resource"],
+                attributes=event_dict["attributes"],
+            )
+            new_event.save()
+            new_case.events.append(new_event)
+        new_case.save()
+        cases.append(new_case)
 
     # Save the event log to the database
     previous_event_log = PreviousEventLog(
         id=get_identifier(),
         name=file.filename,
         path=new_path,
-        data=data
+        cases=cases
     )
     previous_event_log.save()
 

@@ -16,7 +16,7 @@ class Algorithm:
 
     def load_training_data(self):
         # load the training data from date_path
-        return [self.data_path]
+        return [f"FakeData{i}" for i in self.data_path.split("/")]
 
     def is_applicable(self):  # noqa
         # check if the algorithm can be applied to the data

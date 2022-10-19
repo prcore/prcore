@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 class Event(BaseModel):
     id: int
-    name: str
     activity: str
     timestamp: str
     resource: str

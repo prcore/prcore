@@ -50,7 +50,7 @@ def new_dashboard(request: Request):
         id=get_identifier(),
         name=previous_event_log.name,
         path=get_new_path(confs.EVENT_LOG_CURRENT_PATH + "/", suffix=".xes"),
-        data={}
+        cases=[]
     )
     current_event_log.save()
 
