@@ -4,6 +4,9 @@ from pydantic import BaseModel
 
 from blupee import glovar
 from blupee.models.event_log import PreviousEventLog, CurrentEventLog
+from blupee.models.training_task import TrainingTask
+from blupee.models.prescribing_task import PrescribingTask
+
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -15,6 +18,9 @@ class Dashboard(BaseModel):
     description: str = ""
     previous_event_log: PreviousEventLog
     current_event_log: CurrentEventLog
+    algorithms: list
+    training_tasks: list[TrainingTask]
+    prescribing_tasks: list[PrescribingTask]
 
     def save(self):
         with glovar.save_lock:
