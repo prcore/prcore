@@ -4,7 +4,9 @@ from typing import Union
 from fastapi import APIRouter, UploadFile
 from pm4py import read_xes, write_xes
 
-from blupee import confs
+from blupee import confs, glovar
+from blupee.models import PreviousEventLog
+from blupee.models.identifier import get_identifier
 from blupee.utils.file import get_extension, get_new_path
 
 # Enable logging
@@ -46,8 +48,50 @@ def upload_event_log(file: Union[UploadFile, None] = None):
     )
     write_xes(event_log, new_path)
 
+    data = {}
+
+    for i in range(len(event_log)):
+        data[i] = []
+        for j in event_log[i]:
+            data[i].append(j)
+
+    # Save the event log to the database
+    previous_event_log = PreviousEventLog(
+        id=get_identifier(),
+        name=file.filename,
+        path=new_path,
+        data=data
+    )
+    previous_event_log.save()
+
     return {
-        "filename": file.filename,
-        "content_type": file.content_type,
-        "new_path": new_path
+        "message": "File uploaded successfully",
+        "previous_event_log": previous_event_log
+    }
+
+
+@router.put("/{event_id}")
+def confirm_event_log(event_id: int):
+    with glovar.save_lock:
+        for i in range(len(glovar.previous_event_logs)):
+            if glovar.previous_event_logs[i].id == event_id:
+                previous_event_log = glovar.previous_event_logs[i]
+
+    algo_objects = []
+
+    for Algorithm in glovar.algo_classes:
+        algorithm = Algorithm(data_path=previous_event_log.path)
+        algorithm.is_applicable() and algo_objects.append(algorithm)
+
+    algo_dict = {}
+
+    for algorithm in algo_objects:
+        algo_dict[algorithm.name] = {
+            "description": algorithm.description,
+            "parameters": algorithm.parameters
+        }
+
+    return {
+        "message": "Event log confirmed, please select algorithm and set parameters",
+        "applicable_algorithms": algo_dict
     }
