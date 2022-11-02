@@ -39,6 +39,11 @@ class Case(BaseModel):
             return None
         return self.events[-2:]
 
+    def get_current_event_activity(self):
+        if not self.events:
+            return None
+        return self.events[-1].activity
+
     def add_predicted_result(self, result):
         self.results.append(result)
         self.save()
@@ -54,6 +59,7 @@ class Case(BaseModel):
                 id=get_identifier(),
                 date=predicted_result["date"],
                 type=predicted_result["type"],
+                current=self.get_current_event_activity(),
                 output=predicted_result["output"],
                 given_by=predicted_result["algorithm"]
             )

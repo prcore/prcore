@@ -12,6 +12,7 @@ class Result(BaseModel):
     id: int
     date: int
     type: str
+    current: str
     output: str = None
     given_by: str
 

@@ -96,20 +96,7 @@ def call_post_api_for_cases(cases: dict):
         else:
             cases[case_id] = case[1:]
 
-        sleep(3)
-
-    for case_id in cases:
-        case = cases[case_id]
-        # Check if the event is the last one
-        for i in range(len(case)):
-            event = case[i]
-            event["dashboard_id"] = DASHBOARD_ID
-            event.pop("attributes")
-            event["status"] = "closed" if i == len(case) - 1 else "ongoing"
-            print(f"Sending the event: {json.dumps(event, indent=4)}")
-            requests.post("http://localhost:8000/event", json=event)
-            print("Event sent!")
-            sleep(3)
+        sleep(2)
 
 
 def main():
