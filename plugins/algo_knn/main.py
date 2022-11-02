@@ -6,9 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 class Algorithm:
     parameters = {
-        "param1": "value1",
-        "param2": "value2",
-        "param3": "value3",
+        "n_neighbors": 3
     }
     training_task = Any
 
@@ -76,7 +74,7 @@ class Algorithm:
             x_train.append(data[:2])
             y_train.append(data[2])
         # train the model
-        model = KNeighborsClassifier(n_neighbors=3)
+        model = KNeighborsClassifier(n_neighbors=self.parameters["n_neighbors"])
         model.fit(x_train, y_train)
         print(self.name + " has finished training")
         self.training_task.status = "finished"
