@@ -5,9 +5,6 @@ from sklearn.neighbors import KNeighborsClassifier
 
 
 class Algorithm:
-    parameters = {
-        "n_neighbors": 3
-    }
     training_task = Any
 
     def __init__(self, data):
@@ -16,6 +13,9 @@ class Algorithm:
         self.data = data
         self.training_data, self.test_data = self.load_training_data()
         self.activity_map, self.training_data = self.pre_process()
+        self.parameters = {
+           "n_neighbors": 3
+        }
         self.model = None
 
     def load_training_data(self):

@@ -1,6 +1,7 @@
 import json
 import requests
 from time import sleep
+from random import choice
 
 from pm4py import read_xes
 
@@ -76,6 +77,27 @@ def write_cases_to_json_file(cases: dict, path: str):
 
 
 def call_post_api_for_cases(cases: dict):
+    cases_keys = set(cases.keys())
+
+    while len(cases_keys) > 0:
+        case_id = choice(list(cases_keys))
+        case = cases[case_id]
+
+        event = case[0]
+        event["dashboard_id"] = DASHBOARD_ID
+        event.pop("attributes")
+        event["status"] = "closed" if len(case) == 1 else "ongoing"
+        print(f"Sending the event: {json.dumps(event, indent=4)}")
+        requests.post("http://localhost:8000/event", json=event)
+        print("Event sent!")
+
+        if len(case) == 1:
+            cases_keys.discard(case_id)
+        else:
+            cases[case_id] = case[1:]
+
+        sleep(3)
+
     for case_id in cases:
         case = cases[case_id]
         # Check if the event is the last one
