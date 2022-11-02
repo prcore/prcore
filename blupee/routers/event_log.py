@@ -61,6 +61,7 @@ def upload_event_log(file: Union[UploadFile, None] = None):
         )
         new_case.save()
         for j in event_log[i]:
+            should_pass = False
             event_dict = {
                 "id": get_identifier(),
                 "activity": "",
@@ -69,7 +70,10 @@ def upload_event_log(file: Union[UploadFile, None] = None):
                 "attributes": {}
             }
             for key in j:
-                if "activity" in key.lower():
+                if key == "lifecycle:transition" and j[key] != "complete":
+                    should_pass = True
+                    continue
+                if "activity" in key.lower() or "concept:name" in key.lower():
                     event_dict["activity"] = j[key]
                 elif "timestamp" in key.lower():
                     event_dict["timestamp"] = str(j[key])
@@ -77,6 +81,8 @@ def upload_event_log(file: Union[UploadFile, None] = None):
                     event_dict["resource"] = j[key]
                 else:
                     event_dict["attributes"][key] = j[key]
+            if should_pass:
+                continue
             new_event = Event(
                 id=event_dict["id"],
                 activity=event_dict["activity"],

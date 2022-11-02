@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/case")
 
 
-@router.post("/all")
+@router.get("/{dashboard_id}")
 def find_cases(dashboard_id: int):
     # Get dashboard by dashboard_id
     with glovar.save_lock:
