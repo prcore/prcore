@@ -8,7 +8,8 @@ from blupee import confs, glovar
 from blupee.models import PreviousEventLog, CurrentEventLog
 from blupee.models.dashboard import Dashboard
 from blupee.models.identifier import get_identifier
-from blupee.models.training_task import TrainingTask
+from blupee.models.training_task import TrainingTask, TrainingTaskResponse
+from blupee.models.prescribing_task import PrescribingTask
 from blupee.utils.file import get_new_path
 
 # Enable logging
@@ -23,7 +24,26 @@ class Request(BaseModel):
     algorithms: dict
 
 
-@router.post("")
+class AlgorithmOutput(BaseModel):
+    name: str
+    description: str
+    training_task: TrainingTaskResponse
+
+
+class DashboardResponse(BaseModel):
+    id: int
+    name: str
+    description: str = ""
+    training_tasks: list[TrainingTaskResponse]
+    prescribing_tasks: list[PrescribingTask]
+
+
+class Response(BaseModel):
+    message: str
+    dashboard: DashboardResponse = None
+
+
+@router.post("", response_model=Response)
 def new_dashboard(request: Request):
     # Get previous event log by reqeust.event_log_id
     with glovar.save_lock:
@@ -36,7 +56,7 @@ def new_dashboard(request: Request):
     # Get algorithms by request.algorithms
     algorithms = []
     previous_event_log: PreviousEventLog
-    algo_objs = [Algo(previous_event_log.path) for Algo in glovar.algo_classes]
+    algo_objs = [Algo(previous_event_log.cases) for Algo in glovar.algo_classes]
 
     for algorithm_name in request.algorithms:
         for algorithm in algo_objs:
@@ -86,7 +106,7 @@ def new_dashboard(request: Request):
     return {"message": "Dashboard created", "dashboard": new_dashboard_obj}
 
 
-@router.get("/{dashboard_id}")
+@router.get("/{dashboard_id}", response_model=Response)
 def get_dashboard_by_id(dashboard_id: int):
     for dashboard in glovar.dashboards:
         if dashboard.id == dashboard_id:

@@ -120,7 +120,7 @@ def confirm_event_log(event_id: int):
     algo_objects = []
 
     for Algorithm in glovar.algo_classes:
-        algorithm = Algorithm(data_path=previous_event_log.path)
+        algorithm = Algorithm(data=previous_event_log.cases)
         algorithm.is_applicable() and algo_objects.append(algorithm)
 
     algo_dict = {}

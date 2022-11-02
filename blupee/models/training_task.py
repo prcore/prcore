@@ -23,3 +23,8 @@ class TrainingTask(BaseModel):
                     already_saved = True
                     break
             not already_saved and glovar.training_tasks.append(self)
+
+
+class TrainingTaskResponse(BaseModel):
+    id: int
+    status: str

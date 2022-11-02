@@ -9,15 +9,15 @@ class Algorithm:
     }
     training_task = Any
 
-    def __init__(self, data_path):
-        self.data_path = data_path
+    def __init__(self, data):
+        self.data_path = data
         self.data = self.load_training_data()
         self.name = "Algorithm A"
         self.description = "This is a description of the algorithm"
 
     def load_training_data(self):
         # load the training data from date_path
-        return [f"FakeData{i}" for i in self.data_path.split("/")]
+        return [f"FakeData{i}" for i in self.data_path]
 
     def is_applicable(self): # noqa
         # check if the algorithm can be applied to the data
