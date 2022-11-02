@@ -1,4 +1,5 @@
 from typing import Any
+from time import time
 
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -89,6 +90,35 @@ class Algorithm:
         # load the model from a file
         pass
 
-    def predict(self, model, data):
+    def predict(self, events):
         # predict the output of the data
-        pass
+        # Check if the events are long enough
+        if len(events) < 2:
+            return None
+
+        # get the last two events
+        x_test = [events[-2].activity, events[-1].activity]
+
+        # Check if the events are in the activity map
+        if x_test[0] not in self.activity_map or x_test[1] not in self.activity_map:
+            return None
+
+        # map the activities to numbers
+        x_test[0] = self.activity_map[x_test[0]]
+        x_test[1] = self.activity_map[x_test[1]]
+
+        # predict the next activity
+        y_pred = self.model.predict([x_test])
+
+        # map the number to an activity
+        activity = list(self.activity_map.keys())[list(self.activity_map.values()).index(y_pred[0])]
+
+        if not activity:
+            return None
+
+        return {
+            "date": int(time()),
+            "type": "next_activity",
+            "output": activity,
+            "algorithm": self.name
+        }

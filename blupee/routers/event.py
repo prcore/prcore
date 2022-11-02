@@ -21,7 +21,8 @@ class Request(BaseModel):
     activity: str
     timestamp: str
     resource: str
-    attributes: dict
+    attributes: dict = {}
+    status: str
 
 
 @router.post("")
@@ -58,13 +59,17 @@ def receive_event(request: Request):
         case = Case(
             id=case_id,
             status="ongoing",
-            events=[]
+            events=[],
+            results=[]
         )
         case.save()
         dashboard.current_event_log.cases.append(case)
 
     # Append event to case
+    case.status = request.status
     case.events.append(event)
+    case.predict_next_event(dashboard.algorithms)
+    print(f"Result: {case.get_predicted_result()}")
     case.save()
 
     return {"message": "Event received", "case": case}

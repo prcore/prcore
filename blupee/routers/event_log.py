@@ -57,7 +57,8 @@ def upload_event_log(file: Union[UploadFile, None] = None):
             id=get_identifier(),
             name=f"Case {i}",
             status="closed",
-            events=[]
+            events=[],
+            results=[]
         )
         new_case.save()
         for j in event_log[i]:

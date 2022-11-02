@@ -3,7 +3,6 @@ import logging
 from pydantic import BaseModel
 
 from blupee import glovar
-from blupee.models.case import Case
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -12,8 +11,9 @@ logger = logging.getLogger(__name__)
 class Result(BaseModel):
     id: int
     date: int
-    case: Case
+    type: str
     output: str = None
+    given_by: str
 
     def save(self):
         with glovar.save_lock:
