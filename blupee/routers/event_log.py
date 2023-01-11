@@ -38,7 +38,7 @@ def upload_event_log(file: Union[UploadFile, None] = None):
     if original_extension == "xes":
         previous_event_log = process_xes_file(tmp_path, file)
     elif original_extension == "csv":
-        previous_event_log = process_csv_file(tmp_path, file)
+        previous_event_log = process_csv_file(tmp_path, file.filename)
     else:
         previous_event_log = None
 

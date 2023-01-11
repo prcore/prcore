@@ -27,9 +27,10 @@ class Algorithm:
             "metric_expectation": "min",
             "min_prefix_length": self.get_min_length(),
             "max_prefix_length": self.get_avg_length(),
-            "value_threshold": self.get_value_threshold(self.training_data),
+            "value_threshold": 0,
             "cate_threshold": 0.6,
         }
+        self.set_value_threshold()
         self.set_training_datasets()
         self.model = None
 
@@ -91,24 +92,31 @@ class Algorithm:
 
     def get_min_length(self):
         # get the minimum length of the traces
-        return min(self.lengths) if min(self.lengths) > 3 else 3
+        return 3 if max(self.lengths) > 3 else min(self.lengths)
 
     def get_avg_length(self):
         # get the average length of the traces
         return math.floor(sum(self.lengths) / len(self.lengths))
 
+    def set_value_threshold(self):
+        # set the value threshold
+        print(f"Value threshold: {self.get_value_threshold(self.training_data)}")
+        self.parameters["value_threshold"] = self.get_value_threshold(self.training_data)
+
     def get_value_threshold(self, training_data: List[Case]):
         # get the value threshold
-        training_data.sort()
-        return (self.get_metric_values(training_data)[int(len(training_data) * 0.8)]  # noqa
-                if self.parameters["metric_expectation"] == "min"
-                else self.get_metric_values(training_data)[int(len(training_data) * 0.2)])  # noqa
+        values = self.get_metric_values(training_data)
+        print(f"Values min: {min(values)}")  # noqa
+        print(f"Values max: {max(values)}")  # noqa
+        return (values[int(len(training_data) * 0.8)] if self.parameters["metric_expectation"] == "min"  # noqa
+                else values[int(len(training_data) * 0.2)])  # noqa
 
-    def get_metric_values(self, training_data: List[Case]):
+    def get_metric_values(self, training_data: List[Case]) -> List[int]:
         # get the average metric value of the training data
         values = []
         for case in training_data:
             values.append(self.get_metric_value(case))
+        values.sort()
         return values
 
     def get_metric_value(self, case: Case):    # noqa
@@ -126,6 +134,7 @@ class Algorithm:
             "length_2": [event1, event2, event3, ..., outcome, treatment],
             ...
         """
+        print(f"Min length: {min(self.lengths)}")
         for length in range(self.parameters["min_prefix_length"], self.parameters["max_prefix_length"] + 1):
             training_data = []
             for case in self.training_data:
@@ -155,7 +164,9 @@ class Algorithm:
             return 1 if value > self.parameters["value_threshold"] else 0
 
     def get_treatment(self, case):  # noqa
-        return case.events[0].attributes.get("treatment", 0) if len(case.events) > 0 else 0
+        if len(case.events) < 1:
+            return 0
+        return 0 if case.events[0].attributes.get("treatment", 'noTreat') == 'noTreat' else 1
 
     def get_columns(self, length): # noqa
         # get the columns of the training data
@@ -195,9 +206,6 @@ class Algorithm:
         cate = test_df["CATE"].values[0]
 
         print(test_df.to_string())
-
-        if cate <= 0.5:
-            return None
 
         return {
             "date": int(time()),  # noqa

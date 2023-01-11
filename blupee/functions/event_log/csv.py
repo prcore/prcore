@@ -2,7 +2,6 @@ import datetime
 import logging
 from typing import Union
 
-from fastapi import UploadFile
 from pandas import read_csv
 
 from blupee.models import PreviousEventLog
@@ -29,7 +28,7 @@ def process_time_string(time_string: str) -> int:
     return result
 
 
-def process_csv_file(path: str, file: UploadFile) -> Union[PreviousEventLog, None]:
+def process_csv_file(path: str, filename: str) -> Union[PreviousEventLog, None]:
     # Process csv file
     result = None
 
@@ -37,7 +36,7 @@ def process_csv_file(path: str, file: UploadFile) -> Union[PreviousEventLog, Non
         print("Reading csv file...")
         data = read_csv(path, sep=";")
         print("Selecting columns...")
-        data = data[['Case ID', 'start_time', 'end_time', 'Activity']]
+        data = data[['Case ID', 'start_time', 'end_time', 'Activity', 'treatment']]
         print("Renaming columns...")
         data = data.rename(columns={'Case ID': 'case_id', 'start_time': 'start_timestamp', 'end_time': 'end_timestamp',
                                     'Activity': 'activity'})
@@ -98,7 +97,7 @@ def process_csv_file(path: str, file: UploadFile) -> Union[PreviousEventLog, Non
 
         result = PreviousEventLog(
             id=get_identifier(),
-            name=file.filename,
+            name=filename,
             path=path,
             cases=cases
         )
