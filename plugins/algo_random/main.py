@@ -241,5 +241,7 @@ class Algorithm:
             "date": int(time()),  # noqa
             "type": "alarm",
             "output": alarm,
-            "algorithm": self.name
+            "model": {
+                "name": self.name
+            }
         }

@@ -223,5 +223,7 @@ class Algorithm:
             "date": int(time()),  # noqa
             "type": "next_activity",
             "output": activity_name,
-            "algorithm": self.name
+            "model": {
+                "name": self.name
+            }
         }

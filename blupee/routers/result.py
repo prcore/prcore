@@ -1,9 +1,11 @@
 import logging
+from typing import List
 
 from fastapi import APIRouter
 
 from blupee import glovar
 from blupee.models import CurrentEventLog
+from blupee.models.case import Case
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -21,7 +23,7 @@ def get_results_by_dashboard_id(dashboard_id: int):
         return {"message": "Dashboard not found"}
 
     current_event_log: CurrentEventLog = dashboard.current_event_log
-    cases = current_event_log.cases
+    cases: List[Case] = current_event_log.cases
 
     if not cases:
         return {"message": "Dashboard has no current event log cases"}
@@ -33,6 +35,7 @@ def get_results_by_dashboard_id(dashboard_id: int):
         if result:
             results.append({
                 "case_id": case.id,
+                "current_activity": case.get_current_event_activity(),
                 "prescription": result
             })
 

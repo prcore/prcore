@@ -13,9 +13,8 @@ class Result(BaseModel):
     id: int
     date: int
     type: str
-    current: str
-    output: Union[str, dict] = None
-    given_by: str
+    output: Union[bool, str, dict] = None
+    model: dict = {}
 
     def save(self):
         with glovar.save_lock:

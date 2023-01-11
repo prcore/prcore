@@ -128,5 +128,7 @@ class Algorithm:
             "date": int(time()),  # noqa
             "type": "next_activity",
             "output": activity,
-            "algorithm": self.name
+            "model": {
+                "name": self.name
+            }
         }

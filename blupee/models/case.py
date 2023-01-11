@@ -77,7 +77,6 @@ class Case(BaseModel):
 
         self.add_predicted_result(results)
 
-
     def predict_next_event(self, algorithms):
         for algorithm in algorithms:
             predicted_result = algorithm.predict(self.events)
@@ -89,9 +88,8 @@ class Case(BaseModel):
                 id=get_identifier(),
                 date=predicted_result["date"],
                 type=predicted_result["type"],
-                current=self.get_current_event_activity(),
                 output=predicted_result["output"],
-                given_by=predicted_result["algorithm"]
+                model=predicted_result["model"],
             )
             new_result.save()
             self.add_predicted_result(new_result)

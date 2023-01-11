@@ -212,11 +212,13 @@ class Algorithm:
 
         return {
             "date": int(time()),  # noqa
-            "type": "CATE Prediction",
+            "type": "cate_prediction",
             "output": {
                 "proba_if_treated": proba_if_treated,
                 "proba_if_untreated": proba_if_untreated,
                 "cate": cate
             },
-            "algorithm": self.name
+            "model": {
+                "name": self.name
+            }
         }
