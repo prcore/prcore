@@ -1,4 +1,5 @@
-from random import choice, random
+from random import random
+
 
 def get_negative_alarm(predictions, threshold) -> bool:
     # get the negative alarm
