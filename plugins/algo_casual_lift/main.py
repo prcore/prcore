@@ -8,6 +8,7 @@ from blupee.confs import path
 from blupee.models.case import Case
 from blupee.utils.file import get_new_path
 
+from pandas import DataFrame
 from sklearn.ensemble import RandomForestClassifier
 
 from .helper import get_negative_alarm
@@ -126,8 +127,8 @@ class Algorithm:
         # get the training datasets
         """
         :return: {
-            "length_1": [event1, event2, event3, ..., label],
-            "length_2": [event1, event2, event3, ..., label],
+            "length_1": [event1, event2, event3, ..., outcome, treatment],
+            "length_2": [event1, event2, event3, ..., outcome, treatment],
             ...
         """
         for length in range(self.parameters["min_prefix_length"], self.parameters["max_prefix_length"] + 1):
@@ -136,25 +137,34 @@ class Algorithm:
                 if len(case.events) < length:
                     continue
                 data_list: List[Union[int, str]] = self.feature_extraction(case.events[:length])
-                data_list.append(self.get_label(case))
+                data_list.append(self.get_outcome(case))
+                data_list.append(self.get_treatment(case))
                 training_data.append(data_list)
             print(f"Length {length} training data: {len(training_data)}")
 
             if len(training_data) < 100:
                 continue
 
-            self.training_datasets[length] = training_data
+            training_df = DataFrame(training_data, columns=self.get_columns(length))  # noqa
+            self.training_datasets[length] = training_df
 
     def feature_extraction(self, prefix):
         # extract features from the prefix
         return [self.activity_map[event.activity] for event in prefix]
 
-    def get_label(self, case):
+    def get_outcome(self, case):
         value = self.get_metric_value(case)
         if self.parameters["metric_expectation"] == "min":
             return 1 if value <= self.parameters["value_threshold"] else 0
         else:
             return 1 if value > self.parameters["value_threshold"] else 0
+
+    def get_treatment(self, case):  # noqa
+        return case.events[0].attributes.get("treatment", 0) if len(case.events) > 0 else 0
+
+    def get_columns(self, length): # noqa
+        # get the columns of the training data
+        return [f"event_{i}" for i in range(length)] + ["outcome", "treatment"]
 
     def train(self):
         # train the algorithm on the data
