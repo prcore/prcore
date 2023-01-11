@@ -1,17 +1,12 @@
 import math
-import pickle
 from copy import deepcopy
 from typing import Any, List, Union
 from time import time
 
-from blupee.confs import path
 from blupee.models.case import Case
-from blupee.utils.file import get_new_path
 
+from causallift import CausalLift
 from pandas import DataFrame
-from sklearn.ensemble import RandomForestClassifier
-
-from .helper import get_negative_alarm
 
 
 class Algorithm:
@@ -33,7 +28,7 @@ class Algorithm:
             "min_prefix_length": self.get_min_length(),
             "max_prefix_length": self.get_avg_length(),
             "value_threshold": self.get_value_threshold(self.training_data),
-            "proba_threshold": 0.6,
+            "cate_threshold": 0.6,
         }
         self.set_training_datasets()
         self.model = None
@@ -164,59 +159,19 @@ class Algorithm:
 
     def get_columns(self, length): # noqa
         # get the columns of the training data
-        return [f"event_{i}" for i in range(length)] + ["outcome", "treatment"]
+        return [f"event_{i}" for i in range(length)] + ["Outcome", "Treatment"]
 
     def train(self):
         # train the algorithm on the data
-        print(self.name + " is training...")
-        # train the model for each length
-        for length in self.training_datasets.keys():  # noqa
-            self.train_model_for_length(length)
-        self.save_model()
-
-    def train_model_for_length(self, length):
-        # train the model for a specific length
-        x_train = []
-        y_train = []
-
-        print("Training model for length " + str(length))
-        print('Training data is None: ' + str(self.training_datasets[length] is None))
-        print(self.training_datasets[length])
-
-        for data in self.training_datasets[length]:
-            x_train.append(data[:-1])
-            y_train.append(data[-1])
-        # train the model
-        model = RandomForestClassifier()
-        model.fit(x_train, y_train)
-        print(self.name + " has finished training for length " + str(length))
-        self.models[length] = model
+        print(self.name + " is not needed to train in this phase")
+        print("Training data is already prepared")
         self.training_task.status = "finished"
 
-    def save_model(self):
-        # save the model
-        model_path = get_new_path(f"{path.MODEL_PATH}/", self.name, "pkl")
-        with open(model_path, "wb") as f:
-            pickle.dump(self.models, f)
-        self.model = model_path
-
-    def load_model(self):
-        # load the model from a file
-        with open(self.model, "rb") as f:
-            self.models = pickle.load(f)
-
     def predict(self, prefix):
-        # predict the negative outcome possibility for a prefix
+        # predict the proba_if_treated, proba_if_untreated, and CATE
 
         # get the length of the prefix
         length = len(prefix)
-        print("Random Forest is predicting for length " + str(length))
-
-        # get the model for the length
-        model = self.models.get(length, None)  # noqa
-
-        if not model:
-            return None
 
         # check if the activities in prefix are met in the training phase
         if any(x.activity not in self.activity_map for x in prefix):
@@ -225,18 +180,32 @@ class Algorithm:
         # get the features of the prefix
         features = self.feature_extraction(prefix)
 
-        # get the prediction
-        predictions = zip(model.classes_, model.predict_proba([features]))
+        print("Training model for trace length " + str(length))
+        print('The data length of training data: ' + str(len(self.training_datasets[length])))
+        train_df = self.training_datasets[length]
+        test_df = DataFrame([features], columns=[f"event_{i}" for i in range(length)])  # noqa
+        cl = CausalLift(train_df=train_df, test_df=test_df, enable_ipw=True)
+        print(self.name + " has finished training for length " + str(length))
+        print("CasualLift is predicting for length " + str(length))
+        train_df, test_df = cl.estimate_cate_by_2_models()
 
-        print("Predictions: ", predictions)
-        alarm = get_negative_alarm(predictions, self.parameters["proba_threshold"])
+        # get the prediction of the test_df
+        proba_if_treated = test_df["Proba_if_Treated"].values[0]
+        proba_if_untreated = test_df["Proba_if_Untreated"].values[0]
+        cate = test_df["CATE"].values[0]
 
-        if not alarm:
+        print(test_df.to_string())
+
+        if cate <= 0.5:
             return None
 
         return {
             "date": int(time()),  # noqa
-            "type": "alarm",
-            "output": alarm,
+            "type": "CATE Prediction",
+            "output": {
+                "proba_if_treated": proba_if_treated,
+                "proba_if_untreated": proba_if_untreated,
+                "cate": cate
+            },
             "algorithm": self.name
         }

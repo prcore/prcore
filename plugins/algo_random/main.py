@@ -170,14 +170,14 @@ class Algorithm:
         model.fit(x_train, y_train)
         print(self.name + " has finished training for length " + str(length))
         self.models[length] = model
-        self.training_task.status = "finished"
 
     def save_model(self):
         # save the model
-        model_path = get_new_path(f"{path.MODEL_PATH}/", self.name, "pkl")
+        model_path = get_new_path(f"{path.MODEL_PATH}/", f"{self.name} - ", ".pkl")
         with open(model_path, "wb") as f:
             pickle.dump(self.models, f)
         self.model = model_path
+        self.training_task.status = "finished"
 
     def load_model(self):
         # load the model from a file
