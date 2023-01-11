@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from pydantic import BaseModel
 
@@ -14,8 +15,8 @@ logger = logging.getLogger(__name__)
 class Case(BaseModel):
     id: int
     status: str
-    events: list[Event] = []
-    results: list[list[Result]] = []
+    events: List[Event] = []
+    results: List[List[Result]] = []
 
     def save(self, new: bool = False):
         with glovar.save_lock:

@@ -1,5 +1,6 @@
 import logging
 from threading import Thread
+from typing import List
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -34,8 +35,8 @@ class DashboardResponse(BaseModel):
     id: int
     name: str
     description: str = ""
-    training_tasks: list[TrainingTaskResponse]
-    prescribing_tasks: list[PrescribingTask]
+    training_tasks: List[TrainingTaskResponse]
+    prescribing_tasks: List[PrescribingTask]
 
 
 class Response(BaseModel):

@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from pydantic import BaseModel
 
@@ -19,8 +20,8 @@ class Dashboard(BaseModel):
     previous_event_log: PreviousEventLog
     current_event_log: CurrentEventLog
     algorithms: list
-    training_tasks: list[TrainingTask]
-    prescribing_tasks: list[PrescribingTask]
+    training_tasks: List[TrainingTask]
+    prescribing_tasks: List[PrescribingTask]
 
     def save(self):
         with glovar.save_lock:

@@ -21,14 +21,16 @@ def get_results_by_dashboard_id(dashboard_id: int):
         return {"message": "Dashboard not found"}
 
     current_event_log: CurrentEventLog = dashboard.current_event_log
+    cases = current_event_log.cases
 
-    if not (cases := current_event_log.cases):
+    if not cases:
         return {"message": "Dashboard has no current event log cases"}
 
     results = []
 
     for case in cases:
-        if result := case.get_predicted_result():
+        result = case.get_predicted_result()
+        if result:
             results.append({
                 "case_id": case.id,
                 "prescription": result
