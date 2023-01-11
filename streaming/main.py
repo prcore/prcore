@@ -8,14 +8,14 @@ from pandas import read_csv, DataFrame
 from pm4py import read_xes
 
 TEST_MODE = 'csv'
-SLEEP_TIME = 1
+SLEEP_TIME = 5
 ID_OFFSET = 8000000
 CSV_DATASET_PATH = "../data/datasets/prepared_treatment_outcome_bpic2012.csv"
 CSV_DELIMITER = ";"
 XES_DATASET_PATH = "../data/datasets/OrderFullfilment.xes"
 TEST_DATASET_PATH = "../data/datasets/test_cases.json"
 THE_SPLIT = 0.8
-DASHBOARD_ID = 126696
+DASHBOARD_ID = 126697
 SENDING_MODE = "single"
 
 
@@ -46,7 +46,7 @@ def load_csv_file(path) -> DataFrame:
     print("Reading csv file...")
     data = read_csv(path, sep=";")
     print("Selecting columns...")
-    data = data[['Case ID', 'start_time', 'end_time', 'Activity']]
+    data = data[['Case ID', 'start_time', 'end_time', 'Activity', 'treatment']]
     print("Renaming columns...")
     data = data.rename(columns={'Case ID': 'case_id', 'start_time': 'start_timestamp', 'end_time': 'end_timestamp',
                                 'Activity': 'activity'})
@@ -54,6 +54,7 @@ def load_csv_file(path) -> DataFrame:
     data['start_timestamp'] = data['start_timestamp'].apply(lambda x: process_time_string(x))
     data['end_timestamp'] = data['end_timestamp'].apply(lambda x: process_time_string(x))
     return data
+
 
 def get_all_cases_from_event_log(event_log):
     cases = {}
@@ -71,7 +72,7 @@ def get_all_cases_from_dataframe(data: DataFrame) -> dict:
     saved_case_id = set()
     i = 0
 
-    for index, row in data.iterrows():
+    for index, row in data.iterrows():  # noqa
         old_case_id = row["case_id"]
 
         if old_case_id not in saved_case_id:
@@ -85,6 +86,8 @@ def get_all_cases_from_dataframe(data: DataFrame) -> dict:
         event = row.to_dict()
         event["activity"] = event["activity"].strip()
         event["case_id"] = case_id
+        event["attributes"] = {}
+        event["attributes"]["treatment"] = event["treatment"]
         cases[case_id].append(event)
 
     return cases
@@ -126,7 +129,7 @@ def get_test_cases(cases: dict):
     print(f"Length of cases: {len(cases)}")
     print(f"First 10 cases: {list(cases.keys())[:10]}")
     print(f"Last 10 cases: {list(cases.keys())[-10:]}")
-    for i in range(int(len(cases) * THE_SPLIT), len(cases)):
+    for i in range(int(len(cases) * THE_SPLIT), len(cases)):  # noqa
         test_cases[i + ID_OFFSET] = cases[i + ID_OFFSET]
     return test_cases
 
@@ -147,7 +150,7 @@ def call_post_api_for_cases(cases: dict):
         if SENDING_MODE == "random":
             event = case[0]
             event["dashboard_id"] = DASHBOARD_ID
-            event.pop("attributes", {})
+            event.pop("treatment", None)
             event["status"] = "closed" if len(case) == 1 else "ongoing"
             print(f"Sending the event: {json.dumps(event, indent=4)}")
             requests.post("http://localhost:8000/event", json=event)
@@ -162,7 +165,7 @@ def call_post_api_for_cases(cases: dict):
         else:
             for event in case:
                 event["dashboard_id"] = DASHBOARD_ID
-                event.pop("attributes", {})
+                event.pop("treatment", None)
 
                 if len(case) == 1:
                     print("Test completed since the mode is Singleton")
@@ -188,6 +191,7 @@ def get_test_cases_under_xes_mode() -> dict:
     test_cases = get_test_cases(all_cases)
     return test_cases
 
+
 def get_test_cases_under_csv_mode() -> dict:
     print("Loading file...")
     data = load_csv_file(CSV_DATASET_PATH)
@@ -198,6 +202,7 @@ def get_test_cases_under_csv_mode() -> dict:
     print("Getting test cases...")
     test_cases = get_test_cases(all_cases)
     return test_cases
+
 
 def main():
     print("Starting...")

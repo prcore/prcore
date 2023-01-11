@@ -17,6 +17,8 @@ router = APIRouter(prefix="/event_log")
 
 @router.post("")
 def upload_event_log(file: Union[UploadFile, None] = None):
+    logger.warning(f"Upload event log: {file}")
+
     if not file or not file.file:
         return {"message": "No valid file provided"}
 

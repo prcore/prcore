@@ -184,6 +184,9 @@ class Algorithm:
         # get the length of the prefix
         length = len(prefix)
 
+        if length < self.parameters["min_prefix_length"] or length > self.parameters["max_prefix_length"]:
+            return None
+
         # check if the activities in prefix are met in the training phase
         if any(x.activity not in self.activity_map for x in prefix):
             return None
@@ -201,9 +204,9 @@ class Algorithm:
         train_df, test_df = cl.estimate_cate_by_2_models()
 
         # get the prediction of the test_df
-        proba_if_treated = test_df["Proba_if_Treated"].values[0]
-        proba_if_untreated = test_df["Proba_if_Untreated"].values[0]
-        cate = test_df["CATE"].values[0]
+        proba_if_treated = test_df["Proba_if_Treated"].values[0].item()
+        proba_if_untreated = test_df["Proba_if_Untreated"].values[0].item()
+        cate = test_df["CATE"].values[0].item()
 
         print(test_df.to_string())
 

@@ -209,6 +209,10 @@ class Algorithm:
 
         # get the length of the prefix
         length = len(prefix)
+
+        if length < self.parameters["min_prefix_length"] or length > self.parameters["max_prefix_length"]:
+            return None
+
         print("Random Forest is predicting for length " + str(length))
 
         # get the model for the length

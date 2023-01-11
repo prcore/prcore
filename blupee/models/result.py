@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 from pydantic import BaseModel
 
@@ -13,7 +14,7 @@ class Result(BaseModel):
     date: int
     type: str
     current: str
-    output: str = None
+    output: Union[str, dict] = None
     given_by: str
 
     def save(self):
