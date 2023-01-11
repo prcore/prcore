@@ -8,7 +8,7 @@ from pandas import read_csv, DataFrame
 from pm4py import read_xes
 
 TEST_MODE = 'csv'
-SLEEP_TIME = 5
+SLEEP_TIME = 3
 ID_OFFSET = 8000000
 CSV_DATASET_PATH = "../data/datasets/prepared_treatment_outcome_bpic2012.csv"
 CSV_DELIMITER = ";"
@@ -16,7 +16,7 @@ XES_DATASET_PATH = "../data/datasets/OrderFullfilment.xes"
 TEST_DATASET_PATH = "../data/datasets/test_cases.json"
 THE_SPLIT = 0.8
 DASHBOARD_ID = 126697
-SENDING_MODE = "single"
+SENDING_MODE = "limited"
 
 
 def process_time_string(time_string: str) -> int:
@@ -143,11 +143,14 @@ def write_cases_to_json_file(cases: dict, path: str):
 def call_post_api_for_cases(cases: dict):
     cases_keys = set(cases.keys())
 
+    if SENDING_MODE == "limited":
+        cases_keys = list(cases_keys)[:25]
+
     while len(cases_keys) > 0:
         case_id = choice(list(cases_keys))
         case = cases[case_id]
 
-        if SENDING_MODE == "random":
+        if SENDING_MODE in {"random", "limited"}:
             event = case[0]
             event["dashboard_id"] = DASHBOARD_ID
             event.pop("treatment", None)
@@ -162,7 +165,7 @@ def call_post_api_for_cases(cases: dict):
                 cases[case_id] = case[1:]
 
             sleep(SLEEP_TIME)
-        else:
+        elif SENDING_MODE == "single":
             for event in case:
                 event["dashboard_id"] = DASHBOARD_ID
                 event.pop("treatment", None)
@@ -178,6 +181,9 @@ def call_post_api_for_cases(cases: dict):
 
                 cases[case_id] = case[1:]
                 sleep(SLEEP_TIME + 3)
+        else:
+            print("Sending mode not valid")
+            break
 
 
 def get_test_cases_under_xes_mode() -> dict:
