@@ -22,8 +22,8 @@ class Algorithm:
     def load_training_data(self):
         # split the data into training and test data
         data_length = len(self.data)
-        training_data = self.data[:int(data_length * 0.8)]
-        test_data = self.data[int(data_length * 0.8):]
+        training_data = self.data[:int(data_length * 0.8)]  # noqa
+        test_data = self.data[int(data_length * 0.8):]  # noqa
         return training_data, test_data
 
     def is_applicable(self):  # noqa
@@ -125,7 +125,7 @@ class Algorithm:
             return None
 
         return {
-            "date": int(time()),
+            "date": int(time()),  # noqa
             "type": "next_activity",
             "output": activity,
             "algorithm": self.name
