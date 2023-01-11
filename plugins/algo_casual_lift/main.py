@@ -12,7 +12,7 @@ from pandas import DataFrame
 class Algorithm:
     training_task = Any
 
-    def __init__(self, data):
+    def __init__(self, data: List[Case]):
         self.name = "Casual Lift Algorithm"
         self.description = ("This algorithm uses Uplift Modeling package 'CasualLift' "
                             "to predict the CATE and treatment label.")

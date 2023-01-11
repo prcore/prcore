@@ -5,6 +5,7 @@ from typing import Any, List, Union
 from time import time
 
 from blupee.confs import path
+from blupee.models.case import Case
 from blupee.utils.file import get_new_path
 
 from sklearn.ensemble import RandomForestClassifier
@@ -15,7 +16,7 @@ from .helper import get_negative_alarm
 class Algorithm:
     training_task = Any
 
-    def __init__(self, data):
+    def __init__(self, data: List[Case]):
         self.name = "Random Forest Alarm"
         self.description = ("This algorithm prescribes alarms based on the possibility "
                             "of a case being completed in time.")
