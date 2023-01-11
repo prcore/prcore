@@ -2,13 +2,10 @@ import logging
 from typing import Union
 
 from fastapi import APIRouter, UploadFile
-from pm4py import read_xes, write_xes
 
 from blupee import confs, glovar
-from blupee.models import PreviousEventLog
-from blupee.models.case import Case
-from blupee.models.event import Event
-from blupee.models.identifier import get_identifier
+from blupee.functions.event_log.csv import process_csv_file
+from blupee.functions.event_log.xes import process_xes_file
 from blupee.utils.file import get_extension, get_new_path
 
 # Enable logging
@@ -38,76 +35,26 @@ def upload_event_log(file: Union[UploadFile, None] = None):
     with open(tmp_path, "wb") as f:
         f.write(file.file.read())
 
-    # Try to read the file, then save it as new file
-    event_log = read_xes(tmp_path)
+    if original_extension == "xes":
+        previous_event_log = process_xes_file(tmp_path, file)
+    elif original_extension == "csv":
+        previous_event_log = process_csv_file(tmp_path, file)
+    else:
+        previous_event_log = None
 
-    if not event_log:
+    if previous_event_log is None:
         return {"message": "File not valid"}
-
-    new_path = get_new_path(
-        base_path=f"{confs.EVENT_LOG_PREVIOUS_PATH}/",
-        suffix=f".{original_extension}"
-    )
-    write_xes(event_log, new_path)
-
-    cases = []
-
-    for i in range(len(event_log)):
-        new_case = Case(
-            id=get_identifier(),
-            name=f"Case {i}",
-            status="closed",
-            events=[],
-            results=[]
-        )
-        new_case.save()
-        for j in event_log[i]:
-            should_pass = False
-            event_dict = {
-                "id": get_identifier(),
-                "activity": "",
-                "timestamp": "",
-                "resource": "",
-                "attributes": {}
-            }
-            for key in j:
-                if key == "lifecycle:transition" and j[key] != "complete":
-                    should_pass = True
-                    continue
-                if "activity" in key.lower() or "concept:name" in key.lower():
-                    event_dict["activity"] = j[key]
-                elif "timestamp" in key.lower():
-                    event_dict["timestamp"] = str(j[key])
-                elif "resource" in key.lower():
-                    event_dict["resource"] = j[key]
-                else:
-                    event_dict["attributes"][key] = j[key]
-            if should_pass:
-                continue
-            new_event = Event(
-                id=event_dict["id"],
-                activity=event_dict["activity"],
-                timestamp=event_dict["timestamp"],
-                resource=event_dict["resource"],
-                attributes=event_dict["attributes"],
-            )
-            new_event.save()
-            new_case.events.append(new_event)
-        new_case.save()
-        cases.append(new_case)
-
-    # Save the event log to the database
-    previous_event_log = PreviousEventLog(
-        id=get_identifier(),
-        name=file.filename,
-        path=new_path,
-        cases=cases
-    )
-    previous_event_log.save()
+    else:
+        previous_event_log.save()
 
     return {
         "message": "File uploaded successfully",
-        "previous_event_log": previous_event_log
+        "previous_event_log": {
+            "id": previous_event_log.id,
+            "name": previous_event_log.name,
+            "path": previous_event_log.path,
+            "cases": previous_event_log.cases[:10]
+        }
     }
 
 

@@ -1,5 +1,6 @@
 from typing import Any
 from time import time
+from copy import deepcopy
 
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -10,7 +11,7 @@ class Algorithm:
     def __init__(self, data):
         self.name = "KNN next activity prediction"
         self.description = "This algorithm predicts the next activity based on the KNN algorithm"
-        self.data = data
+        self.data = deepcopy(data)
         self.training_data, self.test_data = self.load_training_data()
         self.activity_map, self.training_data = self.pre_process()
         self.parameters = {
@@ -52,7 +53,6 @@ class Algorithm:
                      case.events[i + 1].activity,  # noqa
                      case.events[i + 2].activity]  # noqa
                 )
-        print(training_data)
         print(len(training_data))
         print(activity_map)
         # map the activities to numbers in training data
@@ -60,7 +60,6 @@ class Algorithm:
             training_data[i][0] = activity_map[training_data[i][0]]
             training_data[i][1] = activity_map[training_data[i][1]]
             training_data[i][2] = activity_map[training_data[i][2]]
-        print(training_data)
 
         return activity_map, training_data
 
@@ -91,15 +90,23 @@ class Algorithm:
     def predict(self, events):
         # predict the output of the data
         # Check if the events are long enough
+        print("Knn check condition 1")
         if len(events) < 2:
             return None
 
         # get the last two events
         x_test = [events[-2].activity, events[-1].activity]
 
+        print("Knn check condition 2")
+        print(x_test[0])
+        print(x_test[1])
+        print(self.activity_map)
+
         # Check if the events are in the activity map
         if x_test[0] not in self.activity_map or x_test[1] not in self.activity_map:
             return None
+
+        print("Knn start prediction")
 
         # map the activities to numbers
         x_test[0] = self.activity_map[x_test[0]]
@@ -107,6 +114,9 @@ class Algorithm:
 
         # predict the next activity
         y_pred = self.model.predict([x_test])
+
+        the_prediction = y_pred[0]
+        print("Knn prediction: " + str(the_prediction))
 
         # map the number to an activity
         activity = list(self.activity_map.keys())[list(self.activity_map.values()).index(y_pred[0])]

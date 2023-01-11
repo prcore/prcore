@@ -15,16 +15,17 @@ class Case(BaseModel):
     id: int
     status: str
     events: list[Event] = []
-    results: list[Result] = []
+    results: list[list[Result]] = []
 
-    def save(self):
+    def save(self, new: bool = False):
         with glovar.save_lock:
             already_saved = False
-            for i in range(len(glovar.cases)):
-                if glovar.cases[i].id == self.id:
-                    glovar.cases[i] = self
-                    already_saved = True
-                    break
+            if not new:
+                for i in range(len(glovar.cases)):
+                    if glovar.cases[i].id == self.id:
+                        glovar.cases[i] = self
+                        already_saved = True
+                        break
             not already_saved and glovar.cases.append(self)
 
     def get_predicted_result(self):
@@ -47,6 +48,34 @@ class Case(BaseModel):
     def add_predicted_result(self, result):
         self.results.append(result)
         self.save()
+
+    def prescribe(self, algorithms):
+        results = []
+
+        print("Prescribing using algorithms:", algorithms)
+
+        for algorithm in algorithms:
+            predict_result = algorithm.predict(self.events)
+
+            if not predict_result:
+                continue
+
+            new_result = Result(
+                id=get_identifier(),
+                date=predict_result["date"],
+                type=predict_result["type"],
+                current=self.get_current_event_activity(),
+                output=predict_result["output"],
+                given_by=predict_result["algorithm"]
+            )
+            new_result.save()
+            results.append(new_result)
+
+        if not results:
+            return None
+
+        self.add_predicted_result(results)
+
 
     def predict_next_event(self, algorithms):
         for algorithm in algorithms:

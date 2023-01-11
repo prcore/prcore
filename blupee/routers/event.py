@@ -19,8 +19,9 @@ class Request(BaseModel):
     case_id: int
     dashboard_id: int
     activity: str
-    timestamp: str
-    resource: str
+    start_timestamp: int
+    end_timestamp: int
+    resource: str = ""
     attributes: dict = {}
     status: str
 
@@ -38,15 +39,19 @@ def receive_event(request: Request):
         else:
             return {"message": "Dashboard not found"}
 
+    print("Event received")
+
     # Create new event
     event = Event(
         id=get_identifier(),
         activity=request.activity,
-        timestamp=request.timestamp,
+        start_timestamp=request.start_timestamp,
+        end_timestamp=request.end_timestamp,
         resource=request.resource,
         attributes=request.attributes
     )
-    event.save()
+    event.save(new=True)
+    print("Event created")
 
     # Find case
     case_id = request.case_id
@@ -62,13 +67,15 @@ def receive_event(request: Request):
             events=[],
             results=[]
         )
-        case.save()
+        case.save(new=True)
         dashboard.current_event_log.cases.append(case)
+        print("Case created")
 
     # Append event to case
     case.status = request.status
     case.events.append(event)
-    case.predict_next_event(dashboard.algorithms)
+    print("Event appended to case")
+    case.prescribe(dashboard.algorithms)
     print(f"Result: {case.get_predicted_result()}")
     case.save()
 

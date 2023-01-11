@@ -26,7 +26,7 @@ def get_extension(path: str) -> str:
     return result
 
 
-def get_new_path(base_path: str, prefix: str = "", suffix: str = "", ) -> str:
+def get_new_path(base_path: str, prefix: str = "", suffix: str = "") -> str:
     # Get a new path in tmp directory
     result = ""
 
