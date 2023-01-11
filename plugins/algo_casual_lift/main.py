@@ -8,6 +8,8 @@ from blupee.models.case import Case
 from causallift import CausalLift
 from pandas import DataFrame
 
+from .helper import get_scores
+
 
 class Algorithm:
     training_task = Any
@@ -210,6 +212,8 @@ class Algorithm:
 
         print(test_df.to_string())
 
+        scores = get_scores(train_df, test_df, cl, length)
+
         return {
             "date": int(time()),  # noqa
             "type": "cate_prediction",
@@ -219,6 +223,8 @@ class Algorithm:
                 "cate": cate
             },
             "model": {
-                "name": self.name
+                "name": self.name,
+                "accuracy": scores["accuracy"],
+                "recall": scores["recall"]
             }
         }

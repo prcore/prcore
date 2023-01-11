@@ -4,6 +4,8 @@ from copy import deepcopy
 
 from sklearn.neighbors import KNeighborsClassifier
 
+from .helper import get_scores
+
 
 class Algorithm:
     training_task = Any
@@ -124,11 +126,16 @@ class Algorithm:
         if not activity:
             return None
 
+        scores = get_scores(self.training_data, self.test_data, self.model)
+
         return {
             "date": int(time()),  # noqa
             "type": "next_activity",
             "output": activity,
             "model": {
-                "name": self.name
+                "name": self.name,
+                "accuracy": scores["accuracy"],
+                "recall": scores["recall"],
+                "probability": scores["probability"]
             }
         }

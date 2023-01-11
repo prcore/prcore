@@ -10,7 +10,7 @@ from blupee.utils.file import get_new_path
 
 from sklearn.ensemble import RandomForestClassifier
 
-from .helper import get_negative_alarm
+from .helper import get_negative_alarm, get_scores
 
 
 class Algorithm:
@@ -237,11 +237,16 @@ class Algorithm:
         if not alarm:
             return None
 
+        scores = get_scores(self.training_data, self.test_data, model, length)
+
         return {
             "date": int(time()),  # noqa
             "type": "alarm",
             "output": alarm,
             "model": {
-                "name": self.name
+                "name": self.name,
+                "accuracy": scores["accuracy"],
+                "recall": scores["recall"],
+                "probability": scores["probability"]
             }
         }
