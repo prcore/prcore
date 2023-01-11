@@ -39,7 +39,8 @@ def process_csv_file(path: str, file: UploadFile) -> Union[PreviousEventLog, Non
         print("Selecting columns...")
         data = data[['Case ID', 'start_time', 'end_time', 'Activity']]
         print("Renaming columns...")
-        data = data.rename(columns={'Case ID': 'case_id', 'start_time': 'start_timestamp', 'end_time': 'end_timestamp', 'Activity': 'activity'})
+        data = data.rename(columns={'Case ID': 'case_id', 'start_time': 'start_timestamp', 'end_time': 'end_timestamp',
+                                    'Activity': 'activity'})
         print("Converting timestamps...")
         data['start_timestamp'] = data['start_timestamp'].apply(lambda x: process_time_string(x))
         data['end_timestamp'] = data['end_timestamp'].apply(lambda x: process_time_string(x))
@@ -50,6 +51,7 @@ def process_csv_file(path: str, file: UploadFile) -> Union[PreviousEventLog, Non
         print("Processing cases...")
         for index, row in data.iterrows():
             print(f"Processing event {index} in case {row['case_id']}...")
+
             if row['case_id'] not in saved_case_ids:
                 new_case = Case(
                     id=get_identifier(),
@@ -61,13 +63,35 @@ def process_csv_file(path: str, file: UploadFile) -> Union[PreviousEventLog, Non
                 new_case.save(new=True)
                 cases.append(new_case)
                 saved_case_ids.add(row['case_id'])
+
+            event_dict = {
+                "id": get_identifier(),
+                "activity": "",
+                "start_timestamp": "",
+                "end_timestamp": "",
+                "resource": "",
+                "attributes": {}
+            }
+
+            for key in row.keys():
+                if "activity" in key.lower():
+                    event_dict["activity"] = row[key].strip()
+                elif "start_timestamp" in key.lower():
+                    event_dict["start_timestamp"] = row[key]
+                elif "end_timestamp" in key.lower():
+                    event_dict["end_timestamp"] = row[key]
+                elif "resource" in key.lower():
+                    event_dict["resource"] = row[key]
+                else:
+                    event_dict["attributes"][key] = row[key]
+
             new_event = Event(
-                id=get_identifier(),
-                activity=row['activity'].strip(),
-                start_timestamp=row['start_timestamp'],
-                end_timestamp=row['end_timestamp'],
-                resource="",
-                attributes={}
+                id=event_dict["id"],
+                activity=event_dict["activity"],
+                start_timestamp=event_dict["start_timestamp"],
+                end_timestamp=event_dict["end_timestamp"],
+                resource=event_dict["resource"],
+                attributes=event_dict["attributes"]
             )
             new_event.save(new=True)
             cases[-1].events.append(new_event)
