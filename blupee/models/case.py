@@ -67,7 +67,7 @@ class Case(BaseModel):
                 type=predict_result["type"],
                 current=self.get_current_event_activity(),
                 output=predict_result["output"],
-                given_by=predict_result["algorithm"]
+                model=predict_result["model"]
             )
             new_result.save()
             results.append(new_result)
