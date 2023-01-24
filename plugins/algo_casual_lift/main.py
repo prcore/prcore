@@ -31,6 +31,7 @@ class Algorithm:
             "max_prefix_length": self.get_avg_length(),
             "value_threshold": 0,
             "cate_threshold": 0.6,
+            "treatment_action": "",
         }
         self.set_value_threshold()
         self.set_training_datasets()
@@ -220,7 +221,8 @@ class Algorithm:
             "output": {
                 "proba_if_treated": proba_if_treated,
                 "proba_if_untreated": proba_if_untreated,
-                "cate": cate
+                "cate": cate,
+                "suggested_treatment": self.parameters["treatment_action"]
             },
             "model": {
                 "name": self.name,
