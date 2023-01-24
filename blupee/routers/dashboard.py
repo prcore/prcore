@@ -44,6 +44,11 @@ class Response(BaseModel):
     dashboard: DashboardResponse = None
 
 
+class DashboardListResponse(BaseModel):
+    message: str
+    dashboards: List[DashboardResponse] = []
+
+
 @router.post("", response_model=Response)
 def new_dashboard(request: Request):
     # Get previous event log by reqeust.event_log_id
@@ -114,3 +119,8 @@ def get_dashboard_by_id(dashboard_id: int):
             return {"message": "Dashboard found", "dashboard": dashboard}
 
     return {"message": "Dashboard not found"}
+
+
+@router.get("", response_model=DashboardListResponse)
+def get_all_dashboards():
+    return {"message": "Dashboards found", "dashboards": glovar.dashboards}
