@@ -13,7 +13,7 @@ class Result(BaseModel):
     id: int
     date: int
     type: str
-    output: Union[bool, str, dict] = None
+    output: Union[bool, str, dict, float] = None
     model: dict = {}
 
     def save(self):
