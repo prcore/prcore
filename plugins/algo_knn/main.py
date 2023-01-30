@@ -1,6 +1,13 @@
-from typing import Any
+import math
+import pickle
+from typing import List, Union
 from time import time
 from copy import deepcopy
+
+from blupee.confs import path
+from blupee.models.case import Case
+from blupee.models.training_task import TrainingTask
+from blupee.utils.file import get_new_path
 
 from sklearn.neighbors import KNeighborsClassifier
 
@@ -8,124 +15,170 @@ from .helper import get_scores
 
 
 class Algorithm:
-    training_task = Any
+    training_task: TrainingTask
 
     def __init__(self, data):
         self.name = "KNN next activity prediction"
         self.description = "This algorithm predicts the next activity based on the KNN algorithm"
         self.data = deepcopy(data)
-        self.training_data, self.test_data = self.load_training_data()
-        self.activity_map, self.training_data = self.pre_process()
+        self.training_datasets = {}
+        self.models = {}
+        self.lengths = []
+        self.training_data, self.test_data = self.split_data()
+        self.activity_map = self.pre_process()
         self.parameters = {
-           "n_neighbors": 3
+            "n_neighbors": 3,
+            "min_prefix_length": self.get_min_length(),
+            "max_prefix_length": self.get_avg_length()
         }
+        self.set_training_datasets()
         self.model = None
 
-    def load_training_data(self):
+    def is_applicable(self):
+        # Check if the algorithm can be applied to the data
+        first_case = self.training_data[0]
+        first_event = first_case.events[0]
+        return bool(first_event.activity)
+
+    def set_parameters(self, parameters):
+        # Set the parameters of the algorithm
+        self.parameters = parameters
+
+    def split_data(self) -> (List[Case], List[Case]):
         # split the data into training and test data
         data_length = len(self.data)
         training_data = self.data[:int(data_length * 0.8)]  # noqa
         test_data = self.data[int(data_length * 0.8):]  # noqa
         return training_data, test_data
 
-    def is_applicable(self):  # noqa
-        # check if the algorithm can be applied to the data
-        return True
-
     def pre_process(self):
-        # do some pre-processing on the data
-        # get all possible activities
+        # Pre-process the data
+        self.calculate_lengths()
+        activity_map = self.get_activity_map()
+        return activity_map
+
+    def calculate_lengths(self):
+        # Calculate the lengths of the traces
+        self.lengths = [len(case.events) for case in self.training_data]
+
+    def get_activity_map(self):
+        # Get all possible activities
         activities = set()
         for case in self.training_data:
-            for event in case.events:  # noqa
+            for event in case.events:
                 activities.add(event.activity)
         activities = list(activities)
-        # map activities to numbers
+
+        # Map activities to numbers (Ordinal Encoding)
         activity_map = {}
         for i in range(len(activities)):
             activity_map[activities[i]] = i
-        # remove the traces that are too short
-        self.training_data = [case for case in self.training_data if len(case.events) > 2]  # noqa
-        # get every two events and the next event
-        training_data = []
-        for case in self.training_data:
-            for i in range(len(case.events) - 2):  # noqa
-                training_data.append(
-                    [case.events[i].activity,  # noqa
-                     case.events[i + 1].activity,  # noqa
-                     case.events[i + 2].activity]  # noqa
-                )
-        print(len(training_data))
-        print(activity_map)
-        # map the activities to numbers in training data
-        for i in range(len(training_data)):
-            training_data[i][0] = activity_map[training_data[i][0]]
-            training_data[i][1] = activity_map[training_data[i][1]]
-            training_data[i][2] = activity_map[training_data[i][2]]
 
-        return activity_map, training_data
+        return activity_map
+
+    def get_min_length(self):
+        # Get the minimum length of the traces
+        return 3 if max(self.lengths) > 3 else min(self.lengths)
+
+    def get_avg_length(self):
+        # Get the average length of the traces
+        return math.floor(sum(self.lengths) / len(self.lengths))
+
+    def set_training_datasets(self):
+        # Get the training datasets for each length
+        """
+        :return: {
+            "length_1": [event1, event2, event3, ..., outcome_event],
+            "length_2": [event1, event2, event3, ..., outcome_event],
+            ...
+        """
+        for length in range(self.parameters["min_prefix_length"], self.parameters["max_prefix_length"] + 1):
+            training_data = []
+            for case in self.training_data:
+                if len(case.events) < length:
+                    continue
+                data_list: List[Union[int, str]] = self.feature_extraction(case.events[:length])
+                training_data.append(data_list)
+            print(f"Length {length} training data: {len(training_data)}")
+
+            if len(training_data) < 100:
+                continue
+
+            self.training_datasets[length] = training_data
+
+    def feature_extraction(self, prefix):
+        # Extract features from the prefix
+        return [self.activity_map[event.activity] for event in prefix]
 
     def train(self):
-        # train the algorithm on the data
+        # Train the algorithm on the data
         print(self.name + " is training...")
-        # get training data
+        # Train the model for each length
+        for length in self.training_datasets.keys():  # noqa
+            self.train_model_for_length(length)
+        self.save_model()
+
+    def train_model_for_length(self, length):
+        # Train the model for a specific length
+        print("Training model for length " + str(length))
         x_train = []
         y_train = []
-        for data in self.training_data:
-            x_train.append(data[:2])
-            y_train.append(data[2])
-        # train the model
+
+        for data in self.training_datasets[length]:
+            x_train.append(data[:-1])
+            y_train.append(data[-1])
+
+        # Train the model
         model = KNeighborsClassifier(n_neighbors=self.parameters["n_neighbors"])
         model.fit(x_train, y_train)
-        print(self.name + " has finished training")
-        self.training_task.status = "finished"
-        self.model = model
+        print(self.name + " has finished training for length " + str(length))
+        self.models[length] = model
 
     def save_model(self):
         # save the model
-        pass
+        model_path = get_new_path(f"{path.MODEL_PATH}/", f"{self.name} - ", ".pkl")
+        with open(model_path, "wb") as f:
+            pickle.dump(self.models, f)
+        self.model = model_path
+        self.training_task.status = "finished"
 
     def load_model(self):
         # load the model from a file
-        pass
+        with open(self.model, "rb") as f:
+            self.models = pickle.load(f)
 
-    def predict(self, events):
-        # predict the output of the data
-        # Check if the events are long enough
-        print("Knn check condition 1")
-        if len(events) < 2:
+    def predict(self, prefix):
+        # Predict the next activity
+
+        # Get the length of the prefix
+        length = len(prefix)
+
+        if length < self.parameters["min_prefix_length"] - 1 or length > self.parameters["max_prefix_length"] - 1:
+            print("Length is not in the configuration range")
             return None
 
-        # get the last two events
-        x_test = [events[-2].activity, events[-1].activity]
+        print(f"{self.name} is predicting for prefix length: {length}")
 
-        print("Knn check condition 2")
-        print(x_test[0])
-        print(x_test[1])
-        print(self.activity_map)
+        # Get the model for the length
+        model = self.models.get(length + 1)  # noqa
 
-        # Check if the events are in the activity map
-        if x_test[0] not in self.activity_map or x_test[1] not in self.activity_map:
+        if not model:
+            print(self.models.keys())
+            print("Model not found for the provided prefix length")
             return None
 
-        print("Knn start prediction")
-
-        # map the activities to numbers
-        x_test[0] = self.activity_map[x_test[0]]
-        x_test[1] = self.activity_map[x_test[1]]
-
-        # predict the next activity
-        y_pred = self.model.predict([x_test])
-
-        the_prediction = y_pred[0]
-        print("Knn prediction: " + str(the_prediction))
-
-        # map the number to an activity
-        activity = list(self.activity_map.keys())[list(self.activity_map.values()).index(y_pred[0])]
-
-        if not activity:
+        # Check if the activities in prefix are met in the training phase
+        if any(x.activity not in self.activity_map for x in prefix):
+            print("Activity not found for the provided prefix")
             return None
 
+        # Get the features of the prefix
+        features = self.feature_extraction(prefix)
+
+        # Predict the next activity
+        prediction = model.predict([features])[0]
+        activity = list(self.activity_map.keys())[list(self.activity_map.values()).index(prediction)]
+        print(f"{self.name} predicted: {activity}")
         scores = get_scores(self.training_data, self.test_data, self.model)
 
         return {

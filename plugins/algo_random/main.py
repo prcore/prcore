@@ -66,8 +66,7 @@ class Algorithm:
 
     def calculate_lengths(self):
         # Calculate the lengths of the traces
-        for case in self.training_data:
-            self.lengths.append(len(case.events))
+        self.lengths = [len(case.events) for case in self.training_data]
 
     def get_activity_map(self):
         # Get all possible activities
@@ -109,8 +108,8 @@ class Algorithm:
         # Get the training datasets for each length
         """
         :return: {
-            "length_1": [event1, event2, event3, ..., label],
-            "length_2": [event1, event2, event3, ..., label],
+            "length_1": [event1, event2, event3, ..., outcome],
+            "length_2": [event1, event2, event3, ..., outcome],
             ...
         """
         for length in range(self.parameters["min_prefix_length"], self.parameters["max_prefix_length"] + 1):
@@ -165,7 +164,7 @@ class Algorithm:
         self.models[length] = model
 
     def save_model(self):
-        # save the model
+        # Save the model
         model_path = get_new_path(f"{path.MODEL_PATH}/", f"{self.name} - ", ".pkl")
         with open(model_path, "wb") as f:
             pickle.dump(self.models, f)
@@ -173,7 +172,7 @@ class Algorithm:
         self.training_task.status = "finished"
 
     def load_model(self):
-        # load the model from a file
+        # Load the model from a file
         with open(self.model, "rb") as f:
             self.models = pickle.load(f)
 
@@ -187,9 +186,9 @@ class Algorithm:
             print("Length is not in the configuration range")
             return None
 
-        print(f"Random Forest is predicting for prefix length: {length}")
+        print(f"{self.name} is predicting for prefix length: {length}")
 
-        # get the model for the length
+        # Get the model for the length
         model = self.models.get(length)  # noqa
 
         if not model:
@@ -197,15 +196,15 @@ class Algorithm:
             print("Model not found for the provided prefix length")
             return None
 
-        # check if the activities in prefix are met in the training phase
+        # Check if the activities in prefix are met in the training phase
         if any(x.activity not in self.activity_map for x in prefix):
             print("Activity not found for the provided prefix")
             return None
 
-        # get the features of the prefix
+        # Get the features of the prefix
         features = self.feature_extraction(prefix)
 
-        # get the prediction
+        # Get the prediction
         predictions = list(zip(model.classes_, model.predict_proba([features]).tolist()[0]))
         negative_probability = get_negative_proba(predictions)
         print(f"Negative probability: {negative_probability}")
