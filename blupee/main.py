@@ -11,7 +11,7 @@ from blupee.routers import event_log, dashboard, event, case, result
 logger = logging.getLogger(__name__)
 
 # Create the app
-app = FastAPI(root_path="/api")
+app = FastAPI()
 origins = [
     "http://localhost.tiangolo.com",
     "https://localhost.tiangolo.com",
