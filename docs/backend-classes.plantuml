@@ -1,22 +1,33 @@
-@startuml backend-classes
-
-class Dashboard {
-    id: int
-    date: datetime
-    name: string
-    description: string
-    previous_eventlog: PreviousEventLog
-    current_eventlog: CurrentEventLog
-    algorithms: List[Algorithm]
-    training_tasks: List[TrainingTask]
-    prescribing_tasks: List[PrescribingTask]
-}
+@startuml core-classes
 
 class EventLog {
     id: int
-    date: datetime
-    name: string
-    dashboard: Dashboard
+    created_at: datetime
+    updated_at: datetime
+    file_name: str
+    saved_name: str
+    df_name: str
+    definition: Definition
+    cases: list[Case]
+    events: list[Event]
+}
+
+class Definition {
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    columns_definition: dict[str, str]
+    outcome_definition: list[list[dict[str, Union[datetime, int, str]]]]
+    treatment_definition: list[list[dict[str, Union[datetime, int, str]]]]
+}
+
+class Project {
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    name: str
+    description: str
+    event_log: EventLog
 }
 
 class PreviousEventLog {
@@ -81,21 +92,21 @@ class Result {
     output: string
 }
 
-EventLog <|-- PreviousEventLog
-EventLog <|-- CurrentEventLog
-Dashboard "1" -- "1" PreviousEventLog
-Dashboard "1" -- "1" CurrentEventLog
-CurrentEventLog "1" -- "n" Event
-Event "n" -- "1" Case
-Dashboard "1" -- "n" Algorithm
-Dashboard "1" -- "n" TrainingTask
-Case "1" -- "n" PrescribingTask
-Dashboard "1" -- "n" PrescribingTask
-Algorithm "1" -- "1" TrainingTask
-TrainingTask "1" -- "1" Model
-Algorithm "1" -- "1" Model
-Algorithm "1" -- "n" PrescribingTask
-PrescribingTask "1" -- "1" Result
-Case "1" -- "n" Result
+'EventLog <|-- PreviousEventLog
+'EventLog <|-- CurrentEventLog
+'Project "1" -- "1" PreviousEventLog
+'Project "1" -- "1" CurrentEventLog
+'CurrentEventLog "1" -- "n" Event
+'Event "n" -- "1" Case
+'Project "1" -- "n" Algorithm
+'Project "1" -- "n" TrainingTask
+'Case "1" -- "n" PrescribingTask
+'Project "1" -- "n" PrescribingTask
+'Algorithm "1" -- "1" TrainingTask
+'TrainingTask "1" -- "1" Model
+'Algorithm "1" -- "1" Model
+'Algorithm "1" -- "n" PrescribingTask
+'PrescribingTask "1" -- "1" Result
+'Case "1" -- "n" Result
 
 @enduml
