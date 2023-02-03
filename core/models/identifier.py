@@ -1,7 +1,7 @@
 import logging
 from random import randint
 
-from blupee import glovar
+from core import glovar
 
 # Enable logging
 logger = logging.getLogger(__name__)

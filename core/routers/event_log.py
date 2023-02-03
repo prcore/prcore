@@ -3,10 +3,10 @@ from typing import Union
 
 from fastapi import APIRouter, UploadFile
 
-from blupee import confs, glovar
-from blupee.functions.event_log.csv import process_csv_file
-from blupee.functions.event_log.xes import process_xes_file
-from blupee.utils.file import get_extension, get_new_path
+from core import confs, glovar
+from core.functions.event_log.csv import process_csv_file
+from core.functions.event_log.xes import process_xes_file
+from core.utils.file import get_extension, get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -84,4 +84,12 @@ def confirm_event_log(event_id: int):
     return {
         "message": "Event log confirmed, please select algorithm and set parameters",
         "applicable_algorithms": algo_dict
+    }
+
+
+@router.get("/all")
+def get_all_event_logs():
+    return {
+        "message": "All event logs",
+        "event_logs": [event_log.to_dict() for event_log in glovar.previous_event_logs]
     }

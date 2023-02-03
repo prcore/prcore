@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from blupee.routers import event_log, dashboard, event, case, result
+from core.routers import event_log, dashboard, event, case, result
 
 # Enable logging
 logger = logging.getLogger(__name__)

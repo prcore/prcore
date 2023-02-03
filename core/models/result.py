@@ -3,7 +3,7 @@ from typing import Union
 
 from pydantic import BaseModel
 
-from blupee import glovar
+from core import glovar
 
 # Enable logging
 logger = logging.getLogger(__name__)

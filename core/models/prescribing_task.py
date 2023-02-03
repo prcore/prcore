@@ -3,8 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from blupee import glovar
-from blupee.models.case import Case
+from core import glovar
+from core.models.case import Case
 
 # Enable logging
 logger = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Any, List, Union
 from time import time
 
-from blupee.models.case import Case
+from core.models.case import Case
 
 from causallift import CausalLift
 from pandas import DataFrame

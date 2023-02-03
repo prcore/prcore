@@ -3,9 +3,9 @@ from typing import List
 
 from fastapi import APIRouter
 
-from blupee import glovar
-from blupee.models import CurrentEventLog
-from blupee.models.case import Case
+from core import glovar
+from core.models import CurrentEventLog
+from core.models.case import Case
 
 # Enable logging
 logger = logging.getLogger(__name__)

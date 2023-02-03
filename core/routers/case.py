@@ -4,13 +4,13 @@ from typing import Union
 from fastapi import APIRouter, UploadFile
 from pm4py import read_xes, write_xes
 
-from blupee import confs, glovar
-from blupee.models import PreviousEventLog
-from blupee.models.dashboard import Dashboard
-from blupee.models.case import Case
-from blupee.models.event import Event
-from blupee.models.identifier import get_identifier
-from blupee.utils.file import get_extension, get_new_path
+from core import confs, glovar
+from core.models import PreviousEventLog
+from core.models.dashboard import Dashboard
+from core.models.case import Case
+from core.models.event import Event
+from core.models.identifier import get_identifier
+from core.utils.file import get_extension, get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 import random
 from typing import List, Tuple
 
-from blupee.models.case import Case
+from core.models.case import Case
 
 
 def validate_parameters(parameters):

@@ -1,6 +1,6 @@
 from typing import List
 
-from blupee.models.event import Event
+from core.models.event import Event
 
 
 def get_test_prefix() -> List[Event]:

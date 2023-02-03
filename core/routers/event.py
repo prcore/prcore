@@ -3,10 +3,10 @@ import logging
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from blupee import glovar
-from blupee.models.case import Case
-from blupee.models.event import Event
-from blupee.models.identifier import get_identifier
+from core import glovar
+from core.models.case import Case
+from core.models.event import Event
+from core.models.identifier import get_identifier
 
 # Enable logging
 logger = logging.getLogger(__name__)

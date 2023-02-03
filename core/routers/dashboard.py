@@ -5,13 +5,13 @@ from typing import List
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from blupee import confs, glovar
-from blupee.models import PreviousEventLog, CurrentEventLog
-from blupee.models.dashboard import Dashboard
-from blupee.models.identifier import get_identifier
-from blupee.models.training_task import TrainingTask, TrainingTaskResponse
-from blupee.models.prescribing_task import PrescribingTask
-from blupee.utils.file import get_new_path
+from core import confs, glovar
+from core.models import PreviousEventLog, CurrentEventLog
+from core.models.dashboard import Dashboard
+from core.models.identifier import get_identifier
+from core.models.training_task import TrainingTask, TrainingTaskResponse
+from core.models.prescribing_task import PrescribingTask
+from core.utils.file import get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)

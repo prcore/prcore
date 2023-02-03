@@ -2,8 +2,8 @@ import pickle
 from typing import Any
 from time import time
 
-from blupee.confs import path
-from blupee.utils.file import get_new_path
+from core.confs import path
+from core.utils.file import get_new_path
 
 from sklearn.svm import SVC
 

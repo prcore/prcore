@@ -1,7 +1,7 @@
 from typing import List
 
-from blupee.models.event import Event
-from blupee.models.training_task import TrainingTask
+from core.models.event import Event
+from core.models.training_task import TrainingTask
 from plugins.algo_knn import Algorithm as KNNAlgorithm
 
 from load_dataset import get_cases

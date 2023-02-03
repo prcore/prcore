@@ -1,7 +1,7 @@
 from typing import List
 
-from blupee.functions.event_log.csv import process_csv_file
-from blupee.models.case import Case
+from core.functions.event_log.csv import process_csv_file
+from core.models.case import Case
 
 CSV_PATH = ("/home/zhaosi/Documents/SE/4/Thesis/Application/backend/data/datasets"
             "/prepared_treatment_outcome_bpic2012.csv")

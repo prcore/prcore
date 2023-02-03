@@ -4,10 +4,10 @@ from typing import List, Union
 from time import time
 from copy import deepcopy
 
-from blupee.confs import path
-from blupee.models.case import Case
-from blupee.models.training_task import TrainingTask
-from blupee.utils.file import get_new_path
+from core.confs import path
+from core.models.case import Case
+from core.models.training_task import TrainingTask
+from core.utils.file import get_new_path
 
 from sklearn.neighbors import KNeighborsClassifier
 

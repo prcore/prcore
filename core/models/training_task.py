@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
-from blupee import glovar
-from blupee.models.model import Model
+from core import glovar
+from core.models.model import Model
 
 # Enable logging
 logger = logging.getLogger(__name__)

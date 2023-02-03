@@ -3,10 +3,10 @@ from typing import List
 
 from pydantic import BaseModel
 
-from blupee import glovar
-from blupee.models.event_log import PreviousEventLog, CurrentEventLog
-from blupee.models.training_task import TrainingTask
-from blupee.models.prescribing_task import PrescribingTask
+from core import glovar
+from core.models.event_log import PreviousEventLog, CurrentEventLog
+from core.models.training_task import TrainingTask
+from core.models.prescribing_task import PrescribingTask
 
 
 # Enable logging

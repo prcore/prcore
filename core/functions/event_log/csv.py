@@ -4,10 +4,10 @@ from typing import Union
 
 from pandas import read_csv
 
-from blupee.models import PreviousEventLog
-from blupee.models.case import Case
-from blupee.models.event import Event
-from blupee.models.identifier import get_identifier
+from core.models import PreviousEventLog
+from core.models.case import Case
+from core.models.event import Event
+from core.models.identifier import get_identifier
 
 # Enable logging
 logger = logging.getLogger(__name__)

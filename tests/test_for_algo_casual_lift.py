@@ -1,6 +1,6 @@
 from typing import List
 
-from blupee.models.event import Event
+from core.models.event import Event
 from plugins.algo_casual_lift import Algorithm as CasualLiftAlgorithm
 
 from load_dataset import get_cases
