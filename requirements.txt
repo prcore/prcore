@@ -2,6 +2,7 @@ anyconfig==0.10.1
 anyio==3.6.2
 arrow==1.2.3
 asgiref==3.4.1
+backcall==0.2.0
 binaryornot==0.4.4
 cachetools==4.2.4
 causallift==1.0.6
@@ -31,7 +32,9 @@ immutables==0.19
 importlib-metadata==4.8.3
 importlib-resources==5.4.0
 intervaltree==3.1.0
+ipython==7.16.3
 ipython-genutils==0.2.0
+jedi==0.17.2
 Jinja2==3.0.3
 jinja2-time==0.2.0
 jmespath==0.10.0
@@ -47,14 +50,20 @@ networkx==2.5.1
 numpy==1.19.5
 packaging==21.3
 pandas==1.1.5
+parso==0.7.1
 pep517==0.13.0
+pexpect==4.8.0
+pickleshare==0.7.5
 Pillow==8.4.0
 pip-tools==6.4.0
 pluggy==0.13.1
 pm4py==2.4.1
 poyo==0.5.0
+prompt-toolkit==3.0.36
+ptyprocess==0.7.0
 pydantic==1.9.2
 pydotplus==2.0.2
+Pygments==2.14.0
 pyparsing==3.0.9
 python-dateutil==2.8.2
 python-dotenv==0.20.0
@@ -87,5 +96,7 @@ urllib3==1.26.13
 uvicorn==0.16.0
 uvloop==0.14.0
 watchgod==0.7
+wcwidth==0.2.5
 websockets==9.1
+xgboost==1.0.0
 zipp==3.6.0

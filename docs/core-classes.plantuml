@@ -30,11 +30,12 @@ class Project {
     event_log: EventLog
 }
 
-class PreviousEventLog {
-}
-
-class CurrentEventLog {
+class Case{
+    id: int
+    case_id: string
+    status: string
     events: List[Event]
+    results: List[Result]
 }
 
 class Event{
@@ -46,12 +47,11 @@ class Event{
     case: Case
 }
 
-class Case{
-    id: int
-    case_id: string
-    status: string
+class PreviousEventLog {
+}
+
+class CurrentEventLog {
     events: List[Event]
-    results: List[Result]
 }
 
 class Algorithm {
