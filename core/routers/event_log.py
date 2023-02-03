@@ -2,10 +2,12 @@ import logging
 from typing import Union
 
 from fastapi import APIRouter, UploadFile
+from fastapi import Depends, FastAPI, HTTPException, status
 
 from core import confs, glovar
 from core.functions.event_log.csv import process_csv_file
 from core.functions.event_log.xes import process_xes_file
+from core.security.token import validate_token
 from core.utils.file import get_extension, get_new_path
 
 # Enable logging
@@ -88,7 +90,7 @@ def confirm_event_log(event_id: int):
 
 
 @router.get("/all")
-def get_all_event_logs():
+def get_all_event_logs(_: bool = Depends(validate_token)):
     return {
         "message": "All event logs",
         "event_logs": [event_log.to_dict() for event_log in glovar.previous_event_logs]

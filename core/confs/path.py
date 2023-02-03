@@ -1,4 +1,5 @@
 # Path variables
+CONFIG_PATH = "data/config/config.toml"
 EVENT_LOG_CURRENT_PATH = "data/event_logs/current"
 EVENT_LOG_PREVIOUS_PATH = "data/event_logs/previous"
 LOG_PATH = "data/logs"
