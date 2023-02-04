@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
@@ -15,13 +14,13 @@ logger = logging.getLogger(__name__)
 class EventLog(Base):
     __tablename__ = "event_log"
 
-    id: int = Column(Integer, primary_key=True, index=True)
-    created_at: datetime = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at: datetime = Column(DateTime(timezone=True), onupdate=func.now())
-    file_name: str = Column(String, unique=True, nullable=False)
-    saved_name: str = Column(String, unique=True, nullable=False)
-    df_name: str = Column(String, unique=True, nullable=True)
-    definition_id: int = Column(Integer, ForeignKey("definition.id"))
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    file_name = Column(String, unique=True, nullable=False)
+    saved_name = Column(String, unique=True, nullable=False)
+    df_name = Column(String, unique=True, nullable=True)
+    definition_id = Column(Integer, ForeignKey("definition.id"))
 
     definition = relationship("Definition")
 

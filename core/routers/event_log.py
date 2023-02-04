@@ -1,9 +1,13 @@
 import logging
 from typing import Union
 
-from fastapi import APIRouter, UploadFile
-from fastapi import Depends
+from fastapi import APIRouter, Depends, Request, UploadFile
+from sqlalchemy.orm import Session
 
+import core.crud.event_log as crud
+import core.models.event_log as model
+import core.responses.event_log as response
+import core.schemas.event_log as schema
 from core import confs, glovar
 from core.functions.event_log.csv import process_csv_file
 from core.functions.event_log.xes import process_xes_file
@@ -15,6 +19,10 @@ logger = logging.getLogger(__name__)
 
 # Create the router
 router = APIRouter(prefix="/event_log")
+
+
+def get_db(request: Request):
+    return request.state.db
 
 
 @router.post("")
@@ -89,9 +97,6 @@ def upload_event_log(file: Union[UploadFile, None] = None, _: bool = Depends(val
 #     }
 
 
-@router.get("/all")
-def get_all_event_logs(_: bool = Depends(validate_token)):
-    return {
-        "message": "All event logs",
-        "event_logs": [event_log.to_dict() for event_log in glovar.previous_event_logs]
-    }
+@router.get("/all", response_model=response.AllEventLogsResponse)
+def read_all_event_logs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    return crud.get_event_logs(db, skip=skip, limit=limit)
