@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -26,4 +25,14 @@ def create_event_log(db: Session, event_log: schema.EventLogCreate) -> model.Eve
     db.add(db_event_log)
     db.commit()
     db.refresh(db_event_log)
+    return db_event_log
+
+
+def update_event_log(db: Session, event_log_id: int, definition_id: int) -> model.EventLog:
+    # Update an event log
+    db_event_log = get_event_log(db, event_log_id=event_log_id)
+    if db_event_log:
+        db_event_log.definition_id = definition_id
+        db.commit()
+        db.refresh(db_event_log)
     return db_event_log

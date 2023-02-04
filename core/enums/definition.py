@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ColumnDefinition(Enum):
+class ColumnDefinition(str, Enum):
     """Enum for column definitions."""
     CASE_ID = "CASE_ID"
     TRANSITION = "TRANSITION"

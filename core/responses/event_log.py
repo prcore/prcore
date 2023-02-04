@@ -30,3 +30,11 @@ class UploadEventLogResponse(BaseModel):
     columns_header: list[str]
     columns_inferred_definition: list[ColumnDefinition | None]
     columns_data: list[list[str | Timestamp | None]]
+
+
+class UpdateEventLogResponse(BaseModel):
+    message: str
+    event_log_id: int
+    activities_count: dict[str, int] | None = None
+    outcome_selections: list[ColumnDefinition] | None = None
+    treatment_selections: list[ColumnDefinition] | None = None
