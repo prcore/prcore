@@ -14,20 +14,21 @@ def get_brief_with_inferred_definition(df: DataFrame) -> list[list[str | int | f
 
     try:
         result: list = df.head(5).values.tolist()
-        headers = df.columns.tolist()
-        result.insert(1, get_inferred_definitions(headers))
+        header = df.columns.tolist()
+        result.insert(0, header)
+        result.insert(1, get_inferred_definitions(header))
     except Exception as e:
         logger.warning(f"Get brief with inferred definition error: {e}", exc_info=True)
 
     return result
 
 
-def get_inferred_definitions(headers: list[str]) -> list[ColumnDefinition | None]:
+def get_inferred_definitions(header: list[str]) -> list[ColumnDefinition | None]:
     # Get inferred definition
     result = []
 
     try:
-        result = [get_inferred_definition_by_name(header) for header in headers]
+        result = [get_inferred_definition_by_name(header) for header in header]
     except Exception as e:
         logger.warning(f"Get inferred definition error: {e}", exc_info=True)
 
