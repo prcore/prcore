@@ -2,6 +2,7 @@ import logging
 import os
 from threading import Lock
 
+from pandas import DataFrame
 from tomli import load
 
 from core.confs.path import CONFIG_PATH
@@ -23,6 +24,10 @@ POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
 if any(env is None for env in (DB_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD)):
     raise ValueError("Missing environment variables")
 
+# Data in memory
+dataframes: dict[int, DataFrame] = {}
+
+# Legacy code
 identifiers = set(range(1, 10000000))
 save_lock = Lock()
 algo_classes = []

@@ -2,7 +2,7 @@ import datetime
 import logging
 from typing import Union
 
-from pandas import read_csv
+from pandas import read_csv, DataFrame
 
 from core.models import PreviousEventLog
 from core.models.case import Case
@@ -11,6 +11,14 @@ from core.models.identifier import get_identifier
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def get_dataframe_from_csv(path: str, seperator: str) -> DataFrame:
+    # Get dataframe from csv file
+    df = read_csv(path, sep=seperator)
+    df_obj = df.select_dtypes(['object'])
+    df[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
+    return df
 
 
 def process_time_string(time_string: str) -> int:

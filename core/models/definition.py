@@ -17,6 +17,3 @@ class Definition(Base):
     id: int = Column(Integer, primary_key=True, index=True)
     created_at: datetime = Column(DateTime(timezone=True), server_default=func.now())
     updated_at: datetime = Column(DateTime(timezone=True), onupdate=func.now())
-    # columns_definition: dict
-    # outcome_definition: list
-    # treatment_definition: list
