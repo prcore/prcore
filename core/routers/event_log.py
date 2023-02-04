@@ -2,7 +2,7 @@ import logging
 from typing import Union
 
 from fastapi import APIRouter, UploadFile
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends
 
 from core import confs, glovar
 from core.functions.event_log.csv import process_csv_file
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/event_log")
 
 
 @router.post("")
-def upload_event_log(file: Union[UploadFile, None] = None):
+def upload_event_log(file: Union[UploadFile, None] = None, _: bool = Depends(validate_token)):
     logger.warning(f"Upload event log: {file}")
 
     if not file or not file.file:
@@ -62,31 +62,31 @@ def upload_event_log(file: Union[UploadFile, None] = None):
     }
 
 
-@router.put("/{event_id}")
-def confirm_event_log(event_id: int):
-    with glovar.save_lock:
-        for i in range(len(glovar.previous_event_logs)):
-            if glovar.previous_event_logs[i].id == event_id:
-                previous_event_log = glovar.previous_event_logs[i]
-
-    algo_objects = []
-
-    for Algorithm in glovar.algo_classes:
-        algorithm = Algorithm(data=previous_event_log.cases)
-        algorithm.is_applicable() and algo_objects.append(algorithm)
-
-    algo_dict = {}
-
-    for algorithm in algo_objects:
-        algo_dict[algorithm.name] = {
-            "description": algorithm.description,
-            "parameters": algorithm.parameters
-        }
-
-    return {
-        "message": "Event log confirmed, please select algorithm and set parameters",
-        "applicable_algorithms": algo_dict
-    }
+# @router.put("/{event_id}")
+# def confirm_event_log(event_id: int, _: bool = Depends(validate_token)):
+#     with glovar.save_lock:
+#         for i in range(len(glovar.previous_event_logs)):
+#             if glovar.previous_event_logs[i].id == event_id:
+#                 previous_event_log = glovar.previous_event_logs[i]
+#
+#     algo_objects = []
+#
+#     for Algorithm in glovar.algo_classes:
+#         algorithm = Algorithm(data=previous_event_log.cases)
+#         algorithm.is_applicable() and algo_objects.append(algorithm)
+#
+#     algo_dict = {}
+#
+#     for algorithm in algo_objects:
+#         algo_dict[algorithm.name] = {
+#             "description": algorithm.description,
+#             "parameters": algorithm.parameters
+#         }
+#
+#     return {
+#         "message": "Event log confirmed, please select algorithm and set parameters",
+#         "applicable_algorithms": algo_dict
+#     }
 
 
 @router.get("/all")
