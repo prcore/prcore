@@ -1,8 +1,12 @@
 import logging
+from datetime import datetime
 
 from pydantic import BaseModel
 
 from core import glovar
+from core.models.case import Case
+from core.models.definition import Definition
+from core.models.event import Event
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -10,9 +14,14 @@ logger = logging.getLogger(__name__)
 
 class EventLog(BaseModel):
     id: int
-    name: str
-    path: str
-    cases: list
+    created_at: datetime
+    updated_at: datetime
+    file_name: str
+    saved_name: str
+    df_name: str
+    definition: Definition
+    cases: list[Case]
+    events: list[Event]
 
 
 class PreviousEventLog(EventLog):

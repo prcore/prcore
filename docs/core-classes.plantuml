@@ -35,7 +35,6 @@ class Case{
     case_id: string
     status: string
     events: List[Event]
-    results: List[Result]
 }
 
 class Event{
@@ -47,54 +46,58 @@ class Event{
     case: Case
 }
 
-class PreviousEventLog {
-}
-
-class CurrentEventLog {
-    events: List[Event]
-}
-
-class Algorithm {
-    id: int
-    name: string
-    description: string
-    parameters: dict
-    training_task: TrainingTask
-    model: Model
-}
-
-class TrainingTask {
-    id: int
-    date: datetime
-    status: string
-}
-
-class Model {
-    id: int
-    name: string
-    date: datetime
-    path: string
-}
-
-class PrescribingTask {
-    id: int
-    date: datetime
-    status: string
-    case_id: string
-    algorithm: Algorithm
-    result: Result
-}
-
-class Result {
-    id: int
-    date: datetime
-    case_id: string
-    output: string
-}
+'class PreviousEventLog {
+'}
+'
+'class CurrentEventLog {
+'    events: List[Event]
+'}
+'
+'class Algorithm {
+'    id: int
+'    name: string
+'    description: string
+'    parameters: dict
+'    training_task: TrainingTask
+'    model: Model
+'}
+'
+'class TrainingTask {
+'    id: int
+'    date: datetime
+'    status: string
+'}
+'
+'class Model {
+'    id: int
+'    name: string
+'    date: datetime
+'    path: string
+'}
+'
+'class PrescribingTask {
+'    id: int
+'    date: datetime
+'    status: string
+'    case_id: string
+'    algorithm: Algorithm
+'    result: Result
+'}
+'
+'class Result {
+'    id: int
+'    date: datetime
+'    case_id: string
+'    output: string
+'}
 
 'EventLog <|-- PreviousEventLog
 'EventLog <|-- CurrentEventLog
-'Project "1" -- "1" PreviousEventLog
+EventLog "1" -- "1" Definition
+EventLog "1" -- "n" Case
+EventLog "1" -- "n" Event
+Case "1" -- "n" Event
+Project "1" -- "1" EventLog
 'Project "1" -- "1" CurrentEventLog
 'CurrentEventLog "1" -- "n" Event
 'Event "n" -- "1" Case
