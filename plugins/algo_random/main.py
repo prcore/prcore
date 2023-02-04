@@ -7,7 +7,7 @@ from time import time
 from core.confs import path
 from core.models.case import Case
 from core.models.training_task import TrainingTask
-from core.utils.file import get_new_path
+from core.functions.general import get_new_path
 
 from sklearn.ensemble import RandomForestClassifier
 

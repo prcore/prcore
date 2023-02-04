@@ -8,7 +8,7 @@ from core import confs, glovar
 from core.functions.event_log.csv import process_csv_file
 from core.functions.event_log.xes import process_xes_file
 from core.security.token import validate_token
-from core.utils.file import get_extension, get_new_path
+from core.functions.general.file import get_extension, get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)

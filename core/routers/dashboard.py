@@ -11,7 +11,7 @@ from core.models.dashboard import Dashboard
 from core.models.identifier import get_identifier
 from core.models.training_task import TrainingTask, TrainingTaskResponse
 from core.models.prescribing_task import PrescribingTask
-from core.utils.file import get_new_path
+from core.functions.general import get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)

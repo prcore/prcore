@@ -2,15 +2,11 @@ import logging
 from typing import Union
 
 from fastapi import APIRouter, UploadFile
-from pm4py import read_xes, write_xes
 
 from core import confs, glovar
-from core.models import PreviousEventLog
 from core.models.dashboard import Dashboard
-from core.models.case import Case
 from core.models.event import Event
 from core.models.identifier import get_identifier
-from core.utils.file import get_extension, get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)

@@ -1,12 +1,10 @@
 import logging
+import os
 from threading import Lock
 
 from tomli import load
 
 from core.confs.path import CONFIG_PATH
-# from plugins.algo_knn import Algorithm as AlgorithmKNN
-# from plugins.algo_random import Algorithm as AlgorithmRandom
-# from plugins.algo_casual_lift import Algorithm as AlgorithmCasualLift
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -14,7 +12,16 @@ logger = logging.getLogger(__name__)
 # Load the config
 with open(CONFIG_PATH, mode="rb") as fp:
     config = load(fp)
-token = config["core"]["security"]["token"]
+    token = config["core"]["security"]["token"]
+
+# Load the environment variables
+DB_PORT = os.environ.get('DB_PORT')
+POSTGRES_DB = os.environ.get('POSTGRES_DB')
+POSTGRES_USER = os.environ.get('POSTGRES_USER')
+POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
+
+if any(env is None for env in (DB_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD)):
+    raise ValueError("Missing environment variables")
 
 identifiers = set(range(1, 10000000))
 save_lock = Lock()

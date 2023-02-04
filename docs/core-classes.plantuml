@@ -17,8 +17,8 @@ class Definition {
     created_at: datetime
     updated_at: datetime
     columns_definition: dict[str, str]
-    outcome_definition: list[list[dict[str, Union[datetime, int, str]]]]
-    treatment_definition: list[list[dict[str, Union[datetime, int, str]]]]
+    outcome_definition: list[list[dict[str, datetime | int | str]]]
+    treatment_definition: list[list[dict[str, datetime | int | str]]]
 }
 
 class Project {

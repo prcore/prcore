@@ -9,7 +9,7 @@ from core.models import PreviousEventLog
 from core.models.case import Case
 from core.models.event import Event
 from core.models.identifier import get_identifier
-from core.utils.file import get_new_path
+from core.functions.general.file import get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)

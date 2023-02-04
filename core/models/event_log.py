@@ -1,27 +1,29 @@
 import logging
 from datetime import datetime
 
-from pydantic import BaseModel
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from core import glovar
-from core.models.case import Case
-from core.models.definition import Definition
-from core.models.event import Event
+from core.database import Base
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
-class EventLog(BaseModel):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    file_name: str
-    saved_name: str
-    df_name: str
-    definition: Definition
-    cases: list[Case]
-    events: list[Event]
+class EventLog(Base):
+    __tablename__ = "event_log"
+
+    id: int = Column(Integer, primary_key=True, index=True)
+    created_at: datetime = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at: datetime = Column(DateTime(timezone=True), onupdate=func.now())
+    file_name: str = Column(String, unique=True, nullable=False)
+    saved_name: str = Column(String, unique=True, nullable=False)
+    df_name: str = Column(String, unique=True, nullable=True)
+    definition_id: int = Column(Integer, ForeignKey("definition.id"))
+
+    definition = relationship("Definition")
 
 
 class PreviousEventLog(EventLog):
