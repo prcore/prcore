@@ -45,11 +45,14 @@ def upload_event_log(file: UploadFile = Form(), seperator: str = Form(","), _: b
 
     # Get dataframe from file
     df = get_dataframe_from_xes(raw_path) if extension == "xes" else get_dataframe_from_csv(raw_path, seperator)
+    brief = get_brief_with_inferred_definition(df)
 
     return {
         "message": "Event log uploaded",
         "event_log_id": 1,
-        "events_brief": get_brief_with_inferred_definition(df)
+        "columns_header": brief[0],
+        "columns_inferred_definition": brief[1],
+        "columns_data": brief[2:]
     }
 
 @router.get("/all", response_model=response.AllEventLogsResponse)

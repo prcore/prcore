@@ -19,4 +19,6 @@ class AllEventLogsResponse(BaseModel):
 class UploadEventLogResponse(BaseModel):
     message: str
     event_log_id: int
-    events_brief: list[list[str | ColumnDefinition | Timestamp | None]]
+    columns_header: list[str]
+    columns_inferred_definition: list[ColumnDefinition | None]
+    columns_data: list[list[str | Timestamp | None]]
