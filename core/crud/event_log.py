@@ -28,11 +28,21 @@ def create_event_log(db: Session, event_log: schema.EventLogCreate) -> model.Eve
     return db_event_log
 
 
-def update_event_log(db: Session, event_log_id: int, definition_id: int) -> model.EventLog:
-    # Update an event log
+def associate_definition(db: Session, event_log_id: int, definition_id: int) -> model.EventLog:
+    # Associate a definition to an event log
     db_event_log = get_event_log(db, event_log_id=event_log_id)
     if db_event_log:
         db_event_log.definition_id = definition_id
+        db.commit()
+        db.refresh(db_event_log)
+    return db_event_log
+
+
+def set_df_name(db: Session, event_log: model.EventLog, df_name: str) -> model.EventLog:
+    # Set dataframe name of an event log
+    db_event_log = get_event_log(db, event_log_id=event_log.id)
+    if db_event_log:
+        db_event_log.df_name = df_name
         db.commit()
         db.refresh(db_event_log)
     return db_event_log

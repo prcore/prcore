@@ -97,3 +97,34 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
         logger.warning(f"Get infer from random name error error: {e}", exc_info=True)
 
     return result
+
+
+def get_activities_count(df: DataFrame, definition: dict[str, ColumnDefinition]) -> dict[str, int]:
+    # Get activities count
+    result = {}
+
+    try:
+        activity_column_name = get_defined_column_name(definition, ColumnDefinition.ACTIVITY)
+        transition_column_name = get_defined_column_name(definition, ColumnDefinition.TRANSITION)
+
+        if transition_column_name != "":
+            df = df[df[transition_column_name].str.lower() == "complete"]
+
+        result = df[activity_column_name].value_counts().to_dict()
+    except Exception as e:
+        logger.warning(f"Get activities count error: {e}", exc_info=True)
+
+    return result
+
+
+def get_defined_column_name(definition: dict[str, ColumnDefinition], wanted: ColumnDefinition) -> str:
+    # Get activity column name
+    result = ""
+
+    try:
+        result = [k for k, v in definition.items() if v == wanted]
+        result = result[0] if len(result) > 0 else ""
+    except Exception as e:
+        logger.warning(f"Get defined column name error: {e}", exc_info=True)
+
+    return result

@@ -25,6 +25,9 @@ def get_new_path(base_path: str, prefix: str = "", suffix: str = "") -> str:
     result = ""
 
     try:
+        if not base_path.endswith("/"):
+            base_path += "/"
+
         file_path = random_str(8)
 
         while exists(f"{base_path}{prefix}{file_path}{suffix}"):

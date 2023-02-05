@@ -9,9 +9,11 @@ import core.responses.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
 from core import confs
-from core.functions.event_log.analysis import get_brief_with_inferred_definition
+from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.csv import get_dataframe_from_csv
+from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.xes import get_dataframe_from_xes
+from core.functions.event_log.validation import validate_column_definition
 from core.functions.general.etc import get_current_time_label
 from core.security.token import validate_token
 from core.functions.general.file import get_extension, get_new_path
@@ -37,7 +39,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
 
     # Save the file
     raw_path = get_new_path(
-        base_path=f"{confs.RAW_EVENT_LOG_PATH}/",
+        base_path=f"{confs.EVENT_LOG_RAW_PATH}/",
         prefix=f"{get_current_time_label()}-",
         suffix=f".{extension}"
     )
@@ -51,6 +53,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
         file_name=file.filename,
         saved_name=raw_path.split("/")[-1]
     ))
+    save_dataframe(db, db_event_log, df)
     brief = get_brief_with_inferred_definition(df)
 
     return {
@@ -66,6 +69,7 @@ async def update_event_log(request: Request, event_log_id: int,
                            db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Update event log: {event_log_id} - from IP {request.client.host}")
     request_body = await request.json()
+    validate_column_definition(request_body)
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:
@@ -83,16 +87,12 @@ async def update_event_log(request: Request, event_log_id: int,
             columns_definition=request_body
         ))
 
-    db_event_log = event_log_crud.update_event_log(db, event_log_id, db_definition.id)
+    db_event_log = event_log_crud.associate_definition(db, event_log_id, db_definition.id)
 
     return {
         "message": "Event log updated",
         "event_log_id": db_event_log.id,
-        "activities_count": {
-            "A": 53,
-            "B": 20,
-            "C": 12
-        },
+        "activities_count": get_activities_count(get_dataframe(db_event_log), db_definition.columns_definition),
         "outcome_selections": [
             "TEXT",
             "NUMBER",
