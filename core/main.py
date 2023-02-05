@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.database import Base, engine, SessionLocal
-from core.routers import event_log
+from core.routers import event_log, project
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -35,6 +35,7 @@ async def db_session_middleware(request: Request, call_next):
     return response
 
 app.include_router(event_log.router)
+app.include_router(project.router)
 
 
 @app.get("/")

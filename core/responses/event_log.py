@@ -9,6 +9,7 @@ from core.enums.definition import ColumnDefinition
 # Enable logging
 logger = logging.getLogger(__name__)
 
+
 class EventLogDto(BaseModel):
     id: int
     created_at: datetime
@@ -35,6 +36,7 @@ class UploadEventLogResponse(BaseModel):
 class UpdateEventLogResponse(BaseModel):
     message: str
     event_log_id: int
-    activities_count: dict[str, int] | None = None
-    outcome_selections: list[ColumnDefinition] | None = None
-    treatment_selections: list[ColumnDefinition] | None = None
+    received_definition: dict[str, ColumnDefinition]
+    activities_count: dict[str, int]
+    outcome_selections: list[ColumnDefinition]
+    treatment_selections: list[ColumnDefinition]
