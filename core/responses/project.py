@@ -24,3 +24,8 @@ class ProjectDto(BaseModel):
 class AllProjectsResponse(BaseModel):
     message: str
     projects: list[ProjectDto] = []
+
+
+class CreateProjectResponse(BaseModel):
+    message: str
+    project: ProjectDto

@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 class DefinitionBase(BaseModel):
     columns_definition: dict[str, ColumnDefinition | None]
-    outcome_definition: list[list[dict[str, datetime | int | str]]] | None = None
-    treatment_definition: list[list[dict[str, datetime | int | str]]] | None = None
+    outcome_definition: list[list[dict[str, datetime | int | float | str | bool | None]]] | None = None
+    treatment_definition: list[list[dict[str, datetime | int | float | str | bool | None]]] | None = None
 
 
 class DefinitionCreate(DefinitionBase):

@@ -14,6 +14,11 @@ def get_project(db: Session, project_id: int) -> model.Project | None:
     return db.query(model.Project).filter_by(id=project_id).first()
 
 
+def get_project_by_event_log_id(db: Session, event_log_id: int) -> model.Project | None:
+    # Get a project by event log id
+    return db.query(model.Project).filter_by(event_log_id=event_log_id).first()
+
+
 def get_projects(db: Session, skip: int = 0, limit: int = 100) -> list[model.Project]:
     # Get all projects
     return db.query(model.Project).offset(skip).limit(limit).all()

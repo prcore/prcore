@@ -5,6 +5,7 @@ from pandas import Timestamp
 from pydantic import BaseModel
 
 from core.enums.definition import ColumnDefinition
+from core.responses.definition import DefinitionDto
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ class EventLogDto(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
     file_name: str
+    definition: DefinitionDto | None = None
 
     class Config:
         orm_mode = True

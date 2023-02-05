@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 class ProjectBase(BaseModel):
     name: str
     description: str | None = None
-    event_log: EventLog | None = None
 
 
 class ProjectCreate(ProjectBase):
@@ -22,6 +21,7 @@ class Project(ProjectBase):
     id: int
     created_at: datetime
     updated_at: datetime | None = None
+    event_log: EventLog | None = None
 
     class Config:
         orm_mode = True

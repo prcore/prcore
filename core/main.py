@@ -29,7 +29,7 @@ async def db_session_middleware(request: Request, call_next):
         request.state.db = SessionLocal()
         response = await call_next(request)
     except Exception as e:
-        logger.error(e)
+        logger.warning(e, exc_info=True)
     finally:
         request.state.db.close()
     return response
