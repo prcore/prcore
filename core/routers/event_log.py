@@ -10,7 +10,8 @@ import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
 from core import confs
 from core.database import get_db
-from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
+from core.functions.event_log.analysis import (get_activities_count, get_available_selections,
+                                               get_brief_with_inferred_definition)
 from core.functions.event_log.csv import get_dataframe_from_csv
 from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.xes import get_dataframe_from_xes
@@ -93,20 +94,8 @@ async def update_event_log(request: Request, event_log_id: int,
         "event_log_id": db_event_log.id,
         "received_definition": db_definition.columns_definition,
         "activities_count": get_activities_count(df, db_definition.columns_definition),
-        "outcome_selections": [
-            "TEXT",
-            "NUMBER",
-            "BOOLEAN",
-            "TIMESTAMP",
-            "ACTIVITY",
-            "DURATION",
-            "COST"
-        ],
-        "treatment_selections": [
-            "ACTIVITY",
-            "RESOURCE",
-            "DURATION"
-        ]
+        "outcome_selections": get_available_selections(db_definition.columns_definition, "outcome"),
+        "treatment_selections": get_available_selections(db_definition.columns_definition, "treatment")
     }
 
 
