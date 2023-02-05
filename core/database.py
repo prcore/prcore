@@ -11,7 +11,7 @@ from core import glovar
 logger = logging.getLogger(__name__)
 
 SQLALCHEMY_DATABASE_URL = (f"postgresql+psycopg://{glovar.POSTGRES_USER}:{glovar.POSTGRES_PASSWORD}"
-                           f"@localhost:{glovar.DB_PORT}/{glovar.POSTGRES_DB}")
+                           f"@{glovar.DB_HOST}:{glovar.DB_PORT}/{glovar.POSTGRES_DB}")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

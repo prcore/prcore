@@ -14,8 +14,11 @@ logger = logging.getLogger(__name__)
 with open(CONFIG_PATH, mode="rb") as fp:
     config = load(fp)
     token = config["core"]["security"]["token"]
+    username = config["core"]["security"]["username"]
+    password = config["core"]["security"]["password"]
 
 # Load the environment variables
+DB_HOST = os.environ.get('DB_HOST')
 DB_PORT = os.environ.get('DB_PORT')
 POSTGRES_DB = os.environ.get('POSTGRES_DB')
 POSTGRES_USER = os.environ.get('POSTGRES_USER')

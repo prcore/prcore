@@ -8,7 +8,6 @@ import core.crud.event_log as event_log_crud
 import core.crud.project as project_crud
 import core.requests.project as project_request
 import core.responses.project as project_response
-import core.schemas.definition as definition_schema
 import core.schemas.project as project_schema
 from core.database import get_db
 from core.functions.project.validation import validate_project_definition

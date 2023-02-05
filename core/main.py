@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+from core import security
 from core.database import Base, engine, SessionLocal
 from core.routers import event_log, project
 
@@ -36,6 +37,7 @@ async def db_session_middleware(request: Request, call_next):
 
 app.include_router(event_log.router)
 app.include_router(project.router)
+app.include_router(security.router)
 
 
 @app.get("/")
