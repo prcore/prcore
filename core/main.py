@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
 from core import security
 from core.database import Base, engine, SessionLocal
@@ -29,6 +30,9 @@ async def db_session_middleware(request: Request, call_next):
     try:
         request.state.db = SessionLocal()
         response = await call_next(request)
+    except ValidationError as e:
+        logger.warning(e, exc_info=True)
+        response = Response(e.json(), status_code=400)
     except Exception as e:
         logger.warning(e, exc_info=True)
     finally:
