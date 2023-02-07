@@ -1,6 +1,7 @@
 import logging
 from os import remove
 from os.path import exists
+from shutil import move
 
 from core.functions.general.etc import random_str
 
@@ -52,5 +53,20 @@ def get_new_path(base_path: str, prefix: str = "", suffix: str = "") -> str:
         result = f"{base_path}{prefix}{file_path}{suffix}"
     except Exception as e:
         logger.warning(f"Get new path error: {e}", exc_info=True)
+
+    return result
+
+
+def move_file(src: str, dst: str) -> bool:
+    # Move a file
+    result = False
+
+    try:
+        if not src or not exists(src) or not dst:
+            return False
+
+        result = bool(move(src, dst))
+    except Exception as e:
+        logger.warning(f"Move file error: {e}", exc_info=True)
 
     return result

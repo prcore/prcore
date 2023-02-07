@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from random import choice
 from string import ascii_letters, digits
 from time import localtime, strftime
@@ -12,6 +13,21 @@ logger = logging.getLogger(__name__)
 def get_current_time_label() -> str:
     # Get the current time label
     return strftime("%Y%m%d%H%M%S", localtime())
+
+
+def get_readable_time(secs: int = 0, the_format: str = "%Y%m%d%H%M%S") -> str:
+    # Get a readable time string
+    result = ""
+
+    try:
+        if secs:
+            result = datetime.utcfromtimestamp(secs).strftime(the_format)
+        else:
+            result = strftime(the_format, localtime())
+    except Exception as e:
+        logger.warning(f"Get readable time error: {e}", exc_info=True)
+
+    return result
 
 
 def get_real_ip(request: Request) -> str:

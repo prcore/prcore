@@ -1,11 +1,13 @@
 import logging
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
 from core import security
 from core.database import Base, engine, SessionLocal
+from core.functions.tool.timers import log_rotation
 from core.routers import event_log, project
 
 # Enable logging
@@ -47,3 +49,8 @@ app.include_router(security.router)
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
+
+scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300})
+scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
+scheduler.start()
