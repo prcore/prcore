@@ -17,7 +17,7 @@ from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.xes import get_dataframe_from_xes
 from core.functions.event_log.validation import validate_column_definition
 from core.functions.event_log.zip import get_dataframe_from_zip
-from core.functions.general.etc import get_current_time_label
+from core.functions.general.etc import get_current_time_label, get_real_ip
 from core.functions.general.file import get_extension, get_new_path
 from core.security.token import validate_token
 
@@ -31,7 +31,7 @@ router = APIRouter(prefix="/event_log")
 @router.post("", response_model=event_log_response.UploadEventLogResponse)
 def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str = Form(","),
                      db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Upload event log: {file} - from IP {request.client.host}")
+    logger.warning(f"Upload event log: {file} - from IP {get_real_ip(request)}")
 
     if not file or not file.file or (extension := get_extension(file.filename)) not in confs.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail="No valid file provided")
@@ -72,7 +72,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
 @router.put("/{event_log_id}", response_model=event_log_response.UpdateEventLogResponse)
 async def update_event_log(request: Request, event_log_id: int,
                            db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Update event log: {event_log_id} - from IP {request.client.host}")
+    logger.warning(f"Update event log: {event_log_id} - from IP {get_real_ip(request)}")
     request_body = await request.json()
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
@@ -108,8 +108,8 @@ async def update_event_log(request: Request, event_log_id: int,
 
 @router.get("/all", response_model=event_log_response.AllEventLogsResponse)
 def read_event_logs(request: Request, skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
-                        _: bool = Depends(validate_token)):
-    logger.warning(f"Read event logs - from IP {request.client.host}")
+                    _: bool = Depends(validate_token)):
+    logger.warning(f"Read event logs - from IP {get_real_ip(request)}")
     return {
         "message": "Event logs retrieved successfully",
         "event_logs": event_log_crud.get_event_logs(db, skip, limit)

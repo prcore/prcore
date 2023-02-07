@@ -11,6 +11,7 @@ import core.responses.project as project_response
 import core.schemas.project as project_schema
 from core.database import get_db
 from core.functions.project.validation import validate_project_definition
+from core.functions.general.etc import get_real_ip
 from core.security.token import validate_token
 
 # Enable logging
@@ -21,9 +22,9 @@ router = APIRouter(prefix="/project")
 
 
 @router.post("", response_model=project_response.CreateProjectResponse)
-def create_project(request: Request, create_body: project_request.CreateProjectRequest,db: Session = Depends(get_db),
-                         _: bool = Depends(validate_token)):
-    logger.warning(f"Create project - from IP {request.client.host}")
+def create_project(request: Request, create_body: project_request.CreateProjectRequest,
+                   db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Create project - from IP {get_real_ip(request)}")
     db_event_log = event_log_crud.get_event_log(db, create_body.event_log_id)
 
     if not db_event_log:
@@ -56,8 +57,8 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
 
 @router.get("/all", response_model=project_response.AllProjectsResponse)
 def read_projects(request: Request, skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
-                      _: bool = Depends(validate_token)):
-    logger.warning(f"Read projects - from IP {request.client.host}")
+                  _: bool = Depends(validate_token)):
+    logger.warning(f"Read projects - from IP {get_real_ip(request)}")
     return {
         "message": "Projects retrieved successfully",
         "projects": project_crud.get_projects(db, skip=skip, limit=limit)
