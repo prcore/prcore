@@ -9,4 +9,5 @@ MODEL_PATH = "data/models"
 TEMP_PATH = "data/tmp"
 
 # Allowed extensions
-ALLOWED_EXTENSIONS = ["xes", "csv"]
+ALLOWED_EXTENSIONS = ["xes", "csv", "zip"]
+ALLOWED_EXTRACTED_EXTENSIONS = ["xes", "csv"]

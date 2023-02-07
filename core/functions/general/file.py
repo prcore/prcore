@@ -1,10 +1,26 @@
 import logging
+from os import remove
 from os.path import exists
 
 from core.functions.general.etc import random_str
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def delete_file(path: str) -> bool:
+    # Delete a file
+    result = False
+
+    try:
+        if not(path and exists(path)):
+            return False
+
+        result = remove(path) or True
+    except Exception as e:
+        logger.warning(f"Delete file error: {e}", exc_info=True)
+
+    return result
 
 
 def get_extension(path: str) -> str:

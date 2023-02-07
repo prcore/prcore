@@ -16,6 +16,7 @@ from core.functions.event_log.csv import get_dataframe_from_csv
 from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.xes import get_dataframe_from_xes
 from core.functions.event_log.validation import validate_column_definition
+from core.functions.event_log.zip import get_dataframe_from_zip
 from core.functions.general.etc import get_current_time_label
 from core.functions.general.file import get_extension, get_new_path
 from core.security.token import validate_token
@@ -46,7 +47,13 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
         f.write(file.file.read())
 
     # Get dataframe from file
-    df = get_dataframe_from_xes(raw_path) if extension == "xes" else get_dataframe_from_csv(raw_path, seperator)
+    if extension == "xes":
+        df = get_dataframe_from_xes(raw_path)
+    elif extension == "csv":
+        df = get_dataframe_from_csv(raw_path, seperator)
+    else:
+        df = get_dataframe_from_zip(raw_path, seperator)
+
     db_event_log = event_log_crud.create_event_log(db, event_log_schema.EventLogCreate(
         file_name=file.filename,
         saved_name=raw_path.split("/")[-1]
