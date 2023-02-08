@@ -1,6 +1,7 @@
 import logging
 
 from .path import *
+from .config import *
 
 # Enable logging
 logging.basicConfig(

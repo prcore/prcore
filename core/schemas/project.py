@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class ProjectBase(BaseModel):
     name: str
     description: str | None = None
+    status: str | None = None
 
 
 class ProjectCreate(ProjectBase):

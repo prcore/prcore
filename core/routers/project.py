@@ -10,6 +10,7 @@ import core.requests.project as project_request
 import core.responses.project as project_response
 import core.schemas.project as project_schema
 from core.database import get_db
+from core.functions.event_log.dataset import start_pre_processing
 from core.functions.project.validation import validate_project_definition
 from core.functions.general.etc import get_real_ip
 from core.security.token import validate_token
@@ -48,6 +49,7 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         project=project_schema.ProjectCreate(name=db_event_log.file_name),
         event_log_id=db_event_log.id
     )
+    # start_pre_processing(db_project.id, db, db_event_log)
 
     return {
         "message": "Project created successfully",

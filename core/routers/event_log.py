@@ -10,8 +10,8 @@ import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
 from core import confs
 from core.database import get_db
-from core.functions.event_log.analysis import (get_activities_count, get_available_selections,
-                                               get_brief_with_inferred_definition)
+from core.functions.definition.util import get_available_selections
+from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.csv import get_dataframe_from_csv
 from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.xes import get_dataframe_from_xes

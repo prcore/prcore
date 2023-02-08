@@ -18,8 +18,12 @@ class Plugin(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     name = Column(String, nullable=False)
+    prescription_type = Column(String, nullable=False)
     description = Column(String, nullable=True)
     parameters = Column(JSONB, nullable=False, default={})
+    status = Column(String, nullable=True)
+    model_name = Column(String, nullable=True)
+    data_name = Column(String, nullable=True)
     project_id = Column(Integer, ForeignKey("project.id"))
 
     project = relationship("Project", back_populates="plugins")

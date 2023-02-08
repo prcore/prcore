@@ -18,6 +18,7 @@ class Project(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    status = Column(String, nullable=True)
     event_log_id = Column(Integer, ForeignKey("event_log.id"))
 
     event_log = relationship("EventLog")

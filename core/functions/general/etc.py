@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from multiprocessing import Process
 from random import choice
 from string import ascii_letters, digits
 from time import localtime, strftime
@@ -48,6 +49,14 @@ def get_real_ip(request: Request) -> str:
         logger.warning(f"Get real ip error: {e}", exc_info=True)
 
     return result
+
+
+def process_daemon(func: callable, args: tuple = ()) -> Process:
+    # Process daemon
+    p = Process(target=func, args=args)
+    p.daemon = True
+    p.start()
+    return p
 
 
 def random_str(i: int) -> str:

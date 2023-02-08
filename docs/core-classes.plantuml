@@ -8,7 +8,7 @@ class EventLog {
     saved_name: str
     df_name: str
     training_data_name: str
-    test_data_name: str
+    simulation_df_name: str
     definition: Definition
 }
 
@@ -17,8 +17,8 @@ class Definition {
     created_at: datetime
     updated_at: datetime
     columns_definition: dict[str, str]
-    outcome_definition: list[list[dict[str, datetime | int | str]]]
-    treatment_definition: list[list[dict[str, datetime | int | str]]]
+    outcome_definition: list[list[dict[str, datetime | float | int | str]]]
+    treatment_definition: list[list[dict[str, datetime | float | int | str]]]
 }
 
 class Project {
@@ -27,7 +27,7 @@ class Project {
     updated_at: datetime
     name: str
     description: str
-    error: str
+    status: str
     event_log: EventLog
     cases: list[Case]
     events: list[Event]
@@ -52,8 +52,10 @@ class Event{
 class Plugin {
     id: int
     name: str
+    prescription_type: str
     description: str
     parameters: dict[str, str | bool | int | float]
+    status: str
     model_name: str
     project: Project
 }

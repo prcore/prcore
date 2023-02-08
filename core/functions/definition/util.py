@@ -3,7 +3,6 @@ import logging
 from fastapi import HTTPException
 
 from core.enums.definition import ColumnDefinition, Operator, SupportedOperators
-from core.schemas.definition import ProjectDefinition
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -38,3 +37,46 @@ def get_supported_operators(column_definition: ColumnDefinition) -> list[Operato
     if column_definition in {ColumnDefinition.DATETIME, ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP,
                              ColumnDefinition.END_TIMESTAMP}:
         return SupportedOperators.DATETIME.value
+
+
+def get_defined_column_name(definition: dict[str, ColumnDefinition], wanted: ColumnDefinition) -> str:
+    # Get activity column name
+    result = ""
+
+    try:
+        result = [k for k, v in definition.items() if v == wanted]
+        result = result[0] if len(result) > 0 else ""
+    except Exception as e:
+        logger.warning(f"Get defined column name error: {e}", exc_info=True)
+
+    return result
+
+
+def get_available_selections(definition: dict[str, ColumnDefinition], type_: str = "outcome") -> list[str]:
+    # Get available selections
+    result = []
+
+    try:
+        supported = [
+            ColumnDefinition.TEXT,
+            ColumnDefinition.NUMBER,
+            ColumnDefinition.BOOLEAN,
+            ColumnDefinition.DATETIME,
+            ColumnDefinition.ACTIVITY,
+            ColumnDefinition.RESOURCE,
+            ColumnDefinition.DURATION,
+            ColumnDefinition.COST,
+            ColumnDefinition.TIMESTAMP,
+            ColumnDefinition.START_TIMESTAMP,
+            ColumnDefinition.END_TIMESTAMP
+        ]
+        result = [k for k, v in definition.items() if v in supported]
+
+        if type_ != "outcome" or any(v == ColumnDefinition.DURATION for v in definition.values()):
+            return result
+
+        result.append(ColumnDefinition.DURATION.value)
+    except Exception as e:
+        logger.warning(f"Get available selections error: {e}", exc_info=True)
+
+    return result

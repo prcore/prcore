@@ -3,6 +3,7 @@ import logging
 from pandas import DataFrame
 
 from core.enums.definition import ColumnDefinition
+from core.functions.definition.util import get_defined_column_name
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -113,48 +114,5 @@ def get_activities_count(df: DataFrame, definition: dict[str, ColumnDefinition])
         result = df[activity_column_name].value_counts().to_dict()
     except Exception as e:
         logger.warning(f"Get activities count error: {e}", exc_info=True)
-
-    return result
-
-
-def get_defined_column_name(definition: dict[str, ColumnDefinition], wanted: ColumnDefinition) -> str:
-    # Get activity column name
-    result = ""
-
-    try:
-        result = [k for k, v in definition.items() if v == wanted]
-        result = result[0] if len(result) > 0 else ""
-    except Exception as e:
-        logger.warning(f"Get defined column name error: {e}", exc_info=True)
-
-    return result
-
-
-def get_available_selections(definition: dict[str, ColumnDefinition], type_: str = "outcome") -> list[str]:
-    # Get available selections
-    result = []
-
-    try:
-        supported = [
-            ColumnDefinition.TEXT,
-            ColumnDefinition.NUMBER,
-            ColumnDefinition.BOOLEAN,
-            ColumnDefinition.DATETIME,
-            ColumnDefinition.ACTIVITY,
-            ColumnDefinition.RESOURCE,
-            ColumnDefinition.DURATION,
-            ColumnDefinition.COST,
-            ColumnDefinition.TIMESTAMP,
-            ColumnDefinition.START_TIMESTAMP,
-            ColumnDefinition.END_TIMESTAMP
-        ]
-        result = [k for k, v in definition.items() if v in supported]
-
-        if type_ != "outcome" or any(v == ColumnDefinition.DURATION for v in definition.values()):
-            return result
-
-        result.append(ColumnDefinition.DURATION.value)
-    except Exception as e:
-        logger.warning(f"Get available selections error: {e}", exc_info=True)
 
     return result
