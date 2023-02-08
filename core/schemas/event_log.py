@@ -10,12 +10,13 @@ logger = logging.getLogger(__name__)
 
 class EventLogBase(BaseModel):
     file_name: str
-    saved_name: str
-    df_name: str | None = None
 
 
 class EventLogCreate(EventLogBase):
-    pass
+    saved_name: str
+    df_name: str | None = None
+    training_data_name: str | None = None
+    test_data_name: str | None = None
 
 
 class EventLog(EventLogBase):

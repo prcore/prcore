@@ -1,30 +1,18 @@
 import logging
-from datetime import datetime
 
 from pandas import Timestamp
 from pydantic import BaseModel
 
 from core.enums.definition import ColumnDefinition
-from core.responses.definition import DefinitionDto
+from core.schemas.event_log import EventLog
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
-class EventLogDto(BaseModel):
-    id: int
-    created_at: datetime
-    updated_at: datetime | None = None
-    file_name: str
-    definition: DefinitionDto | None = None
-
-    class Config:
-        orm_mode = True
-
-
 class AllEventLogsResponse(BaseModel):
     message: str
-    event_logs: list[EventLogDto] = []
+    event_logs: list[EventLog] = []
 
 
 class UploadEventLogResponse(BaseModel):

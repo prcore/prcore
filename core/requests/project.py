@@ -1,12 +1,7 @@
 import logging
-from datetime import datetime
 
-from pandas import Timestamp
 from pydantic import BaseModel
 
-import core.enums.definition
-
-from core.enums.definition import Operator
 from core.schemas.definition import ProjectDefinition
 
 # Enable logging

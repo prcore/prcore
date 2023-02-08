@@ -2,28 +2,26 @@ import logging
 from datetime import datetime
 
 from pydantic import BaseModel
-from core.schemas.event_log import EventLog
-from core.schemas.plugin import Plugin
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
-class ProjectBase(BaseModel):
+class PluginBase(BaseModel):
     name: str
     description: str | None = None
+    parameters: dict[str, str | bool | int | float] = {}
 
 
-class ProjectCreate(ProjectBase):
+class PluginCreate(PluginBase):
     pass
 
 
-class Project(ProjectBase):
+class Plugin(PluginBase):
     id: int
     created_at: datetime
     updated_at: datetime | None = None
-    event_log: EventLog | None = None
-    plugins: list[Plugin] | None = None
+    project_id: int
 
     class Config:
         orm_mode = True
