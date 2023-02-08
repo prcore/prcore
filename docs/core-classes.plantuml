@@ -7,9 +7,9 @@ class EventLog {
     file_name: str
     saved_name: str
     df_name: str
+    training_data_name: str
+    test_data_name: str
     definition: Definition
-    cases: list[Case]
-    events: list[Event]
 }
 
 class Definition {
@@ -27,89 +27,42 @@ class Project {
     updated_at: datetime
     name: str
     description: str
+    error: str
     event_log: EventLog
+    cases: list[Case]
+    events: list[Event]
+    plugins: list[Plugin]
 }
 
 class Case{
     id: int
-    case_id: string
-    status: string
-    events: List[Event]
+    case_identifier: str
+    status: str
+    events: list[Event]
 }
 
 class Event{
     id: int
     date: datetime
-    case_id: string
-    activity: string
+    activity: str
     attributes: dict
     case: Case
 }
 
-'class PreviousEventLog {
-'}
-'
-'class CurrentEventLog {
-'    events: List[Event]
-'}
-'
-'class Algorithm {
-'    id: int
-'    name: string
-'    description: string
-'    parameters: dict
-'    training_task: TrainingTask
-'    model: Model
-'}
-'
-'class TrainingTask {
-'    id: int
-'    date: datetime
-'    status: string
-'}
-'
-'class Model {
-'    id: int
-'    name: string
-'    date: datetime
-'    path: string
-'}
-'
-'class PrescribingTask {
-'    id: int
-'    date: datetime
-'    status: string
-'    case_id: string
-'    algorithm: Algorithm
-'    result: Result
-'}
-'
-'class Result {
-'    id: int
-'    date: datetime
-'    case_id: string
-'    output: string
-'}
+class Plugin {
+    id: int
+    name: str
+    description: str
+    parameters: dict[str, str | bool | int | float]
+    model_name: str
+    project: Project
+}
 
-'EventLog <|-- PreviousEventLog
-'EventLog <|-- CurrentEventLog
 EventLog "1" -- "1" Definition
-EventLog "1" -- "n" Case
-EventLog "1" -- "n" Event
-Case "1" -- "n" Event
 Project "1" -- "1" EventLog
-'Project "1" -- "1" CurrentEventLog
-'CurrentEventLog "1" -- "n" Event
-'Event "n" -- "1" Case
-'Project "1" -- "n" Algorithm
-'Project "1" -- "n" TrainingTask
-'Case "1" -- "n" PrescribingTask
-'Project "1" -- "n" PrescribingTask
-'Algorithm "1" -- "1" TrainingTask
-'TrainingTask "1" -- "1" Model
-'Algorithm "1" -- "1" Model
-'Algorithm "1" -- "n" PrescribingTask
-'PrescribingTask "1" -- "1" Result
-'Case "1" -- "n" Result
+Project "1" -- "n" Case
+Project "1" -- "n" Event
+Case "1" -- "n" Event
+Project "1" -- "n" Plugin
 
 @enduml
