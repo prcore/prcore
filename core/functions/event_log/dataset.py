@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 import core.models.event_log as event_log_model
 import core.schemas.definition as definition_schema
-from core import glovar, confs
+from core import glovar
+from core.confs import path
 from core.crud.event_log import set_datasets_name
 from core.enums.definition import ColumnDefinition
 from core.functions.definition.util import get_column_definition, get_defined_column_name
@@ -31,8 +32,8 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> boo
     cases = get_cases(df, definition_schema.Definition(**db_event_log.definition.dict()))
     training_cases = cases[:int(len(cases) * 0.8)]
     test_cases = cases[int(len(cases) * 0.8):]
-    training_data_path = get_new_path(base_path=f"{confs.EVENT_LOG_TRAINING_DATA_PATH}/", suffix=".json")
-    simulation_df_path = get_new_path(base_path=f"{confs.EVENT_LOG_SIMULATION_DF_PATH}/", suffix=".pkl")
+    training_data_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DATA_PATH}/", suffix=".json")
+    simulation_df_path = get_new_path(base_path=f"{path.EVENT_LOG_SIMULATION_DF_PATH}/", suffix=".pkl")
 
     with open(training_data_path, "w") as f:
         json.dump(training_cases, f, ensure_ascii=False)

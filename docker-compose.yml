@@ -1,22 +1,26 @@
 version: '3.8'
 
+x-common-environment: &common-environment
+  POSTGRES_DB: ${POSTGRES_DB}
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
 services:
 
-  web:
-    build: .
-    container_name: prcore-web
+  core:
+    build:
+      context: .
+      dockerfile: core/Dockerfile
+    container_name: prcore-core
     restart: always
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      <<: *common-environment
+      DB_HOST: "db"
+      DB_PORT: "5432"
     volumes:
       - ./data/config:/code/data/config
       - ./data/event_logs:/code/data/event_logs
       - ./data/logs:/code/data/logs
-      - ./data/models:/code/data/models
       - ./data/tmp:/code/data/tmp
     ports:
       - ${SERVER_PORT}:80
@@ -27,10 +31,7 @@ services:
     image: postgres:latest
     container_name: prcore-db
     restart: always
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    environment: *common-environment
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     ports:

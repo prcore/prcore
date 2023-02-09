@@ -8,7 +8,7 @@ import core.crud.definition as definition_crud
 import core.responses.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
-from core import confs
+from core.confs import path
 from core.database import get_db
 from core.functions.definition.util import get_available_selections
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
@@ -33,12 +33,12 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
                      db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Upload event log: {file} - from IP {get_real_ip(request)}")
 
-    if not file or not file.file or (extension := get_extension(file.filename)) not in confs.ALLOWED_EXTENSIONS:
+    if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail="No valid file provided")
 
     # Save the file
     raw_path = get_new_path(
-        base_path=f"{confs.EVENT_LOG_RAW_PATH}/",
+        base_path=f"{path.EVENT_LOG_RAW_PATH}/",
         prefix=f"{get_current_time_label()}-",
         suffix=f".{extension}"
     )

@@ -5,7 +5,7 @@ from fastapi import UploadFile
 from pandas import DataFrame
 from pm4py import read_xes, write_xes
 
-from core import confs
+from core.confs import path
 from core.models import PreviousEventLog
 from core.models.case import Case
 from core.models.event import Event
@@ -32,7 +32,7 @@ def process_xes_file(path: str, file: UploadFile) -> Union[PreviousEventLog, Non
             return None
 
         new_path = get_new_path(
-            base_path=f"{confs.EVENT_LOG_PREVIOUS_PATH}/",
+            base_path=f"{path.EVENT_LOG_PREVIOUS_PATH}/",
             suffix=".xes"
         )
         write_xes(event_log, new_path)

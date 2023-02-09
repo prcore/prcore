@@ -2,7 +2,7 @@ from typing import List
 
 from core.models.event import Event
 from core.models.training_task import TrainingTask
-from plugins.algo_knn import Algorithm as KNNAlgorithm
+from plugins.knn_next_activity import Algorithm as KNNAlgorithm
 
 from load_dataset import get_cases
 from load_test_data import get_test_prefix

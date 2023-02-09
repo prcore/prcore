@@ -1,7 +1,7 @@
 import logging
 from subprocess import run
 
-from core import confs
+from core.confs import path
 from core.functions.general.etc import get_readable_time
 from core.functions.general.file import move_file
 
@@ -14,9 +14,9 @@ def log_rotation() -> bool:
     result = False
 
     try:
-        move_file(f"{confs.LOG_PATH}/log", f"{confs.LOG_PATH}/log-{get_readable_time(the_format='%Y%m%d')}")
+        move_file(f"{path.LOG_PATH}/log", f"{path.LOG_PATH}/log-{get_readable_time(the_format='%Y%m%d')}")
 
-        with open(f"{confs.LOG_PATH}/log", "w", encoding="utf-8") as f:
+        with open(f"{path.LOG_PATH}/log", "w", encoding="utf-8") as f:
             f.write("")
 
         # Reconfigure the logger
@@ -24,11 +24,11 @@ def log_rotation() -> bool:
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             level=logging.WARNING,
-            filename=f"{confs.LOG_PATH}/log",
+            filename=f"{path.LOG_PATH}/log",
             filemode="a"
         )
 
-        run(f"find {confs.LOG_PATH}/log-* -mtime +30 -delete", shell=True)
+        run(f"find {path.LOG_PATH}/log-* -mtime +30 -delete", shell=True)
 
         result = True
     except Exception as e:

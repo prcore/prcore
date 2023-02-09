@@ -28,6 +28,7 @@ class Project {
     name: str
     description: str
     status: str
+    selected_plugins: list[str]
     event_log: EventLog
     cases: list[Case]
     events: list[Event]

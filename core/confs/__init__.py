@@ -1,7 +1,5 @@
 import logging
-
-from .path import *
-from .config import *
+from core.confs.path import LOG_PATH
 
 # Enable logging
 logging.basicConfig(

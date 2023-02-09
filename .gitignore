@@ -1,11 +1,10 @@
 data/
 data/datasets/
 envs/
+venv_*/
 *.env
-rsync.sh
-chmod.sh
-refresh.sh
-update.sh
+scripts/rsync.sh
+scripts/chmod.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
