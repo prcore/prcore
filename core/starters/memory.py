@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 dataframes: dict[int, DataFrame] = {}
 pre_processing_tasks: dict[int, Process] = {}
 available_plugins: dict[str, dict[str, str]] = {
-    "plugin_knn_next_activity": {
+    "plugin-knn-next-activity": {
         "name": "KNN Next Activity",
         "prescription_type": "NEXT_ACTIVITY",
         "description": "Predict the next activity using KNN algorithm",
@@ -19,14 +19,14 @@ available_plugins: dict[str, dict[str, str]] = {
         },
         "online": True
     },
-    "plugin_random_forest_alarm": {
+    "plugin-random-forest-alarm": {
         "name": "Random Forest Alarm",
         "prescription_type": "ALARM",
         "description": "Predict the probability of alarm using Random Forest algorithm",
         "parameters": {},
         "online": True
     },
-    "plugin_casual_lift_treatment_effect": {
+    "plugin-casual-lift-treatment-effect": {
         "name": "CasualLift Treatment Effect",
         "prescription_type": "TREATMENT_EFFECT",
         "description": "Predict the treatment effect using CasualLift algorithm",

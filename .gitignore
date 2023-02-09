@@ -5,6 +5,7 @@ venv_*/
 *.env
 scripts/rsync.sh
 scripts/chmod.sh
+scripts/flow.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 basic_info = {
-    "id": config.APP_TYPE,
+    "id": config.APP_ID,
     "name": "KNN next activity prediction",
     "prescription_type": PluginType.NEXT_ACTIVITY,
     "description": "This plugin predicts the next activity based on the KNN algorithm.",
@@ -50,8 +50,8 @@ def main():
     try:
         connection = BlockingConnection(parameters)
         channel = connection.channel()
-        channel.queue_declare(queue=config.APP_TYPE)
-        channel.basic_consume(queue=config.APP_TYPE, on_message_callback=callback)
+        channel.queue_declare(queue=config.APP_ID)
+        channel.basic_consume(queue=config.APP_ID, on_message_callback=callback)
         channel.basic_publish(exchange="", routing_key="core", body=get_body(MessageType.ONLINE_REPORT, basic_info))
         channel.start_consuming()
     except KeyboardInterrupt:
