@@ -9,8 +9,7 @@ import core.crud.project as project_crud
 import core.requests.project as project_request
 import core.responses.project as project_response
 import core.schemas.project as project_schema
-from core.database import get_db
-from core.functions.event_log.dataset import start_pre_processing
+from core.starters.database import get_db
 from core.functions.project.validation import validate_project_definition
 from core.functions.general.etc import get_real_ip
 from core.security.token import validate_token

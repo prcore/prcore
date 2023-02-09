@@ -4,7 +4,7 @@ from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
-from core.database import Base
+from core.starters.database import Base
 
 # Enable logging
 logger = logging.getLogger(__name__)

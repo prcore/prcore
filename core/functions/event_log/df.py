@@ -5,12 +5,12 @@ from typing import Union
 from pandas import read_pickle, DataFrame
 from sqlalchemy.orm import Session
 
-from core import glovar
 from core.confs import path
 from core.crud.event_log import set_df_name
 from core.models.event_log import EventLog
 from core.functions.general.etc import get_current_time_label
 from core.functions.general.file import get_new_path
+from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def get_dataframe(db_event_log: EventLog) -> DataFrame | None:
 
 def get_dataframe_from_memory(event_log_id: int) -> DataFrame | None:
     # Get dataframe from memory
-    return glovar.dataframes.get(event_log_id)
+    return memory.dataframes.get(event_log_id)
 
 
 def get_dataframe_from_pickle(filename: str) -> DataFrame:
@@ -48,7 +48,7 @@ def save_dataframe(db: Session, db_event_log: EventLog, df: DataFrame) -> None:
 
 def save_dataframe_to_memory(event_log_id: int, df: DataFrame) -> None:
     # Save dataframe to memory
-    glovar.dataframes[event_log_id] = df
+    memory.dataframes[event_log_id] = df
 
 
 def save_dataframe_to_pickle(path: str, df: DataFrame) -> None:

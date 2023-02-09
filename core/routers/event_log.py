@@ -9,7 +9,7 @@ import core.responses.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
 from core.confs import path
-from core.database import get_db
+from core.starters.database import get_db
 from core.functions.definition.util import get_available_selections
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.csv import get_dataframe_from_csv

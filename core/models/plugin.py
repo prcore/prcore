@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from core.database import Base
+from core.starters.database import Base
 
 # Enable logging
 logger = logging.getLogger(__name__)

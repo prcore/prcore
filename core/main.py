@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
 from core import security
-from core.database import Base, engine, SessionLocal
+from core.starters.database import Base, engine, SessionLocal
 from core.functions.tool.timers import log_rotation
 from core.routers import event_log, plugin, project
 
