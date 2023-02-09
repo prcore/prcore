@@ -7,12 +7,16 @@ class ProjectStatus(str, Enum):
     PREPROCESSING = "PREPROCESSING"
     TRAINING = "TRAINING"
     TRAINED = "TRAINED"
+    ACTIVATING = "ACTIVATING"
     STREAMING = "STREAMING"
+    SIMULATING = "SIMULATING"
 
 
 class PluginStatus(str, Enum):
     """Enum for plugin status."""
     WAITING = "WAITING"
-    RUNNING = "TRAINING"
-    FINISHED = "TRAINED"
-    FAILED = "STREAMING"
+    TRAINING = "TRAINING"
+    TRAINED = "TRAINED"
+    ACTIVATING = "ACTIVATING"
+    STREAMING = "STREAMING"
+

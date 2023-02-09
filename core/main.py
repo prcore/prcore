@@ -10,9 +10,9 @@ from sqlalchemy.orm import close_all_sessions
 
 from core import security
 from core.starters.database import Base, engine, SessionLocal
-from core.starters.rabbitmq import start_consuming, stop_consuming, connection_closed
+from core.starters.rabbitmq import parameters
 from core.functions.general.etc import thread
-from core.functions.message.handler import callback
+from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.tool.timers import log_rotation
 from core.routers import event_log, plugin, project
 
@@ -67,8 +67,8 @@ def shutdown_event():
     stop_consuming.set()
 
     # Wait for the rabbitmq connection to close
-    while not connection_closed.is_set():
-        sleep(1)
+    while not consuming_stopped.is_set():
+        sleep(0.5)
 
 
 # Start a scheduler
@@ -77,4 +77,4 @@ scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
 scheduler.start()
 
 # Start a thread to consume messages
-thread(start_consuming, ("core", callback, 1))
+thread(start_consuming, (parameters, "core", callback, 1))
