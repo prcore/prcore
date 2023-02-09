@@ -8,6 +8,9 @@ from pydantic import ValidationError
 
 from core import security
 from core.starters.database import Base, engine, SessionLocal
+from core.starters.rabbitmq import connection, start_consuming
+from core.functions.general.etc import thread
+from core.functions.message.handler import callback
 from core.functions.tool.timers import log_rotation
 from core.routers import event_log, plugin, project
 
@@ -26,6 +29,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(event_log.router)
+app.include_router(plugin.router)
+app.include_router(project.router)
+app.include_router(security.router)
+
 
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
@@ -42,17 +50,16 @@ async def db_session_middleware(request: Request, call_next):
         request.state.db.close()
     return response
 
-app.include_router(event_log.router)
-app.include_router(plugin.router)
-app.include_router(project.router)
-app.include_router(security.router)
-
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
 
 
+# Start a scheduler
 scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
 scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
 scheduler.start()
+
+# Start a thread to consume messages
+thread(start_consuming, (connection, "core", callback, 1))

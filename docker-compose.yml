@@ -24,7 +24,6 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASS: ${RABBITMQ_PASS}
     volumes:
-      - ./data/config:/code/data/config
       - ./data/event_logs:/code/data/event_logs
       - ./data/logs:/code/data/logs
       - ./data/tmp:/code/data/tmp
