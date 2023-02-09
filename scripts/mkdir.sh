@@ -17,4 +17,4 @@ mkdir -p ./data/postgres
 mkdir -p ./data/rabbitmq
 mkdir -p ./data/rabbitmq/data
 mkdir -p ./data/rabbitmq/log
-chmod -R 770 ./data/rabbitmq/log
+chmod -R 777 ./data/rabbitmq/log
