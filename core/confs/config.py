@@ -12,11 +12,11 @@ with open(CONFIG_PATH, mode="rb") as fp:
     password = config["core"]["security"]["password"]
 
 # Load the environment variables
-DB_HOST = os.environ.get('DB_HOST')
-DB_PORT = os.environ.get('DB_PORT')
+POSTGRES_HOST = os.environ.get('POSTGRES_HOST')
+POSTGRES_PORT = os.environ.get('POSTGRES_PORT')
 POSTGRES_DB = os.environ.get('POSTGRES_DB')
 POSTGRES_USER = os.environ.get('POSTGRES_USER')
 POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
 
-if any(env is None for env in (DB_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD)):
+if any(env is None for env in (POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD)):
     raise ValueError("Missing environment variables")

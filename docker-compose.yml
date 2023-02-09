@@ -1,10 +1,5 @@
 version: '3.8'
 
-x-common-environment: &common-environment
-  POSTGRES_DB: ${POSTGRES_DB}
-  POSTGRES_USER: ${POSTGRES_USER}
-  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
 services:
 
   core:
@@ -12,11 +7,15 @@ services:
       context: .
       dockerfile: core/Dockerfile
     container_name: prcore-core
+    depends_on:
+      - db
     restart: always
     environment:
-      <<: *common-environment
-      DB_HOST: "db"
-      DB_PORT: "5432"
+      POSTGRES_HOST: "db"
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./data/config:/code/data/config
       - ./data/event_logs:/code/data/event_logs
@@ -31,11 +30,30 @@ services:
     image: postgres:latest
     container_name: prcore-db
     restart: always
-    environment: *common-environment
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     ports:
-      - ${DB_PORT}:5432
+      - ${POSTGRES_PORT}:5432
+    networks:
+      - prcore
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: prcore-rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - ./data/rabbitmq/data:/var/lib/rabbitmq
+      - ./data/rabbitmq/log:/var/log/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - prcore
 

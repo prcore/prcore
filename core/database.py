@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import quote
 
 from fastapi import Request
 from sqlalchemy import create_engine
@@ -10,8 +11,10 @@ from core.confs import config
 # Enable logging
 logger = logging.getLogger(__name__)
 
-SQLALCHEMY_DATABASE_URL = (f"postgresql+psycopg://{config.POSTGRES_USER}:{config.POSTGRES_PASSWORD}"
-                           f"@{config.DB_HOST}:{config.DB_PORT}/{config.POSTGRES_DB}")
+SQLALCHEMY_DATABASE_URL = (f"postgresql+psycopg://{config.POSTGRES_USER}:{quote(config.POSTGRES_PASSWORD)}"
+                           f"@{config.POSTGRES_HOST}:{config.POSTGRES_PORT}/{config.POSTGRES_DB}")
+
+print(SQLALCHEMY_DATABASE_URL)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
