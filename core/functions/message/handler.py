@@ -1,5 +1,6 @@
 import logging
 from threading import Event
+from time import sleep
 
 from pika import BlockingConnection, URLParameters
 from pika.adapters.blocking_connection import BlockingChannel
@@ -23,6 +24,7 @@ def start_consuming(parameters: URLParameters, queue: str, callback_function: ca
 
     while not stop_consuming.is_set():
         connection.process_data_events()
+        sleep(0.1)
 
     channel.stop_consuming()
     connection.close()

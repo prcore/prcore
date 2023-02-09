@@ -19,4 +19,3 @@ class PluginStatus(str, Enum):
     TRAINED = "TRAINED"
     ACTIVATING = "ACTIVATING"
     STREAMING = "STREAMING"
-
