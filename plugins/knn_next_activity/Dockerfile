@@ -6,4 +6,4 @@ COPY ./core /code/core
 COPY ./plugins/knn_next_activity /code/plugins/knn_next_activity
 COPY ./scripts /code/scripts
 RUN bash scripts/mkdir.sh
-CMD ["python", "plugins/knn_next_activity/main.py"]
+CMD ["python", "-m", "plugins.knn_next_activity.main"]

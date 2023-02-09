@@ -38,7 +38,7 @@ services:
   plugin-knn-next-activity:
     build:
       context: .
-      dockerfile: plugins/knn-next-activity/Dockerfile
+      dockerfile: plugins/knn_next_activity/Dockerfile
     container_name: prcore-plugin-knn-next-activity
     depends_on:
       - core
