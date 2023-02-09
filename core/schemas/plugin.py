@@ -16,7 +16,7 @@ class PluginBase(BaseModel):
 
 
 class PluginCreate(PluginBase):
-    pass
+    model_name: str | None = None
 
 
 class Plugin(PluginBase):

@@ -14,7 +14,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def validate_token(token: str = Depends(oauth2_scheme)) -> bool:
     # Check if the token is valid
-    if token == config.token:
+    if token == config.API_TOKEN:
         return True
 
     raise HTTPException(
@@ -29,11 +29,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     username = form_data.username
     password = form_data.password
 
-    if username != config.username or password != config.password:
+    if username != config.API_USERNAME or password != config.API_PASSWORD:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return {"access_token": config.token, "token_type": "bearer"}
+    return {"access_token": config.API_TOKEN, "token_type": "bearer"}

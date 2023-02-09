@@ -23,7 +23,6 @@ class Plugin(Base):
     parameters = Column(JSONB, nullable=False, default={})
     status = Column(String, nullable=True)
     model_name = Column(String, nullable=True)
-    data_name = Column(String, nullable=True)
     project_id = Column(Integer, ForeignKey("project.id"))
 
     project = relationship("Project", back_populates="plugins")

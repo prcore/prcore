@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 SQLALCHEMY_DATABASE_URL = (f"postgresql+psycopg://{config.POSTGRES_USER}:{quote(config.POSTGRES_PASSWORD)}"
                            f"@{config.POSTGRES_HOST}:{config.POSTGRES_PORT}/{config.POSTGRES_DB}")
 
-print(SQLALCHEMY_DATABASE_URL)
-
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

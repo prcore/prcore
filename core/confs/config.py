@@ -7,9 +7,9 @@ from core.confs.path import CONFIG_PATH
 # Load the config
 with open(CONFIG_PATH, mode="rb") as fp:
     config = load(fp)
-    token = config["core"]["security"]["token"]
-    username = config["core"]["security"]["username"]
-    password = config["core"]["security"]["password"]
+    API_TOKEN = config["core"]["security"]["token"]
+    API_USERNAME = config["core"]["security"]["username"]
+    API_PASSWORD = config["core"]["security"]["password"]
 
 # Load the environment variables
 POSTGRES_HOST = os.environ.get('POSTGRES_HOST')
