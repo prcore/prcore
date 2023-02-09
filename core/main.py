@@ -1,14 +1,16 @@
 import logging
+from time import sleep
 from tzlocal import get_localzone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
+from sqlalchemy.orm import close_all_sessions
 
 from core import security
 from core.starters.database import Base, engine, SessionLocal
-from core.starters.rabbitmq import connection, start_consuming
+from core.starters.rabbitmq import start_consuming, stop_consuming, connection_closed
 from core.functions.general.etc import thread
 from core.functions.message.handler import callback
 from core.functions.tool.timers import log_rotation
@@ -56,10 +58,23 @@ def read_root():
     return {"Hello": "World"}
 
 
+@app.on_event("shutdown")
+def shutdown_event():
+    # Close the database session
+    close_all_sessions()
+
+    # Close the rabbitmq connection
+    stop_consuming.set()
+
+    # Wait for the rabbitmq connection to close
+    while not connection_closed.is_set():
+        sleep(1)
+
+
 # Start a scheduler
 scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
 scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
 scheduler.start()
 
 # Start a thread to consume messages
-thread(start_consuming, (connection, "core", callback, 1))
+thread(start_consuming, ("core", callback, 1))
