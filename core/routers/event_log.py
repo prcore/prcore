@@ -17,7 +17,8 @@ from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.xes import get_dataframe_from_xes
 from core.functions.event_log.validation import validate_column_definition
 from core.functions.event_log.zip import get_dataframe_from_zip
-from core.functions.general.etc import get_current_time_label, get_real_ip
+from core.functions.general.etc import get_current_time_label
+from core.functions.general.request import get_real_ip
 from core.functions.general.file import get_extension, get_new_path
 from core.security.token import validate_token
 
@@ -68,6 +69,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
         "columns_inferred_definition": brief[1],
         "columns_data": brief[2:]
     }
+
 
 @router.put("/{event_log_id}", response_model=event_log_response.UpdateEventLogResponse)
 async def update_event_log(request: Request, event_log_id: int,

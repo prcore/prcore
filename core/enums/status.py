@@ -15,6 +15,7 @@ class ProjectStatus(str, Enum):
 class PluginStatus(str, Enum):
     """Enum for plugin status."""
     WAITING = "WAITING"
+    PREPROCESSING = "PREPROCESSING"
     TRAINING = "TRAINING"
     TRAINED = "TRAINED"
     ACTIVATING = "ACTIVATING"

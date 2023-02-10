@@ -1,44 +1,18 @@
 import logging
-import json
-from threading import Event
-from time import sleep
-
-from pika import BlockingConnection, URLParameters
-from pika.adapters.blocking_connection import BlockingChannel
-from pika.spec import Basic, BasicProperties
+from datetime import datetime
 
 from core.confs import config
 from core.enums.message import MessageType
 from core.starters import memory
-from core.starters.rabbitmq import parameters
+from core.functions.message.util import send_message
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
-def send_message(plugin_id: str, message_type: MessageType, data: dict) -> bool:
-    # Send message to a specific plugin
-    result = False
-    connection = None
-
-    try:
-        connection = BlockingConnection(parameters)
-        channel = connection.channel()
-        channel.queue_declare(queue=plugin_id)
-        channel.basic_publish(exchange="", routing_key=plugin_id, body=get_body(message_type, data))
-        result = True
-    except Exception as e:
-        logger.warning(f"Error while sending message: {e}", exc_info=True)
-    finally:
-        connection and connection.close()
-
-    return result
-
-
 def send_online_inquires() -> bool:
     # Send online inquiries to all plugins
-    return bool(all(send_online_inquiry(plugin_id)
-                    for plugin_id in config.ENABLED_PLUGINS.split("||")))
+    return all(send_online_inquiry(plugin_id) for plugin_id in config.ENABLED_PLUGINS)
 
 
 def send_online_inquiry(plugin_id: str) -> bool:
@@ -46,15 +20,25 @@ def send_online_inquiry(plugin_id: str) -> bool:
     return send_message(plugin_id, MessageType.ONLINE_INQUIRY, {})
 
 
-def get_body(message_type: MessageType, data: dict) -> bytes:
-    result = b""
+def send_training_data_to_all_plugins(project_id: int, training_data_name: str) -> bool:
+    # Send training data to all plugins
+    return all(send_training_data(plugin_id, project_id, training_data_name) for plugin_id in get_active_plugins())
 
-    try:
-        result = json.dumps({
-            "type": message_type,
-            "data": data
-        }).encode("utf-8")
-    except Exception as e:
-        logger.warning(f"Error while getting body: {e}", exc_info=True)
 
-    return result
+def send_training_data(plugin_id: str, project_id: int, training_data_name: str) -> bool:
+    # Send training data to a specific plugin
+    return send_message(plugin_id, MessageType.TRAINING_DATA, {
+        "project_id": project_id,
+        "training_data_name": training_data_name
+    })
+
+
+def get_active_plugins() -> list[str]:
+    # Get all active plugins
+    return [plugin_id for plugin_id in list(memory.available_plugins) if is_plugin_active(plugin_id)]
+
+
+def is_plugin_active(plugin_id: str) -> bool:
+    # Check if a plugin is active
+    since_last_online = datetime.now() - memory.available_plugins.get(plugin_id, {"online": datetime.now()})["online"]
+    return since_last_online.total_seconds() < 15 * 60

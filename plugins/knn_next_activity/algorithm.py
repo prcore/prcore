@@ -2,35 +2,37 @@ import math
 import pickle
 from typing import List, Union
 from time import time
-from copy import deepcopy
-
-from ...core.confs import path
-from ...core.functions.general.file import get_new_path
 
 from sklearn.neighbors import KNeighborsClassifier
 
-from .helper import get_scores
+from plugins.knn_next_activity.config import basic_info
+from plugins.knn_next_activity.helper import get_scores
 
 
 class Algorithm:
-    training_task: TrainingTask
-
-    def __init__(self, data):
-        self.name = "KNN next activity prediction"
-        self.description = "This algorithm predicts the next activity based on the KNN algorithm"
-        self.data = deepcopy(data)
-        self.training_datasets = {}
-        self.models = {}
+    def __init__(self, project_id: int, raw_data: dict = None,
+                 model_name: str = None,
+                 parameters: dict = basic_info["parameters"]):
+        self.raw_data = raw_data
+        self.model_name = model_name
+        self.parameters = parameters
+        self.training_data = []
+        self.test_data = []
         self.lengths = []
-        self.training_data, self.test_data = self.split_data()
-        self.activity_map = self.pre_process()
-        self.parameters = {
-            "n_neighbors": 3,
-            "min_prefix_length": self.get_min_length(),
-            "max_prefix_length": self.get_avg_length()
+        self.activity_map = {}
+        self.training_datasets = {}
+        self.test_datasets = {}
+        self.models = {}
+        self.data = {
+            "project_id": project_id,
+            "models": {}
         }
-        self.set_training_datasets()
-        self.model = None
+
+    def preprocess(self) -> bool:
+        pass
+
+    def load_model(self) -> bool:
+        pass
 
     def is_applicable(self):
         # Check if the algorithm can be applied to the data

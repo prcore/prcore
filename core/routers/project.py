@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 import core.crud.definition as definition_crud
@@ -10,8 +10,9 @@ import core.requests.project as project_request
 import core.responses.project as project_response
 import core.schemas.project as project_schema
 from core.starters.database import get_db
+from core.functions.event_log.dataset import start_pre_processing
+from core.functions.general.request import get_real_ip
 from core.functions.project.validation import validate_project_definition
-from core.functions.general.etc import get_real_ip
 from core.security.token import validate_token
 
 # Enable logging
@@ -23,20 +24,23 @@ router = APIRouter(prefix="/project")
 
 @router.post("", response_model=project_response.CreateProjectResponse)
 def create_project(request: Request, create_body: project_request.CreateProjectRequest,
-                   db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+                   background_tasks: BackgroundTasks, db: Session = Depends(get_db),
+                   _: bool = Depends(validate_token)):
     logger.warning(f"Create project - from IP {get_real_ip(request)}")
-    db_event_log = event_log_crud.get_event_log(db, create_body.event_log_id)
 
+    # Get the data from the database, and validate it
+    db_event_log = event_log_crud.get_event_log(db, create_body.event_log_id)
     if not db_event_log:
         raise HTTPException(status_code=400, detail="No valid event log provided")
-
     db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
-
     if db_project:
         raise HTTPException(status_code=400, detail="Project already exists for this event log")
 
+    # Validate the user's input
     validate_project_definition(create_body.positive_outcome, db_event_log.definition.columns_definition)
     validate_project_definition(create_body.treatment, db_event_log.definition.columns_definition)
+
+    # Create the project
     definition_crud.set_outcome_treatment_definition(
         db=db,
         db_definition=db_event_log.definition,
@@ -48,8 +52,9 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         project=project_schema.ProjectCreate(name=db_event_log.file_name),
         event_log_id=db_event_log.id
     )
-    # start_pre_processing(db_project.id, db, db_event_log)
 
+    # Start the pre-processing
+    background_tasks.add_task(start_pre_processing, db_project.id, db, db_event_log)
     return {
         "message": "Project created successfully",
         "project": db_project

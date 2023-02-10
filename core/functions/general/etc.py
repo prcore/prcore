@@ -6,8 +6,6 @@ from string import ascii_letters, digits
 from threading import active_count, Thread
 from time import localtime, strftime
 
-from fastapi import Request
-
 # Enable logging
 logger = logging.getLogger(__name__)
 
@@ -28,26 +26,6 @@ def get_readable_time(secs: int = 0, the_format: str = "%Y%m%d%H%M%S") -> str:
             result = strftime(the_format, localtime())
     except Exception as e:
         logger.warning(f"Get readable time error: {e}", exc_info=True)
-
-    return result
-
-
-def get_real_ip(request: Request) -> str:
-    # Get the real ip address of the client
-    result = ""
-
-    try:
-        result = request.headers.get("X-Forwarded-For")
-
-        if not result:
-            return request.client.host
-
-        if "," not in result:
-            return result
-
-        result = result.split(",")[0]
-    except Exception as e:
-        logger.warning(f"Get real ip error: {e}", exc_info=True)
 
     return result
 

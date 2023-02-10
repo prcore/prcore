@@ -5,6 +5,8 @@ class ColumnDefinition(str, Enum):
     """Enum for column definitions."""
     CASE_ID = "CASE_ID"
     TRANSITION = "TRANSITION"
+    OUTCOME = "OUTCOME"
+    TREATMENT = "TREATMENT"
     TEXT = "TEXT"
     NUMBER = "NUMBER"
     BOOLEAN = "BOOLEAN"

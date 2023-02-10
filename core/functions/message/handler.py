@@ -1,5 +1,4 @@
 import logging
-import json
 from datetime import datetime
 from threading import Event
 from time import sleep
@@ -9,6 +8,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 
 from core.enums.message import MessageType
+from core.functions.message.util import get_data_from_body
 from core.starters import memory
 
 # Enable logging
@@ -42,18 +42,6 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, _: BasicProperties, bod
     ch.basic_ack(delivery_tag=method.delivery_tag)
     if message_type == MessageType.ONLINE_REPORT.value:
         update_available_plugins(data)
-
-
-def get_data_from_body(body: bytes) -> tuple[str, any]:
-    result = ("", None)
-
-    try:
-        decoded = json.loads(body.decode("utf-8"))
-        result = (decoded["type"], decoded["data"])
-    except Exception as e:
-        logger.warning(f"Error while getting data from body: {e}", exc_info=True)
-
-    return result
 
 
 def update_available_plugins(data: dict) -> None:

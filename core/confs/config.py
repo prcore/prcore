@@ -25,6 +25,7 @@ if APP_ID == "core":
                 ENABLED_PLUGINS,
                 POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD,
                 RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASS}
+    ENABLED_PLUGINS = [p.strip() for p in ENABLED_PLUGINS.split("||")]
 elif APP_ID == "test":
     all_envs = set()
 else:
