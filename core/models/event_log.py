@@ -21,7 +21,7 @@ class EventLog(Base):
     saved_name = Column(String, unique=True, nullable=False)
     df_name = Column(String, unique=True, nullable=True)
     training_data_name = Column(String, unique=True, nullable=True)
-    test_data_name = Column(String, unique=True, nullable=True)
+    simulation_df_name = Column(String, unique=True, nullable=True)
     definition_id = Column(Integer, ForeignKey("definition.id"))
 
     definition = relationship("Definition")

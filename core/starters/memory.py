@@ -9,28 +9,4 @@ logger = logging.getLogger(__name__)
 # Data in memory
 dataframes: dict[int, DataFrame] = {}
 pre_processing_tasks: dict[int, Process] = {}
-available_plugins: dict[str, dict[str, str]] = {
-    "plugin-knn-next-activity": {
-        "name": "KNN Next Activity",
-        "prescription_type": "NEXT_ACTIVITY",
-        "description": "Predict the next activity using KNN algorithm",
-        "parameters": {
-            "n_neighbors": 3
-        },
-        "online": True
-    },
-    "plugin-random-forest-alarm": {
-        "name": "Random Forest Alarm",
-        "prescription_type": "ALARM",
-        "description": "Predict the probability of alarm using Random Forest algorithm",
-        "parameters": {},
-        "online": True
-    },
-    "plugin-casual-lift-treatment-effect": {
-        "name": "CasualLift Treatment Effect",
-        "prescription_type": "TREATMENT_EFFECT",
-        "description": "Predict the treatment effect using CasualLift algorithm",
-        "parameters": {},
-        "online": True
-    }
-}
+available_plugins: dict[str, dict[str, str]] = {}

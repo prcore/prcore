@@ -1,15 +1,14 @@
 import logging
-import json
 
-from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 
 from core.confs import config
 from core.enums.message import MessageType
 from core.enums.plugin import PluginType
-from core.enums.status import PluginStatus
-from core.starters.rabbitmq import parameters
+from core.functions.message.handler import get_data_from_body
+from core.functions.message.sender import send_message
+from core.functions.plugin.common import plugin_run
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -26,39 +25,13 @@ basic_info = {
 }
 
 
-def get_body(message_type: MessageType, data: dict) -> bytes:
-    result = b""
-
-    try:
-        result = json.dumps({
-            "type": message_type,
-            "data": data
-        }).encode("utf-8")
-    except Exception as e:
-        logger.warning(f"Error while getting body: {e}", exc_info=True)
-
-    return result
-
-
-def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:
-    print(" [x] Received %r" % body)
+def callback(ch: BlockingChannel, method: Basic.Deliver, _: BasicProperties, body: bytes) -> None:
+    message_type, data = get_data_from_body(body)
+    print(message_type, data)
     ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-def main():
-    connection = None
-    try:
-        connection = BlockingConnection(parameters)
-        channel = connection.channel()
-        channel.queue_declare(queue=config.APP_ID)
-        channel.basic_consume(queue=config.APP_ID, on_message_callback=callback)
-        channel.basic_publish(exchange="", routing_key="core", body=get_body(MessageType.ONLINE_REPORT, basic_info))
-        channel.start_consuming()
-    except KeyboardInterrupt:
-        logger.warning("Plugin stopped by user")
-    finally:
-        connection.close()
+    if message_type == MessageType.ONLINE_INQUIRY.value:
+        send_message("core", MessageType.ONLINE_REPORT, basic_info)
 
 
 if __name__ == "__main__":
-    main()
+    plugin_run(basic_info, callback)
