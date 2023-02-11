@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 import core.crud.plugin as plugin_crud
-import core.responses.plugin as plugin_response
+import core.schemas.responses.plugin as plugin_response
 from core.starters.database import get_db
 from core.functions.general.request import get_real_ip
 from core.security.token import validate_token

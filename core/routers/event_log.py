@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 import core.crud.event_log as event_log_crud
 import core.crud.definition as definition_crud
-import core.responses.event_log as event_log_response
+import core.schemas.responses.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
 from core.confs import path
