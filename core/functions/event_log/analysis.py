@@ -14,7 +14,7 @@ def get_brief_with_inferred_definition(df: DataFrame) -> list[list[str | int | f
     result = []
 
     try:
-        result: list = df.head(5).values.tolist()
+        result: list = df.head(5).values.tolist()  # type: ignore
         header = df.columns.tolist()
         result.insert(0, header)
         result.insert(1, get_inferred_definitions(header))

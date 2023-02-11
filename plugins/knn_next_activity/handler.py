@@ -17,9 +17,9 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, _: BasicProperties, bod
     print(message_type, data)
 
     try:
-        if message_type == MessageType.ONLINE_INQUIRY.value:
+        if message_type == MessageType.ONLINE_INQUIRY:
             online_inquiry_handler(ch)
-        elif message_type == MessageType.TRAINING_DATA.value:
+        elif message_type == MessageType.TRAINING_DATA:
             training_data_handler(ch, data)
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)

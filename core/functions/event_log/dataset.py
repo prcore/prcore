@@ -1,6 +1,6 @@
 import logging
-import json
 
+import pandas as pd
 from pandas import DataFrame
 from sklearn.model_selection import GroupShuffleSplit
 from sqlalchemy.orm import Session
@@ -11,11 +11,11 @@ from core.confs import path
 from core.crud.event_log import set_datasets_name
 from core.crud.project import set_project_error
 from core.enums.definition import ColumnDefinition
-from core.functions.definition.util import get_column_definition, get_defined_column_name
+from core.enums.transition import Transition
+from core.functions.definition.util import get_defined_column_name
 from core.functions.event_log.df import get_dataframe
 from core.functions.general.file import get_new_path
 from core.functions.message.sender import send_training_data_to_all_plugins
-from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
         simulation_df = df.iloc[simulation_indexes]
 
         # Get processed dataframe for training
-        processed_df = get_processed_df(training_df, db_event_log.definition)
+        processed_df = get_processed_dataframe(training_df, db_event_log.definition)
 
         # Save the data
         training_df_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DATA_PATH}/", suffix=".pkl")
@@ -64,22 +64,45 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
     return result
 
 
-def get_processed_df(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
+def get_filtered_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
+    # Get filtered dataframe
+    if not any(d == ColumnDefinition.TRANSITION for d in columns_definition.values()):
+        return df
+    transition_column = get_defined_column_name(columns_definition, ColumnDefinition.TRANSITION)
+    if not transition_column:
+        return df
+    df = df[df[transition_column].str.upper() == Transition.COMPLETE]
+    return df
+
+
+def get_processed_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
     # Get processed dataframe
-    renamed_df = get_renamed_df(df, definition)
+    filtered_df = get_filtered_dataframe(df, definition.columns_definition)
+    timestamped_df = get_timestamped_dataframe(filtered_df, definition.columns_definition)
+    # bool_df =
+    # numbered_df =
+    renamed_df = get_renamed_dataframe(df, definition.columns_definition)
     return renamed_df
 
 
-def get_renamed_df(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
+def get_timestamped_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
+    # Get timestamped dataframe, convert to Timestamp of pandas
+    for k, v in columns_definition.items():
+        if k in {ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP}:
+            df[k] = pd.to_datetime(df[k])
+    return df
+
+
+def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
     # Get renamed dataframe
-    special_definitions = {ColumnDefinition.ACTIVITY, ColumnDefinition.TIMESTAMP,
-                           ColumnDefinition.TRANSITION, ColumnDefinition.START_TIMESTAMP,
-                           ColumnDefinition.END_TIMESTAMP, ColumnDefinition.RESOURCE, ColumnDefinition.DURATION,
-                           ColumnDefinition.COST, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}
+    needed_definitions = {ColumnDefinition.ACTIVITY,
+                          ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
+                          ColumnDefinition.RESOURCE, ColumnDefinition.DURATION, ColumnDefinition.COST,
+                          ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}
     columns_need_to_rename = {}
     for column in df.columns.tolist():
-        if (special_definition := get_column_definition(column, definition.columns_definition)) in special_definitions:
-            columns_need_to_rename[column] = special_definition.value
+        if (definition := columns_definition.get(column, column)) in needed_definitions:
+            columns_need_to_rename[column] = definition
     return df.rename(columns=columns_need_to_rename)
 
 
@@ -119,28 +142,3 @@ def assign_treatment_label(group: DataFrame) -> DataFrame:
     group['treatment'] = group['treatment'].fillna(0)
     group['treatment'] = group['treatment'].astype(int)
     return group
-
-
-def get_cases(df: DataFrame, definition: definition_schema.Definition) -> dict[str, list[dict]]:
-    cases = {}
-    columns = df.columns.tolist()
-    special_definitions = {ColumnDefinition.ACTIVITY, ColumnDefinition.TIMESTAMP,
-                           ColumnDefinition.TRANSITION, ColumnDefinition.START_TIMESTAMP,
-                           ColumnDefinition.END_TIMESTAMP, ColumnDefinition.RESOURCE, ColumnDefinition.DURATION,
-                           ColumnDefinition.COST}
-    case_id_column_name = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
-
-    for case_id, events_df in df.groupby(case_id_column_name):
-        case_identifier = str(case_id)
-        events = []
-        for _, row in events_df.iterrows():
-            event = {}
-            for column in columns:
-                if get_column_definition(column, definition.columns_definition) == ColumnDefinition.CASE_ID:
-                    continue
-                if get_column_definition(column, definition.columns_definition) in special_definitions:
-                    event[get_column_definition(column, definition.columns_definition).value] = row[column]
-            events.append(event)
-        cases[case_identifier] = events
-
-    return cases

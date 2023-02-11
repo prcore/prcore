@@ -15,6 +15,7 @@ from core.starters import memory
 # Enable logging
 logger = logging.getLogger(__name__)
 
+
 def get_dataframe(db_event_log: EventLog) -> DataFrame | None:
     # Get dataframe from memory or pickle file
     df = get_dataframe_from_memory(event_log_id=db_event_log.id)
@@ -43,7 +44,7 @@ def save_dataframe(db: Session, db_event_log: EventLog, df: DataFrame) -> None:
         suffix=".pkl"
     )
     set_df_name(db, db_event_log, dataframe_path.split("/")[-1])
-    save_dataframe_to_pickle(path=dataframe_path, df=df)
+    save_dataframe_to_pickle(df_path=dataframe_path, df=df)
 
 
 def save_dataframe_to_memory(event_log_id: int, df: DataFrame) -> None:
@@ -51,6 +52,6 @@ def save_dataframe_to_memory(event_log_id: int, df: DataFrame) -> None:
     memory.dataframes[event_log_id] = df
 
 
-def save_dataframe_to_pickle(path: str, df: DataFrame) -> None:
+def save_dataframe_to_pickle(df_path: str, df: DataFrame) -> None:
     # Save dataframe to pickle file
-    df.to_pickle(path)
+    df.to_pickle(df_path)

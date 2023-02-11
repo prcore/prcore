@@ -40,7 +40,7 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, _: BasicProperties, bod
     message_type, data = get_data_from_body(body)
     print(message_type, data)
     ch.basic_ack(delivery_tag=method.delivery_tag)
-    if message_type == MessageType.ONLINE_REPORT.value:
+    if message_type == MessageType.ONLINE_REPORT:
         update_available_plugins(data)
 
 

@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 from core.enums.definition import ColumnDefinition
 from core.schemas.definition import ProjectDefinition
-from core.functions.definition.util import get_supported_operators_by_column_name
+from core.functions.definition.util import is_supported_operator
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -21,8 +21,12 @@ def validate_project_definition(project_definition: list[list[ProjectDefinition]
             raise HTTPException(status_code=400, detail="Invalid definition")
 
         for project_definition in sub_list:
-            if project_definition.operator not in get_supported_operators_by_column_name(project_definition.column,
-                                                                                         columns_definition):
+            column_definition = columns_definition.get(project_definition.column)
+
+            if column_definition is None and project_definition.column != ColumnDefinition.DURATION:
+                raise HTTPException(status_code=400, detail=f"Column '{project_definition.column}' is not defined")
+
+            if is_supported_operator(project_definition.operator, column_definition) is False:
                 raise HTTPException(
                     status_code=400,
                     detail=(f"Operator '{project_definition.operator}' not supported "

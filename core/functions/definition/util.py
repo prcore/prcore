@@ -8,35 +8,24 @@ from core.enums.definition import ColumnDefinition, Operator, SupportedOperators
 logger = logging.getLogger(__name__)
 
 
-def get_supported_operators_by_column_name(column_name: str, columns_definition: dict[str, ColumnDefinition]) -> list[Operator]:
-    # Get column definition
-    column_definition = get_column_definition(column_name, columns_definition)
-
-    # Get supported operators
-    return get_supported_operators(column_definition)
+def is_supported_operator(operator: Operator, column_definition: ColumnDefinition) -> bool:
+    # Check if the operator is supported by the column definition
+    supported_operators = get_supported_operators(column_definition)
+    return operator in supported_operators if supported_operators is not None else False
 
 
-def get_column_definition(column_name: str, columns_definition: dict[str, ColumnDefinition]) -> ColumnDefinition:
-    # Get column definition
-    column_definition = columns_definition.get(column_name)
-
-    if column_definition is None:
-        raise HTTPException(status_code=400, detail=f"Column '{column_name}' is not defined")
-
-    return column_definition
-
-
-def get_supported_operators(column_definition: ColumnDefinition) -> list[Operator]:
+def get_supported_operators(column_definition: ColumnDefinition) -> SupportedOperators | None:
     # Get supported operators
     if column_definition in {ColumnDefinition.TEXT, ColumnDefinition.ACTIVITY, ColumnDefinition.RESOURCE}:
-        return SupportedOperators.TEXT.value
-    if column_definition in {ColumnDefinition.NUMBER, ColumnDefinition.DURATION, ColumnDefinition.COST}:
-        return SupportedOperators.NUMBER.value
-    if column_definition in {ColumnDefinition.BOOLEAN}:
-        return SupportedOperators.BOOLEAN.value
-    if column_definition in {ColumnDefinition.DATETIME, ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP,
-                             ColumnDefinition.END_TIMESTAMP}:
-        return SupportedOperators.DATETIME.value
+        return SupportedOperators.TEXT
+    elif column_definition in {ColumnDefinition.NUMBER, ColumnDefinition.DURATION, ColumnDefinition.COST}:
+        return SupportedOperators.NUMBER
+    elif column_definition in {ColumnDefinition.BOOLEAN}:
+        return SupportedOperators.BOOLEAN
+    elif column_definition in {ColumnDefinition.DATETIME, ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP,
+                               ColumnDefinition.END_TIMESTAMP}:
+        return SupportedOperators.DATETIME
+    return None
 
 
 def get_defined_column_name(definition: dict[str, ColumnDefinition], wanted: ColumnDefinition) -> str:
@@ -52,8 +41,8 @@ def get_defined_column_name(definition: dict[str, ColumnDefinition], wanted: Col
     return result
 
 
-def get_available_selections(definition: dict[str, ColumnDefinition], type_: str = "outcome") -> list[str]:
-    # Get available selections
+def get_available_options(definition: dict[str, ColumnDefinition], type_: str = "outcome") -> list[str]:
+    # Get available options
     result = []
 
     try:
@@ -75,8 +64,8 @@ def get_available_selections(definition: dict[str, ColumnDefinition], type_: str
         if type_ != "outcome" or any(v == ColumnDefinition.DURATION for v in definition.values()):
             return result
 
-        result.append(ColumnDefinition.DURATION.value)
+        result.append(ColumnDefinition.DURATION)
     except Exception as e:
-        logger.warning(f"Get available selections error: {e}", exc_info=True)
+        logger.warning(f"Get available options error: {e}", exc_info=True)
 
     return result
