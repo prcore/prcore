@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from pandas import Series, Timestamp
+from pandas import Timestamp
 
 from core.enums.definition import ColumnDefinition, Operator, SupportedOperators
 from core.functions.definition.util import get_supported_operators

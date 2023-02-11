@@ -1,6 +1,4 @@
-import datetime
 import logging
-from typing import Union
 
 from pandas import read_pickle, DataFrame
 from sqlalchemy.orm import Session

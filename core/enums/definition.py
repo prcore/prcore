@@ -57,8 +57,10 @@ class SupportedOperators(list[Operator], Enum):
     # TEXT
     TEXT = [Operator.EQUAL, Operator.NOT_EQUAL, Operator.CONTAINS, Operator.NOT_CONTAINS]
     # NUMBER
-    NUMBER = [Operator.EQUAL, Operator.NOT_EQUAL, Operator.LESS_THAN, Operator.LESS_THAN_OR_EQUAL, Operator.GREATER_THAN, Operator.GREATER_THAN_OR_EQUAL]
+    NUMBER = [Operator.EQUAL, Operator.NOT_EQUAL, Operator.LESS_THAN, Operator.LESS_THAN_OR_EQUAL,
+              Operator.GREATER_THAN, Operator.GREATER_THAN_OR_EQUAL]
     # BOOLEAN
     BOOLEAN = [Operator.EQUAL, Operator.NOT_EQUAL, Operator.IS_TRUE, Operator.IS_FALSE]
     # DATETIME
-    DATETIME = [Operator.EQUAL, Operator.NOT_EQUAL, Operator.EARLIER_THAN, Operator.EARLIER_THAN_OR_EQUAL, Operator.LATER_THAN, Operator.LATER_THAN_OR_EQUAL]
+    DATETIME = [Operator.EQUAL, Operator.NOT_EQUAL, Operator.EARLIER_THAN, Operator.EARLIER_THAN_OR_EQUAL,
+                Operator.LATER_THAN, Operator.LATER_THAN_OR_EQUAL]

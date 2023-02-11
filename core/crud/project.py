@@ -22,7 +22,7 @@ def get_project_by_event_log_id(db: Session, event_log_id: int) -> model.Project
 
 def get_projects(db: Session, skip: int = 0, limit: int = 100) -> list[model.Project]:
     # Get all projects
-    return db.query(model.Project).offset(skip).limit(limit).all()
+    return db.query(model.Project).offset(skip).limit(limit).all()  # type: ignore
 
 
 def create_project(db: Session, project: schema.ProjectCreate, event_log_id: int) -> model.Project:

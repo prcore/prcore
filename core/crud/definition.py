@@ -31,7 +31,7 @@ def update_definition(db: Session, definition: schema.Definition) -> model.Defin
     db.commit()
     db.refresh(db_definition)
 
-    return db_definition
+    return db_definition  # type: ignore
 
 
 def set_outcome_treatment_definition(db: Session, db_definition: model.Definition,

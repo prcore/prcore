@@ -16,7 +16,7 @@ def get_event_log(db: Session, event_log_id: int) -> model.EventLog | None:
 
 def get_event_logs(db: Session, skip: int = 0, limit: int = 100) -> list[model.EventLog]:
     # Get all event logs
-    return db.query(model.EventLog).offset(skip).limit(limit).all()
+    return db.query(model.EventLog).offset(skip).limit(limit).all()  # type: ignore
 
 
 def create_event_log(db: Session, event_log: schema.EventLogCreate) -> model.EventLog:

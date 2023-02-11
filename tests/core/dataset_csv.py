@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 from pandas import DataFrame, read_csv
@@ -60,7 +59,7 @@ def main():
     end_time = datetime.now()
 
     print(f"Time: {end_time - start_time}")
-    processed_df.to_csv("data/bpic2012_processed.csv", index=False)
+    processed_df.to_csv("data/bpic2012_csv_processed.csv", index=False)
     print("Done!")
 
 

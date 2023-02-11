@@ -1,16 +1,10 @@
 import logging
 import json
-from threading import Event
-from datetime import datetime
-from time import sleep
 
-from pika import BlockingConnection, URLParameters
+from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.spec import Basic, BasicProperties
 
-from core.confs import config
 from core.enums.message import MessageType
-from core.starters import memory
 from core.starters.rabbitmq import parameters
 
 # Enable logging
