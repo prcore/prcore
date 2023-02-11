@@ -53,7 +53,7 @@ def set_datasets_name(db: Session, event_log: model.EventLog, training_data_name
     # Set datasets name of an event log
     db_event_log = get_event_log(db, event_log_id=event_log.id)
     if db_event_log:
-        db_event_log.training_data_name = training_data_name
+        db_event_log.training_df_name = training_data_name
         db_event_log.simulation_df_name = simulation_df_name
         db.commit()
         db.refresh(db_event_log)

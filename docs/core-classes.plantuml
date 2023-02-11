@@ -7,7 +7,7 @@ class EventLog {
     file_name: str
     saved_name: str
     df_name: str
-    training_data_name: str
+    training_df_name: str
     simulation_df_name: str
     definition: Definition
 }

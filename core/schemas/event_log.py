@@ -15,8 +15,8 @@ class EventLogBase(BaseModel):
 class EventLogCreate(EventLogBase):
     saved_name: str
     df_name: str | None = None
-    training_data_name: str | None = None
-    test_data_name: str | None = None
+    training_df_name: str | None = None
+    simulation_df_name: str | None = None
 
 
 class EventLog(EventLogBase):
