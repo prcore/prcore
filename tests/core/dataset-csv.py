@@ -5,11 +5,11 @@ from pandas import DataFrame, read_csv
 
 from core.enums.definition import ColumnDefinition, Operator
 from core.schemas.definition import ProjectDefinition, Definition
-from core.functions.event_log.dataset import get_cases
+from core.functions.event_log.dataset import get_processed_dataframe
 
 
 def get_dataframe() -> DataFrame:
-    df = read_csv("data/bpic2012.csv")
+    df = read_csv("data/bpic2012.csv", dtype=str)
     df_obj = df.select_dtypes(['object'])
     df[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
     return df
@@ -56,16 +56,11 @@ def main():
     df = get_dataframe()
     definition = get_definition()
     start_time = datetime.now()
-    cases = get_cases(df, definition)
+    processed_df = get_processed_dataframe(df, definition)
     end_time = datetime.now()
 
-
     print(f"Time: {end_time - start_time}")
-    print(f"Cases: {len(cases)}")
-
-    with open("data/bpic2012.json", "w") as f:
-        json.dump(cases, f)
-
+    processed_df.to_csv("data/bpic2012_processed.csv", index=False)
     print("Done!")
 
 

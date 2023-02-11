@@ -10,7 +10,7 @@ import core.schemas.request.project as project_request
 import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
 from core.starters.database import get_db
-from core.functions.event_log.dataset import start_pre_processing
+from core.functions.event_log.job import start_pre_processing
 from core.functions.general.request import get_real_ip
 from core.functions.project.validation import validate_project_definition
 from core.security.token import validate_token

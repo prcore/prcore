@@ -1,8 +1,6 @@
 import logging
 
-from fastapi import HTTPException
-
-from core.enums.definition import ColumnDefinition, Operator, SupportedOperators
+from core.enums.definition import ColumnDefinition, DefinitionType, Operator, SupportedOperators
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -16,14 +14,13 @@ def is_supported_operator(operator: Operator, column_definition: ColumnDefinitio
 
 def get_supported_operators(column_definition: ColumnDefinition) -> SupportedOperators | None:
     # Get supported operators
-    if column_definition in {ColumnDefinition.TEXT, ColumnDefinition.ACTIVITY, ColumnDefinition.RESOURCE}:
+    if column_definition in DefinitionType.TEXT:
         return SupportedOperators.TEXT
-    elif column_definition in {ColumnDefinition.NUMBER, ColumnDefinition.DURATION, ColumnDefinition.COST}:
+    elif column_definition in DefinitionType.NUMBER:
         return SupportedOperators.NUMBER
-    elif column_definition in {ColumnDefinition.BOOLEAN}:
+    elif column_definition in DefinitionType.BOOLEAN:
         return SupportedOperators.BOOLEAN
-    elif column_definition in {ColumnDefinition.DATETIME, ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP,
-                               ColumnDefinition.END_TIMESTAMP}:
+    elif column_definition in DefinitionType.DATETIME:
         return SupportedOperators.DATETIME
     return None
 

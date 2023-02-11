@@ -20,6 +20,15 @@ class ColumnDefinition(str, Enum):
     END_TIMESTAMP = "END_TIMESTAMP"
 
 
+class DefinitionType(str, Enum):
+    """Enum for definition type."""
+    TEXT = {ColumnDefinition.TEXT, ColumnDefinition.ACTIVITY, ColumnDefinition.RESOURCE}
+    NUMBER = {ColumnDefinition.NUMBER, ColumnDefinition.DURATION, ColumnDefinition.COST}
+    BOOLEAN = {ColumnDefinition.BOOLEAN}
+    DATETIME = {ColumnDefinition.DATETIME, ColumnDefinition.TIMESTAMP,
+                ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP}
+
+
 class Operator(str, Enum):
     """Enum for outcome operators."""
     # Basic
