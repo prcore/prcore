@@ -10,6 +10,7 @@ import core.schemas.definition as definition_schema
 from core.confs import path
 from core.crud.event_log import set_datasets_name
 from core.enums.definition import ColumnDefinition, DefinitionType
+from core.functions.definition.condition import check_or_conditions
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event_log.df import get_dataframe
 from core.functions.general.file import get_new_path
@@ -249,7 +250,9 @@ def get_labelled_dataframe_by_one(df: DataFrame, case_id_column: str, definition
                                   by_outcome: bool = True) -> DataFrame:
     # Get labelled dataframe by one
     column_name = ColumnDefinition.OUTCOME if by_outcome else ColumnDefinition.TREATMENT
-    df[column_name] = df.groupby(case_id_column)[column_name].transform(lambda x: get_label(x, definition, by_outcome))
+    df[column_name] = df.groupby(case_id_column).apply(
+        lambda x: label_one_column(x, definition, by_outcome)
+    ).reset_index(drop=True)
     return df
 
 
@@ -276,12 +279,12 @@ def get_labels(group: DataFrame, definition: definition_schema.Definition) -> tu
     if outcome_column:
         outcome = label_for_outcome(group[outcome_column].iloc[0])
     else:
-        outcome = False
+        outcome = check_or_conditions(group, definition.outcome_definition, columns_definition)
 
     if treatment_column:
         treatment = label_for_treatment(group[treatment_column].iloc[0])
     else:
-        treatment = False
+        treatment = check_or_conditions(group, definition.treatment_definition, columns_definition)
 
     return outcome, treatment
 
@@ -294,7 +297,7 @@ def get_label(group: DataFrame, definition: definition_schema.Definition, by_out
         if outcome_column:
             return label_for_outcome(group[outcome_column].iloc[0])
         else:
-            return False
+            return check_or_conditions(group, definition.outcome_definition, columns_definition)
     else:
         treatment_column = get_defined_column_name(columns_definition, ColumnDefinition.TREATMENT)
         if not treatment_column:
@@ -355,23 +358,3 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
     df = df.rename(columns=columns_need_to_rename)
     df.drop(columns=[c for c in df.columns if c not in needed_definitions], axis=1, inplace=True)
     return df
-
-
-def assign_outcome_label(group: DataFrame, definition: definition_schema.Definition) -> DataFrame:
-    # Assign outcome label
-    pre_defined_outcome_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.OUTCOME)
-    if pre_defined_outcome_column:
-        group[pre_defined_outcome_column] = group.apply(
-            lambda row: label_for_outcome(row[pre_defined_outcome_column]),
-            axis=1
-        )
-    else:
-        pass
-    return group
-
-
-def assign_treatment_label(group: DataFrame) -> DataFrame:
-    # Assign treatment label
-    group['treatment'] = group['treatment'].fillna(0)
-    group['treatment'] = group['treatment'].astype(int)
-    return group

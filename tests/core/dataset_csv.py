@@ -47,7 +47,10 @@ def get_definition() -> Definition:
         created_at=datetime.now(),
         columns_definition=columns_definition,
         outcome_definition=outcome_definition,
-        treatment_definition=treatment_definition
+        treatment_definition=treatment_definition,
+        fast_mode=True,
+        start_transition="start",
+        end_transition="complete"
     )
 
 
