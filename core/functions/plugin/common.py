@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Callable, List
 
 from pandas import DataFrame, read_pickle
@@ -57,3 +58,15 @@ def get_timestamp_columns(df: DataFrame) -> List[str]:
         return [ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP]
     else:
         return []
+
+
+def get_null_output(plugin_name: str, plugin_type: str, detail: str) -> dict:
+    return {
+        "date": datetime.now(),
+        "type": plugin_type,
+        "outcome": None,
+        "model": {
+            "name": plugin_name,
+            "detail": detail
+        }
+    }

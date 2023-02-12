@@ -1,6 +1,6 @@
 import logging
 import pickle
-from time import time
+from datetime import datetime
 
 import numpy as np
 from pandas import DataFrame
@@ -11,11 +11,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from core.confs import path
 from core.enums.definition import ColumnDefinition
 from core.functions.general.file import get_new_path
+from core.functions.plugin.common import get_null_output
 from core.functions.training.util import get_ordinal_encoded_df
 
 from plugins.knn_next_activity.config import basic_info
-from plugins.knn_next_activity.helper import get_scores
-
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -108,49 +107,36 @@ class Algorithm:
             return False
         return True
 
-    def predict(self, prefix):
+    def predict(self, prefix: list[dict]) -> dict:
         # Predict the next activity
+        if any(x["ACTIVITY"] not in self.data["mapping"] for x in prefix):
+            return get_null_output(basic_info["name"], basic_info["type"],
+                                   "The prefix contains an activity that is not in the training set")
 
         # Get the length of the prefix
         length = len(prefix)
-
-        if length < self.parameters["min_prefix_length"] - 1 or length > self.parameters["max_prefix_length"] - 1:
-            print("Length is not in the configuration range")
-            return None
-
-        print(f"{self.name} is predicting for prefix length: {length}")
-
-        # Get the model for the length
-        model = self.models.get(length + 1)  # noqa
-
+        model = self.data["models"].get(length)
         if not model:
-            print(self.models.keys())
-            print("Model not found for the provided prefix length")
-            return None
-
-        # Check if the activities in prefix are met in the training phase
-        if any(x.activity not in self.activity_map for x in prefix):
-            print("Activity not found for the provided prefix")
-            return None
+            return get_null_output(basic_info["name"], basic_info["type"],
+                                   "The model is not trained for the given prefix length")
 
         # Get the features of the prefix
-        features = self.feature_extraction(prefix)
+        features = [self.data["mapping"][x["ACTIVITY"]] for x in prefix]
 
         # Predict the next activity
         prediction = model.predict([features])[0]
-        activity = list(self.activity_map.keys())[list(self.activity_map.values()).index(prediction)]
-        print(f"{self.name} predicted: {activity}")
-        scores = get_scores(self.training_data, self.test_data, self.model)
-
+        output = list(self.data["mapping"].keys())[list(self.data["mapping"].values()).index(prediction)]
         return {
-            "date": int(time()),  # noqa
-            "type": "next_activity",
-            "output": activity,
-            "model": {
-                "name": self.name,
-                "accuracy": scores["accuracy"],
-                "recall": scores["recall"],
-                "probability": scores["probability"]
+            "date": datetime.now(),
+            "type": basic_info["type"],
+            "output": output,
+            "plugin": {
+                "name": basic_info["name"],
+                "model": length,
+                "accuracy": self.data["scores"][length]["accuracy"],
+                "precision": self.data["scores"][length]["precision"],
+                "recall": self.data["scores"][length]["recall"],
+                "f1_score": self.data["scores"][length]["f1_score"]
             }
         }
 
