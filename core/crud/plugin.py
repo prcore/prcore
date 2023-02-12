@@ -19,11 +19,6 @@ def get_plugin_by_id(db: Session, plugin_id: int) -> model.Plugin | None:
     return db.query(model.Plugin).filter_by(id=plugin_id).first()
 
 
-def get_plugin_by_project_id(db: Session, project_id: int) -> model.Plugin | None:
-    # Get a plugin by project id
-    return db.query(model.Plugin).filter_by(project_id=project_id).first()
-
-
 def create_plugin(db: Session, plugin: schema.PluginCreate, project_id: int) -> model.Plugin:
     # Create a plugin
     db_plugin = model.Plugin(**plugin.dict(), project_id=project_id)
@@ -33,23 +28,19 @@ def create_plugin(db: Session, plugin: schema.PluginCreate, project_id: int) -> 
     return db_plugin
 
 
-def update_status(db: Session, plugin: model.Plugin, status: str) -> None:
+def update_status(db: Session, db_plugin: model.Plugin, status: str) -> model.Plugin:
     # Update a plugin's status
-    db_plugin = get_plugin_by_id(db, plugin_id=plugin.id)
-    if db_plugin:
-        db_plugin.status = status
-        db.commit()
-        db.refresh(db_plugin)
+    db_plugin.status = status
+    db.commit()
+    db.refresh(db_plugin)
     return db_plugin
 
 
-def update_model_name(db: Session, plugin: model.Plugin, model_name: str) -> None:
+def update_model_name(db: Session, db_plugin: model.Plugin, model_name: str) -> model.Plugin:
     # Update a plugin's model name
-    db_plugin = get_plugin_by_id(db, plugin_id=plugin.id)
-    if db_plugin:
-        db_plugin.model_name = model_name
-        db.commit()
-        db.refresh(db_plugin)
+    db_plugin.model_name = model_name
+    db.commit()
+    db.refresh(db_plugin)
     return db_plugin
 
 

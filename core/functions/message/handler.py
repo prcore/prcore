@@ -6,12 +6,15 @@ from time import sleep
 from pika import BlockingConnection, URLParameters
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
+from sqlalchemy.orm import Session
 
 import core.crud.plugin as plugin_crud
+import core.crud.project as project_crud
 from core.starters.database import SessionLocal
 from core.enums.message import MessageType
-from core.enums.status import PluginStatus
+from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.message.util import get_data_from_body
+from core.functions.project.util import get_project_status
 from core.starters import memory
 
 # Enable logging
@@ -65,31 +68,75 @@ def handle_online_report(data: dict) -> None:
 
 def handle_data_report(data: dict) -> None:
     project_id = data["project_id"]
+    plugin_id = data["plugin_id"]
     applicable = data["applicable"]
     with SessionLocal() as db:
-        plugin = plugin_crud.get_plugin_by_project_id(db, project_id)
+        plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
         if not plugin:
             return
         if applicable:
             plugin_crud.update_status(db, plugin, PluginStatus.PREPROCESSING)
+            update_project_status(db, project_id)
         else:
             plugin_crud.delete_plugin(db, plugin)
+            project = project_crud.get_project_by_id(db, project_id)
+            if not project.plugins:
+                project_crud.set_project_error(db, project.id, "No plugin is applicable")
+
+
+def update_project_status(db: Session, project_id: int) -> None:
+    project = project_crud.get_project_by_id(db, project_id)
+    if project.status == ProjectStatus.SIMULATING:
+        return
+    if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
+            and project_status):
+        project_crud.update_status(db, project, project_status)
 
 
 def handle_error_report(data: dict) -> None:
-    pass
+    project_id = data["project_id"]
+    plugin_id = data["plugin_id"]
+    detail = data["detail"]
+    with SessionLocal() as db:
+        plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
+        if not plugin:
+            return
+        plugin_crud.update_status(db, plugin, detail)
+        update_project_status(db, project_id)
 
 
 def handle_training_start(data: dict) -> None:
-    pass
+    project_id = data["project_id"]
+    plugin_id = data["plugin_id"]
+    with SessionLocal() as db:
+        plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
+        if not plugin:
+            return
+        plugin_crud.update_status(db, plugin, PluginStatus.TRAINING)
+        update_project_status(db, project_id)
 
 
 def handle_model_name(data: dict) -> None:
-    pass
+    project_id = data["project_id"]
+    plugin_id = data["plugin_id"]
+    model_name = data["model_name"]
+    with SessionLocal() as db:
+        plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
+        if not plugin:
+            return
+        plugin_crud.update_model_name(db, plugin, model_name)
+        update_project_status(db, project_id)
 
 
 def handle_streaming_ready(data: dict) -> None:
-    pass
+    project_id = data["project_id"]
+    plugin_id = data["plugin_id"]
+    with SessionLocal() as db:
+        plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
+        if not plugin:
+            return
+        plugin_crud.update_status(db, plugin, PluginStatus.STREAMING)
+        update_project_status(db, project_id)
 
 
 def handle_prescription_result(data: dict) -> None:

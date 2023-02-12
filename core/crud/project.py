@@ -10,7 +10,7 @@ from core.enums.status import ProjectStatus
 logger = logging.getLogger(__name__)
 
 
-def get_project(db: Session, project_id: int) -> model.Project | None:
+def get_project_by_id(db: Session, project_id: int) -> model.Project | None:
     # Get a project by id
     return db.query(model.Project).filter_by(id=project_id).first()
 
@@ -35,9 +35,17 @@ def create_project(db: Session, project: schema.ProjectCreate, event_log_id: int
     return db_project
 
 
+def update_status(db: Session, db_project: model.Project, status: ProjectStatus | str) -> model.Project:
+    # Update a project's status
+    db_project.status = status
+    db.commit()
+    db.refresh(db_project)
+    return db_project
+
+
 def set_project_error(db: Session, project_id: int, error: str) -> model.Project:
     # Set error of a project
-    db_project = get_project(db, project_id=project_id)
+    db_project = get_project_by_id(db, project_id=project_id)
     if db_project:
         db_project.error = error
         db.commit()

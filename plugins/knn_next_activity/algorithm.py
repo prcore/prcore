@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class Algorithm:
-    def __init__(self, project_id: int, df: DataFrame, model_name: str = None,
+    def __init__(self, project_id: int, plugin_id: int, df: DataFrame, model_name: str = None,
                  parameters: dict = basic_info["parameters"]):
         self.df: DataFrame = df
         self.model_name: str = model_name
@@ -30,6 +30,7 @@ class Algorithm:
         self.lengths = []
         self.data = {
             "project_id": project_id,
+            "plugin_id": plugin_id,
             "models": {},
             "scores": {},
             "mapping": {}

@@ -21,18 +21,21 @@ def start_pre_processing(project_id: int, event_log_id: int, active_plugins: dic
         if not training_df_name:
             project_crud.set_project_error(db, project_id, "Failed to pre-process the data")
             return False
-        plugin_ids = list(active_plugins.keys())
-        for plugin_id in plugin_ids:
-            plugin_crud.create_plugin(
+        plugin_keys = list(active_plugins.keys())
+        plugins = {}
+        for plugin_key in plugin_keys:
+            plugin = plugin_crud.create_plugin(
                 db=db,
                 plugin=plugin_schema.PluginCreate(
-                    name=active_plugins[plugin_id]["name"],
-                    prescription_type=active_plugins[plugin_id]["prescription_type"],
-                    description=active_plugins[plugin_id]["description"],
-                    parameters=active_plugins[plugin_id]["parameters"],
+                    key=plugin_key,
+                    name=active_plugins[plugin_key]["name"],
+                    prescription_type=active_plugins[plugin_key]["prescription_type"],
+                    description=active_plugins[plugin_key]["description"],
+                    parameters=active_plugins[plugin_key]["parameters"],
                     status=PluginStatus.WAITING
                 ),
                 project_id=project_id
             )
-        send_training_data_to_all_plugins(project_id, training_df_name, plugin_ids)
+            plugins[plugin_key] = plugin.id
+        send_training_data_to_all_plugins(project_id, training_df_name, plugins)
     return True

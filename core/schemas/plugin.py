@@ -16,6 +16,7 @@ class PluginBase(BaseModel):
 
 
 class PluginCreate(PluginBase):
+    key: str
     model_name: str | None = None
 
 
