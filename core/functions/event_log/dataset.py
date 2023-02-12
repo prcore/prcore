@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pandas as pd
 from pandas import DataFrame, Series
 from sklearn.model_selection import GroupShuffleSplit
@@ -9,7 +10,7 @@ import core.models.event_log as event_log_model
 import core.schemas.definition as definition_schema
 from core.confs import path
 from core.crud.event_log import set_datasets_name
-from core.enums.definition import ColumnDefinition, DefinitionType
+from core.enums.definition import ColumnDefinition, DefinitionType, Transition
 from core.functions.definition.condition import check_or_conditions
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event_log.df import get_dataframe
@@ -17,6 +18,19 @@ from core.functions.general.file import get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def get_completed_transition_df(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
+    # Get completed transition dataframe
+    transition_column = get_defined_column_name(columns_definition, ColumnDefinition.TRANSITION)
+
+    if not transition_column:
+        return df
+
+    if not np.any(df[transition_column] == Transition.COMPLETE):
+        return df
+
+    return df[df[transition_column] == Transition.COMPLETE]
 
 
 def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str:
@@ -35,7 +49,10 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
         simulation_df = df.iloc[simulation_indices]
 
         # Get processed dataframe for training
-        processed_df = get_processed_dataframe(df=training_df, definition=db_event_log.definition)
+        processed_df = get_processed_dataframe(
+            df=training_df,
+            definition=definition_schema.Definition(**db_event_log.definition.__dict__),
+        )
 
         # Save the data
         training_df_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DATA_PATH}/", suffix=".pkl")
