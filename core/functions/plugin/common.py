@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Callable, List
+from typing import Any, Callable, List
 
 from pandas import DataFrame, read_pickle
 from pika import BlockingConnection
@@ -8,7 +8,7 @@ from pika import BlockingConnection
 from core.confs import config, path
 from core.enums.definition import ColumnDefinition
 from core.enums.message import MessageType
-from core.functions.message.util import get_body
+from core.functions.message.util import get_body, send_message
 from core.starters.rabbitmq import parameters
 
 # Enable logging
@@ -70,3 +70,19 @@ def get_null_output(plugin_name: str, plugin_type: str, detail: str) -> dict:
             "detail": detail
         }
     }
+
+
+def start_training(project_id: int, instance: Any) -> None:
+    preprocess_result = instance.preprocess()
+    if not preprocess_result:
+        send_message("core", MessageType.ERROR_REPORT, {"project_id": project_id, "detail": "Pre-process failed"})
+    else:
+        send_message("core", MessageType.TRAINING_START, {"project_id": project_id})
+    train_result = instance.train()
+    if not train_result:
+        send_message("core", MessageType.ERROR_REPORT, {"project_id": project_id, "detail": "Train failed"})
+    model_name = instance.save_model()
+    if not model_name:
+        send_message("core", MessageType.ERROR_REPORT, {"project_id": project_id, "detail": "Save model failed"})
+    else:
+        send_message("core", MessageType.MODEL_NAME, {"project_id": project_id, "model_name": model_name})

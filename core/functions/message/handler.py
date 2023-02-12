@@ -74,3 +74,23 @@ def handle_data_report(data: dict) -> None:
             plugin_crud.update_status(db, plugin, PluginStatus.PREPROCESSING)
         else:
             plugin_crud.delete_plugin(db, plugin)
+
+
+def handle_error_report(data: dict) -> None:
+    pass
+
+
+def handle_training_start(data: dict) -> None:
+    pass
+
+
+def handle_model_name(data: dict) -> None:
+    pass
+
+
+def handle_streaming_ready(data: dict) -> None:
+    pass
+
+
+def handle_prescription_result(data: dict) -> None:
+    pass
