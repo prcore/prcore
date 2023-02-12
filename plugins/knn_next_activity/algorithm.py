@@ -1,151 +1,112 @@
-import math
+import logging
 import pickle
-from typing import List, Union
 from time import time
 
+import numpy as np
+from pandas import DataFrame
+from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+
+from core.confs import path
+from core.enums.definition import ColumnDefinition
+from core.functions.general.file import get_new_path
+from core.functions.training.util import get_ordinal_encoded_df
 
 from plugins.knn_next_activity.config import basic_info
 from plugins.knn_next_activity.helper import get_scores
 
 
+# Enable logging
+logger = logging.getLogger(__name__)
+
+
 class Algorithm:
-    def __init__(self, project_id: int, raw_data: dict = None,
-                 model_name: str = None,
+    def __init__(self, project_id: int, df: DataFrame, model_name: str = None,
                  parameters: dict = basic_info["parameters"]):
-        self.raw_data = raw_data
-        self.model_name = model_name
-        self.parameters = parameters
-        self.training_data = []
-        self.test_data = []
+        self.df: DataFrame = df
+        self.model_name: str = model_name
+        self.parameters: dict = parameters
+        self.grouped_activities = []
         self.lengths = []
-        self.activity_map = {}
-        self.training_datasets = {}
-        self.test_datasets = {}
-        self.models = {}
         self.data = {
             "project_id": project_id,
-            "models": {}
+            "models": {},
+            "scores": {},
+            "mapping": {}
         }
 
     def preprocess(self) -> bool:
-        pass
+        # Pre-process the data
+        try:
+            encoded_df, mapping = get_ordinal_encoded_df(self.df, ColumnDefinition.ACTIVITY)
+            self.data["mapping"] = mapping
+            case_ids = encoded_df[ColumnDefinition.CASE_ID].values
+            activities = encoded_df[ColumnDefinition.ACTIVITY].values
+            unique_case_ids = np.unique(case_ids)
+            self.grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
+            self.lengths = [len(case) for case in self.grouped_activities]
+        except Exception as e:
+            logger.warning(f"Pre-processing failed: {e}", exc_info=True)
+            return False
+        return True
+
+    def train(self) -> bool:
+        # Train the model
+        try:
+            min_length = min(self.lengths)
+            max_length = max(self.lengths)
+            threshold = 100  # The minimum number of cases needed to train the model
+            for length in range(min_length, max_length):
+                if len([group for group in self.grouped_activities if len(group) > length]) < threshold:
+                    continue
+                x = [group[:length] for group in self.grouped_activities if len(group) > length]
+                y = [group[length] for group in self.grouped_activities if len(group) > length]
+                x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
+                knn = KNeighborsClassifier(n_neighbors=5)
+                knn.fit(x_train, y_train)
+                self.data["models"][length] = knn
+
+                # Evaluate the model on the validation set
+                y_pred = knn.predict(x_val)
+                accuracy = knn.score(x_val, y_val)
+                precision = precision_score(y_val, y_pred, average='weighted', zero_division=1)
+                recall = recall_score(y_val, y_pred, average='weighted', zero_division=1)
+                f1 = f1_score(y_val, y_pred, average='weighted')
+                self.data["scores"][length] = {
+                    "accuracy": accuracy,
+                    "precision": precision,
+                    "recall": recall,
+                    "f1_score": f1
+                }
+        except Exception as e:
+            logger.warning(f"Training failed: {e}", exc_info=True)
+            return False
+        return True
+
+    def save_model(self) -> str:
+        # Save the model
+        result = ""
+        try:
+            model_path = get_new_path(f"{path.PLUGIN_MODEL_PATH}/", suffix=".pkl")
+            with open(model_path, "wb") as f:
+                pickle.dump(self.data, f)
+            result = model_path.split("/")[-1]
+        except Exception as e:
+            logger.warning(f"Saving model failed: {e}", exc_info=True)
+        return result
 
     def load_model(self) -> bool:
-        pass
-
-    def is_applicable(self):
-        # Check if the algorithm can be applied to the data
-        first_case = self.training_data[0]
-        first_event = first_case.events[0]
-        return bool(first_event.activity)
-
-    def set_parameters(self, parameters):
-        # Set the parameters of the algorithm
-        self.parameters = parameters
-
-    def split_data(self) -> (List[Case], List[Case]):
-        # split the data into training and test data
-        data_length = len(self.data)
-        training_data = self.data[:int(data_length * 0.8)]  # noqa
-        test_data = self.data[int(data_length * 0.8):]  # noqa
-        return training_data, test_data
-
-    def pre_process(self):
-        # Pre-process the data
-        self.calculate_lengths()
-        activity_map = self.get_activity_map()
-        return activity_map
-
-    def calculate_lengths(self):
-        # Calculate the lengths of the traces
-        self.lengths = [len(case.events) for case in self.training_data]
-
-    def get_activity_map(self):
-        # Get all possible activities
-        activities = set()
-        for case in self.training_data:
-            for event in case.events:
-                activities.add(event.activity)
-        activities = list(activities)
-
-        # Map activities to numbers (Ordinal Encoding)
-        activity_map = {}
-        for i in range(len(activities)):
-            activity_map[activities[i]] = i
-
-        return activity_map
-
-    def get_min_length(self):
-        # Get the minimum length of the traces
-        return 3 if max(self.lengths) > 3 else min(self.lengths)
-
-    def get_avg_length(self):
-        # Get the average length of the traces
-        return math.floor(sum(self.lengths) / len(self.lengths))
-
-    def set_training_datasets(self):
-        # Get the training datasets for each length
-        """
-        :return: {
-            "length_1": [event1, event2, event3, ..., outcome_event],
-            "length_2": [event1, event2, event3, ..., outcome_event],
-            ...
-        """
-        for length in range(self.parameters["min_prefix_length"], self.parameters["max_prefix_length"] + 1):
-            training_data = []
-            for case in self.training_data:
-                if len(case.events) < length:
-                    continue
-                data_list: List[Union[int, str]] = self.feature_extraction(case.events[:length])
-                training_data.append(data_list)
-            print(f"Length {length} training data: {len(training_data)}")
-
-            if len(training_data) < 100:
-                continue
-
-            self.training_datasets[length] = training_data
-
-    def feature_extraction(self, prefix):
-        # Extract features from the prefix
-        return [self.activity_map[event.activity] for event in prefix]
-
-    def train(self):
-        # Train the algorithm on the data
-        print(self.name + " is training...")
-        # Train the model for each length
-        for length in self.training_datasets.keys():  # noqa
-            self.train_model_for_length(length)
-        self.save_model()
-
-    def train_model_for_length(self, length):
-        # Train the model for a specific length
-        print("Training model for length " + str(length))
-        x_train = []
-        y_train = []
-
-        for data in self.training_datasets[length]:
-            x_train.append(data[:-1])
-            y_train.append(data[-1])
-
-        # Train the model
-        model = KNeighborsClassifier(n_neighbors=self.parameters["n_neighbors"])
-        model.fit(x_train, y_train)
-        print(self.name + " has finished training for length " + str(length))
-        self.models[length] = model
-
-    def save_model(self):
-        # save the model
-        model_path = get_new_path(f"{path.MODEL_PATH}/", f"{self.name} - ", ".pkl")
-        with open(model_path, "wb") as f:
-            pickle.dump(self.models, f)
-        self.model = model_path
-        self.training_task.status = "finished"
-
-    def load_model(self):
-        # load the model from a file
-        with open(self.model, "rb") as f:
-            self.models = pickle.load(f)
+        # Load the model
+        if not self.model_name:
+            return False
+        try:
+            with open(f"{path.PLUGIN_MODEL_PATH}/{self.model_name}", "rb") as f:
+                self.data = pickle.load(f)
+        except Exception as e:
+            logger.warning(f"Loading model failed: {e}", exc_info=True)
+            return False
+        return True
 
     def predict(self, prefix):
         # Predict the next activity
@@ -192,3 +153,7 @@ class Algorithm:
                 "probability": scores["probability"]
             }
         }
+
+    def set_parameters(self, parameters):
+        # Set the parameters of the algorithm
+        self.parameters = parameters

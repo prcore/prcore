@@ -21,4 +21,4 @@ def get_instance(project_id: int, training_df: DataFrame) -> Algorithm:
 
 def get_new_instance(project_id: int, training_df: DataFrame) -> Algorithm:
     # Get new instance
-    return Algorithm(project_id)
+    return Algorithm(project_id, training_df)
