@@ -7,7 +7,10 @@ from pika import BlockingConnection, URLParameters
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 
+import core.crud.plugin as plugin_crud
+from core.starters.database import SessionLocal
 from core.enums.message import MessageType
+from core.enums.status import PluginStatus
 from core.functions.message.util import get_data_from_body
 from core.starters import memory
 
@@ -39,12 +42,17 @@ def start_consuming(parameters: URLParameters, queue: str, callback_function: ca
 def callback(ch: BlockingChannel, method: Basic.Deliver, _: BasicProperties, body: bytes) -> None:
     message_type, data = get_data_from_body(body)
     print(message_type, data)
-    ch.basic_ack(delivery_tag=method.delivery_tag)
-    if message_type == MessageType.ONLINE_REPORT:
-        update_available_plugins(data)
+
+    try:
+        if message_type == MessageType.ONLINE_REPORT:
+            handle_online_report(data)
+        elif message_type == MessageType.DATA_REPORT:
+            handle_data_report(data)
+    finally:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def update_available_plugins(data: dict) -> None:
+def handle_online_report(data: dict) -> None:
     memory.available_plugins[data["id"]] = {
         "name": data["name"],
         "prescription_type": data["prescription_type"],
@@ -53,3 +61,16 @@ def update_available_plugins(data: dict) -> None:
         "online": datetime.now()
     }
     print(memory.available_plugins)
+
+
+def handle_data_report(data: dict) -> None:
+    project_id = data["project_id"]
+    applicable = data["applicable"]
+    with SessionLocal() as db:
+        plugin = plugin_crud.get_plugin_by_project_id(db, project_id)
+        if not plugin:
+            return
+        if applicable:
+            plugin_crud.update_status(db, plugin, PluginStatus.PREPROCESSING)
+        else:
+            plugin_crud.delete_plugin(db, plugin)

@@ -14,6 +14,11 @@ def get_event_log(db: Session, event_log_id: int) -> model.EventLog | None:
     return db.query(model.EventLog).filter_by(id=event_log_id).first()
 
 
+def get_event_log_by_id(db: Session, event_log_id: int) -> model.EventLog | None:
+    # Get an event log by id
+    return db.query(model.EventLog).filter_by(id=event_log_id).first()
+
+
 def get_event_logs(db: Session, skip: int = 0, limit: int = 100) -> list[model.EventLog]:
     # Get all event logs
     return db.query(model.EventLog).offset(skip).limit(limit).all()  # type: ignore

@@ -51,11 +51,11 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
         # Get processed dataframe for training
         processed_df = get_processed_dataframe(
             df=training_df,
-            definition=definition_schema.Definition(**db_event_log.definition.__dict__),
+            definition=definition_schema.Definition.from_orm(db_event_log.definition),
         )
 
         # Save the data
-        training_df_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DATA_PATH}/", suffix=".pkl")
+        training_df_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DF_PATH}/", suffix=".pkl")
         training_df_name = training_df_path.split("/")[-1]
         simulation_df_path = get_new_path(base_path=f"{path.EVENT_LOG_SIMULATION_DF_PATH}/", suffix=".pkl")
         simulation_df_name = simulation_df_path.split("/")[-1]

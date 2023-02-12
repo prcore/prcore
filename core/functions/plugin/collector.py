@@ -7,9 +7,13 @@ from core.starters import memory
 logger = logging.getLogger(__name__)
 
 
-def get_active_plugins() -> list[str]:
+def get_active_plugins() -> dict:
     # Get all active plugins
-    return [plugin_id for plugin_id in list(memory.available_plugins) if is_plugin_active(plugin_id)]
+    active_plugins = {}
+    for plugin_id, plugin in memory.available_plugins.items():
+        if is_plugin_active(plugin_id):
+            active_plugins[plugin_id] = plugin
+    return active_plugins
 
 
 def is_plugin_active(plugin_id: str) -> bool:

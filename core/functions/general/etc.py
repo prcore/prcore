@@ -5,6 +5,7 @@ from random import choice
 from string import ascii_letters, digits
 from threading import active_count, Thread
 from time import localtime, strftime
+from typing import Callable, Tuple
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def get_readable_time(secs: int = 0, the_format: str = "%Y%m%d%H%M%S") -> str:
     return result
 
 
-def process_daemon(func: callable, args: tuple = ()) -> Process:
+def process_daemon(func: Callable, args: Tuple) -> Process:
     # Process daemon
     p = Process(target=func, args=args)
     p.daemon = True
@@ -43,7 +44,7 @@ def random_str(i: int) -> str:
     return "".join(choice(ascii_letters + digits) for _ in range(i))
 
 
-def thread(target: callable, args: tuple, kwargs: dict = None, daemon: bool = True) -> bool:
+def thread(target: Callable, args: Tuple, kwargs: dict = None, daemon: bool = True) -> bool:
     # Call a function using thread
     result = False
 

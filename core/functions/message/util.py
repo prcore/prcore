@@ -1,5 +1,6 @@
 import logging
 import json
+from typing import Any, Tuple
 
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
@@ -58,7 +59,7 @@ def get_body(message_type: MessageType, data: dict) -> bytes:
     return result
 
 
-def get_data_from_body(body: bytes) -> tuple[str, any]:
+def get_data_from_body(body: bytes) -> Tuple[str, Any]:
     result = ("", None)
 
     try:

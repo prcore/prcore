@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 import core.crud.definition as definition_crud
@@ -11,7 +11,9 @@ import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
 from core.starters.database import get_db
 from core.functions.event_log.job import start_pre_processing
+from core.functions.general.etc import process_daemon
 from core.functions.general.request import get_real_ip
+from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.validation import validate_project_definition
 from core.security.token import validate_token
 
@@ -24,8 +26,7 @@ router = APIRouter(prefix="/project")
 
 @router.post("", response_model=project_response.CreateProjectResponse)
 def create_project(request: Request, create_body: project_request.CreateProjectRequest,
-                   background_tasks: BackgroundTasks, db: Session = Depends(get_db),
-                   _: bool = Depends(validate_token)):
+                   db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Create project - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
@@ -57,7 +58,7 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     )
 
     # Start the pre-processing
-    background_tasks.add_task(start_pre_processing, db_project.id, db, db_event_log)
+    process_daemon(start_pre_processing, (db_project.id, db_event_log.id, get_active_plugins()))
     return {
         "message": "Project created successfully",
         "project": db_project
