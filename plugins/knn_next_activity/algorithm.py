@@ -97,6 +97,8 @@ class Algorithm:
 
     def load_model(self) -> bool:
         # Load the model
+        if self.data["models"]:
+            return True
         if not self.model_name:
             return False
         try:
