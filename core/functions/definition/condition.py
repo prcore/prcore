@@ -117,6 +117,12 @@ def compare_datetime(group: DataFrame, column_name: str, operator: Operator, thr
     threshold = pd.to_datetime(threshold, errors="coerce")
     if np.isnan(threshold):
         raise ValueError("Invalid threshold")
+
+    # If the column is timestamp, and not in the group, then it is the start timestamp
+    # This is because the timestamp column is removed during the transition recognize process
+    if column_name == ColumnDefinition.TIMESTAMP and column_name not in group.columns:
+        column_name = ColumnDefinition.START_TIMESTAMP
+
     if operator == Operator.EQUAL:
         return np.any(group[column_name] == threshold)
     elif operator == Operator.NOT_EQUAL:
