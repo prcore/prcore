@@ -1,10 +1,11 @@
 import logging
 
-from sqlalchemy import Column, DateTime, Integer
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
 from core.starters.database import Base
+from core.enums.definition import Transition
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -19,3 +20,6 @@ class Definition(Base):
     columns_definition = Column(JSONB, nullable=False)
     outcome_definition = Column(JSONB)
     treatment_definition = Column(JSONB)
+    fast_mode = Column(Boolean, default=True)
+    start_transition = Column(String, default=Transition.START)
+    end_transition = Column(String, default=Transition.COMPLETE)

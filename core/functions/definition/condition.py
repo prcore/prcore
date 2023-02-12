@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 
 from pandas import Timestamp
@@ -42,3 +43,31 @@ def compare_text(value: Any, operator: Operator, threshold: Any) -> bool:
     elif operator == Operator.NOT_CONTAINS:
         return threshold not in value
     return False
+
+
+def convert_to_seconds(time_str):
+    time_str = str(time_str).strip().lower()
+    if time_str.isdigit():
+        return int(time_str)
+
+    match = re.match(r"^(\d+)\s*(\w+)$", time_str)
+    if not match:
+        raise ValueError("Invalid input")
+
+    value = int(match.group(1))
+    unit = match.group(2)
+
+    if unit in ["months", "month", "mo", "m"]:
+        return value * 30 * 24 * 60 * 60
+    elif unit in ["weeks", "week", "wk", "w"]:
+        return value * 7 * 24 * 60 * 60
+    elif unit in ["days", "day", "d"]:
+        return value * 24 * 60 * 60
+    elif unit in ["hours", "hour", "hr", "h"]:
+        return value * 60 * 60
+    elif unit in ["minutes", "minute", "min", "m"]:
+        return value * 60
+    elif unit in ["seconds", "second", "sec", "s"]:
+        return value
+    else:
+        raise ValueError("Invalid unit")

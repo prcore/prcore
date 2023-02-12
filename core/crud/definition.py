@@ -28,6 +28,9 @@ def update_definition(db: Session, definition: schema.Definition) -> model.Defin
     db_definition.columns_definition = definition.columns_definition
     db_definition.outcome_definition = definition.outcome_definition
     db_definition.treatment_definition = definition.treatment_definition
+    db_definition.fast_mode = definition.fast_mode
+    db_definition.start_transition = definition.start_transition
+    db_definition.end_transition = definition.end_transition
     db.commit()
     db.refresh(db_definition)
 
@@ -36,10 +39,14 @@ def update_definition(db: Session, definition: schema.Definition) -> model.Defin
 
 def set_outcome_treatment_definition(db: Session, db_definition: model.Definition,
                                      outcome: list[list[schema.ProjectDefinition]],
-                                     treatment: list[list[schema.ProjectDefinition]]) -> model.Definition:
+                                     treatment: list[list[schema.ProjectDefinition]],
+                                     fast_mode: bool, start_transition: str, end_transition: str) -> model.Definition:
     # Set outcome and treatment definition
     db_definition.outcome_definition = [[d.dict() for d in data] for data in outcome]
     db_definition.treatment_definition = [[d.dict() for d in data] for data in treatment]
+    db_definition.fast_mode = fast_mode
+    db_definition.start_transition = start_transition
+    db_definition.end_transition = end_transition
     db.commit()
     db.refresh(db_definition)
     return db_definition

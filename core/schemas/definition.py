@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from pydantic import BaseModel
-from core.enums.definition import ColumnDefinition, Operator
+from core.enums.definition import ColumnDefinition, Operator, Transition
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -18,6 +18,9 @@ class DefinitionBase(BaseModel):
     columns_definition: dict[str, ColumnDefinition | None]
     outcome_definition: list[list[ProjectDefinition]] | None = None
     treatment_definition: list[list[ProjectDefinition]] | None = None
+    fast_mode: bool = True
+    start_transition: str = Transition.START
+    end_transition: str = Transition.COMPLETE
 
 
 class DefinitionCreate(DefinitionBase):

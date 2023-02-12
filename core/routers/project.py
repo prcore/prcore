@@ -45,7 +45,10 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         db=db,
         db_definition=db_event_log.definition,
         outcome=create_body.positive_outcome,
-        treatment=create_body.treatment
+        treatment=create_body.treatment,
+        fast_mode=create_body.fast_mode,
+        start_transition=create_body.start_transition,
+        end_transition=create_body.end_transition
     )
     db_project = project_crud.create_project(
         db=db,

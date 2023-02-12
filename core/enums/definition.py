@@ -64,3 +64,20 @@ class SupportedOperators(list[Operator], Enum):
     # DATETIME
     DATETIME = [Operator.EQUAL, Operator.NOT_EQUAL, Operator.EARLIER_THAN, Operator.EARLIER_THAN_OR_EQUAL,
                 Operator.LATER_THAN, Operator.LATER_THAN_OR_EQUAL]
+
+
+class Transition(str, Enum):
+    """Enum for transition."""
+    ASSIGN = "ASSIGN"
+    ATE_ABORT = "ATE_ABORT"
+    AUTOSKIP = "AUTOSKIP"
+    COMPLETE = "COMPLETE"
+    MANUALSKIP = "MANUALSKIP"
+    PI_ABORT = "PI_ABORT"
+    REASSIGN = "REASSIGN"
+    RESUME = "RESUME"
+    SCHEDULE = "SCHEDULE"
+    START = "START"
+    SUSPEND = "SUSPEND"
+    UNKNOWN = "UNKNOWN"
+    WITHDRAW = "WITHDRAW"

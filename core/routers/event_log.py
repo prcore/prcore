@@ -13,7 +13,7 @@ from core.starters.database import get_db
 from core.functions.definition.util import get_available_options
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.csv import get_dataframe_from_csv
-from core.functions.event_log.dataset import get_filtered_dataframe
+from core.functions.event_log.dataset import get_transition_recognized_dataframe
 from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.xes import get_dataframe_from_xes
 from core.functions.event_log.validation import validate_column_definition
@@ -84,7 +84,7 @@ async def update_event_log(request: Request, event_log_id: int,
 
     df = get_dataframe(db_event_log)
     validate_column_definition(request_body, df)
-    df = get_filtered_dataframe(df, request_body)
+    df = get_transition_recognized_dataframe(df, request_body)
 
     if db_event_log.definition:
         db_definition = definition_crud.update_definition(db, definition_schema.Definition(
@@ -106,9 +106,7 @@ async def update_event_log(request: Request, event_log_id: int,
         "received_definition": db_definition.columns_definition,
         "activities_count": get_activities_count(df, db_definition.columns_definition),
         "outcome_options": get_available_options(db_definition.columns_definition, "outcome"),
-        "treatment_options": get_available_options(db_definition.columns_definition, "treatment"),
-        "outcome_selections": get_available_options(db_definition.columns_definition, "outcome"),  # Deprecated soon
-        "treatment_selections": get_available_options(db_definition.columns_definition, "treatment")  # Deprecated soon
+        "treatment_options": get_available_options(db_definition.columns_definition, "treatment")
     }
 
 
