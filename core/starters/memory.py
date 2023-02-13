@@ -12,3 +12,4 @@ dataframes: dict[int, DataFrame] = {}
 available_plugins: dict[str, dict[str, datetime | str]] = {}
 processed_messages: dict[str, datetime] = {}
 simulation_events: dict[int, Event] = {}
+reading_projects: set[int] = set()

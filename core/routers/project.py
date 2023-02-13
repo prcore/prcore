@@ -1,7 +1,10 @@
 import logging
+import json
 
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from sse_starlette.sse import EventSourceResponse
 
 import core.crud.case as case_crud
 import core.crud.definition as definition_crud
@@ -19,7 +22,9 @@ from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.simulation import stop_simulation
+from core.functions.project.streaming import get_data, mark_as_sent
 from core.functions.project.validation import validate_project_definition
+from core.starters import memory
 from core.security.token import validate_token
 
 # Enable logging
@@ -160,16 +165,41 @@ def simulation_clear(request: Request, project_id: int, db: Session = Depends(ge
     }
 
 
-@router.put("/{project_id}/streaming/result")
+@router.get("/{project_id}/streaming/result")
 async def streaming_result(request: Request, project_id: int, db: Session = Depends(get_db),
                            _: bool = Depends(validate_token)):
-    logger.warning(f"Streaming result - from IP {get_real_ip(request)}")
+    try:
+        logger.warning(f"Streaming result - from IP {get_real_ip(request)}")
 
-    # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    if db_project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
+        # Get the data from the database, and validate it
+        db_project = project_crud.get_project_by_id(db, project_id)
+        if not db_project:
+            raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+        if db_project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+            raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
 
-    return
+        # Check if the project is already being read
+        if project_id in memory.reading_projects:
+            raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ALREADY_READING)
+        else:
+            memory.reading_projects.add(project_id)
+
+        async def event_generator():
+            while True:
+                if await request.is_disconnected():
+                    break
+                data = get_data(db, project_id)
+                if data:
+                    yield {
+                        "event": "NEW_RESULT",
+                        "id": data[0]["id"],
+                        "retry": 15000,
+                        "data": json.dumps(data)
+                    }
+                event_ids = [event["id"] for event in data]
+                mark_as_sent(db, event_ids)
+                await asyncio.sleep(1)
+
+        return EventSourceResponse(event_generator())
+    finally:
+        memory.reading_projects.discard(project_id)

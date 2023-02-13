@@ -26,7 +26,11 @@ def get_events_by_case_id_and_project_id(db: Session, case_id: int, project_id: 
 
 def get_events_prescribed_but_not_sent_by_project_id(db: Session, project_id: int) -> list[model.Event]:
     # Get all events prescribed but not sent by project id
-    return db.query(model.Event).filter_by(project_id=project_id, prescribed=True, sent=False).all()  # type: ignore
+    return db.query(model.Event).filter_by(  # type: ignore
+        project_id=project_id,
+        prescribed=True,
+        sent=False
+    ).order_by(model.Event.created_at).all()
 
 
 def create_event(db: Session, event: schema.EventCreate, case_id: int) -> model.Event:
@@ -54,6 +58,13 @@ def mark_as_prescribed(db: Session, db_event: model.Event) -> model.Event:
     db.commit()
     db.refresh(db_event)
     return db_event
+
+
+def mark_as_sent_by_event_ids(db: Session, event_ids: list[int]) -> None:
+    # Mark events as sent by event ids
+    db.query(model.Event).filter(model.Event.id.in_(event_ids)).update(  # type: ignore
+        {model.Event.sent: True}, synchronize_session="fetch")  # type: ignore
+    db.commit()
 
 
 def delete_event(db: Session, event_id: int) -> None:
