@@ -15,7 +15,7 @@ from core.starters.database import SessionLocal
 from core.enums.message import MessageType
 from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.message.util import get_data_from_body
-from core.functions.plugin.collector import is_plugin_active
+from core.functions.plugin.collector import is_plugin_active, get_active_plugins
 from core.functions.project.util import get_project_status
 from core.starters import memory
 
@@ -104,6 +104,9 @@ def handle_data_report(data: dict) -> None:
 def update_project_status(db: Session, project_id: int) -> None:
     project = project_crud.get_project_by_id(db, project_id)
     if project.status == ProjectStatus.SIMULATING:
+        if get_active_plugins() and all([plugin.status == PluginStatus.STREAMING for plugin in project.plugins]):
+            # TODO: start simulation script
+            pass
         return
     if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
             and project_status):

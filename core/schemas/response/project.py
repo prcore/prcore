@@ -13,6 +13,15 @@ class AllProjectsResponse(BaseModel):
     projects: list[Project] = []
 
 
+class ReadProjectResponse(BaseModel):
+    message: str
+    project: Project
+
+
 class CreateProjectResponse(BaseModel):
     message: str
     project: Project
+
+
+class SimulateProjectResponse(BaseModel):
+    message: str

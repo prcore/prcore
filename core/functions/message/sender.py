@@ -31,3 +31,18 @@ def send_training_data(plugin_key: str, project_id: int, plugin_id: int, trainin
         "plugin_id": plugin_id,
         "training_df_name": training_df_name
     })
+
+
+def send_streaming_prepare_to_all_plugins(project_id: int, plugins: dict[str, int],
+                                          model_names: dict[int, str]) -> bool:
+    # Send streaming prepare to all plugins
+    return all(send_streaming_prepare(plugin_key, project_id, model_names[plugins[plugin_key]])
+               for plugin_key in plugins)
+
+
+def send_streaming_prepare(plugin_key: str, project_id: int, model_name: str) -> bool:
+    # Send streaming prepare to a specific plugin
+    return send_message(plugin_key, MessageType.STREAMING_PREPARE, {
+        "project_id": project_id,
+        "model_name": model_name
+    })

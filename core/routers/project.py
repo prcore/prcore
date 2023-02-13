@@ -9,9 +9,11 @@ import core.crud.project as project_crud
 import core.schemas.request.project as project_request
 import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
+from core.enums.status import ProjectStatus
 from core.functions.event_log.job import start_pre_processing
 from core.functions.general.etc import process_daemon
 from core.functions.general.request import get_real_ip, get_db
+from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.validation import validate_project_definition
 from core.security.token import validate_token
@@ -64,6 +66,15 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     }
 
 
+@router.get("/{project_id}", response_model=project_response.ReadProjectResponse)
+def read_project(request: Request, project_id: int, db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Read project - from IP {get_real_ip(request)}")
+    return {
+        "message": "Project retrieved successfully",
+        "project": project_crud.get_project_by_id(db, project_id)
+    }
+
+
 @router.get("/all", response_model=project_response.AllProjectsResponse)
 def read_projects(request: Request, skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
                   _: bool = Depends(validate_token)):
@@ -71,4 +82,30 @@ def read_projects(request: Request, skip: int = 0, limit: int = 100, db: Session
     return {
         "message": "Projects retrieved successfully",
         "projects": project_crud.get_projects(db, skip=skip, limit=limit)
+    }
+
+
+@router.put("/{project_id}/simulate/start", response_model=project_response.SimulateProjectResponse)
+def start_simulation(request: Request, project_id: int, db: Session = Depends(get_db),
+                     _: bool = Depends(validate_token)):
+    logger.warning(f"Start simulation - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail="No valid project provided")
+    if db_project.status == ProjectStatus.ACTIVATING:
+        raise HTTPException(status_code=400, detail="Project is activating")
+    if db_project.status == ProjectStatus.SIMULATING:
+        raise HTTPException(status_code=400, detail="Simulation already started")
+    if db_project.status != ProjectStatus.TRAINED:
+        raise HTTPException(status_code=400, detail="Project not trained")
+
+    # Start the simulation
+    db_project = project_crud.update_status(db, db_project, ProjectStatus.SIMULATING)
+    plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
+    model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
+    send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
+    return {
+        "message": "Project simulation started successfully"
     }
