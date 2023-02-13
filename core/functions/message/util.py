@@ -2,10 +2,11 @@ import logging
 import json
 from typing import Any, Tuple
 
-from pika import BlockingConnection
+from pika import BasicProperties, BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 
 from core.enums.message import MessageType
+from core.functions.general.etc import random_str
 from core.starters.rabbitmq import parameters
 
 # Enable logging
@@ -21,7 +22,12 @@ def send_message(receiver_id: str, message_type: MessageType, data: dict) -> boo
         connection = BlockingConnection(parameters)
         channel = connection.channel()
         channel.queue_declare(queue=receiver_id)
-        channel.basic_publish(exchange="", routing_key=receiver_id, body=get_body(message_type, data))
+        channel.basic_publish(
+            exchange="",
+            routing_key=receiver_id,
+            body=get_body(message_type, data),
+            properties=BasicProperties(message_id=random_str(16))
+        )
         result = True
     except Exception as e:
         logger.warning(f"Error while sending message: {e}", exc_info=True)
@@ -37,7 +43,12 @@ def send_message_by_channel(channel: BlockingChannel, receiver_id: str, message_
 
     try:
         channel.queue_declare(queue=receiver_id)
-        channel.basic_publish(exchange="", routing_key=receiver_id, body=get_body(message_type, data))
+        channel.basic_publish(
+            exchange="",
+            routing_key=receiver_id,
+            body=get_body(message_type, data),
+            properties=BasicProperties(message_id=random_str(16))
+        )
         result = True
     except Exception as e:
         logger.warning(f"Error while sending message by channel: {e}", exc_info=True)
