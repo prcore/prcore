@@ -1,28 +1,27 @@
 import logging
 
-from pydantic import BaseModel
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
-from core import glovar
+from core.starters.database import Base
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
-class Event(BaseModel):
-    id: int
-    activity: str
-    start_timestamp: int
-    end_timestamp: int
-    resource: str
-    attributes: dict
+class Event(Base):
+    __tablename__ = "event"
 
-    def save(self, new: bool = False):
-        with glovar.save_lock:
-            already_saved = False
-            if not new:
-                for i in range(len(glovar.events)):
-                    if glovar.events[i].id == self.id:
-                        glovar.events[i] = self
-                        already_saved = True
-                        break
-            not already_saved and glovar.events.append(self)
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    project_id = Column(Integer, ForeignKey("project.id"))
+    attributes = Column(JSONB, nullable=False, default={})
+    prescriptions = Column(JSONB, nullable=False, default={})
+    prescribed = Column(Boolean, nullable=False, default=False)
+    sent = Column(Boolean, nullable=False, default=False)
+    case_id = Column(Integer, ForeignKey("case.id"))
+
+    case = relationship("Case", back_populates="events")
