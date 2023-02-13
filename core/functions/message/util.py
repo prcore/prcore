@@ -7,7 +7,7 @@ from pika import BasicProperties, BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 
 from core.enums.message import MessageType
-from core.functions.general.etc import random_str
+from core.functions.general.etc import get_message_id
 from core.starters.rabbitmq import parameters
 
 # Enable logging
@@ -27,7 +27,7 @@ def send_message(receiver_id: str, message_type: MessageType, data: dict) -> boo
             exchange="",
             routing_key=receiver_id,
             body=get_body(message_type, data),
-            properties=BasicProperties(message_id=random_str(16))
+            properties=BasicProperties(message_id=get_message_id())
         )
         result = True
     except Exception as e:
@@ -48,7 +48,7 @@ def send_message_by_channel(channel: BlockingChannel, receiver_id: str, message_
             exchange="",
             routing_key=receiver_id,
             body=get_body(message_type, data),
-            properties=BasicProperties(message_id=random_str(16))
+            properties=BasicProperties(message_id=get_message_id())
         )
         result = True
     except Exception as e:

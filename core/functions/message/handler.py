@@ -56,7 +56,8 @@ def start_consuming(parameters: URLParameters, queue: str, callback_function: ca
 
 def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:
     message_type, data = get_data_from_body(body)
-    print(message_type, data)
+    print(message_type, properties.message_id, data)
+    print("-" * 24)
 
     try:
         message_id = properties.message_id
@@ -92,7 +93,6 @@ def handle_online_report(data: dict) -> None:
         "parameters": data["parameters"],
         "online": datetime.now()
     }
-    print(memory.available_plugins)
 
 
 def handle_data_report(data: dict) -> None:

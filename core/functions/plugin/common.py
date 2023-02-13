@@ -7,11 +7,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from pandas import DataFrame, read_pickle
 from pika import BlockingConnection
 from pika.exceptions import AMQPConnectionError
+from pika.spec import BasicProperties
 from tzlocal import get_localzone
 
 from core.confs import config, path
 from core.enums.definition import ColumnDefinition
 from core.enums.message import MessageType
+from core.functions.general.etc import get_message_id
 from core.functions.message.util import get_body, send_message
 from core.functions.tool.timers import log_rotation
 from core.starters.rabbitmq import parameters
@@ -40,7 +42,12 @@ def plugin_run(basic_info: dict, callback: Callable, processed_messages_clean: C
         channel = connection.channel()
         channel.queue_declare(queue=config.APP_ID)
         channel.basic_consume(queue=config.APP_ID, on_message_callback=callback)
-        channel.basic_publish(exchange="", routing_key="core", body=get_body(MessageType.ONLINE_REPORT, basic_info))
+        channel.basic_publish(
+            exchange="",
+            routing_key="core",
+            body=get_body(MessageType.ONLINE_REPORT, basic_info),
+            properties=BasicProperties(message_id=get_message_id())
+        )
         channel.start_consuming()
     except KeyboardInterrupt:
         logger.warning("Plugin stopped by user")

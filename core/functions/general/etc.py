@@ -31,6 +31,11 @@ def get_readable_time(secs: int = 0, the_format: str = "%Y%m%d%H%M%S") -> str:
     return result
 
 
+def get_message_id() -> str:
+    # Get a message id
+    return f"{get_current_time_label()}-{random_str(16)}"
+
+
 def process_daemon(func: Callable, args: Tuple) -> Process:
     # Process daemon
     p = Process(target=func, args=args)

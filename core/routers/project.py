@@ -191,6 +191,9 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
             while True:
                 if await request.is_disconnected():
                     break
+                project = project_crud.get_project_by_id(db, project_id)
+                if project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+                    break
                 data = get_data(db, project_id)
                 if data:
                     yield {
