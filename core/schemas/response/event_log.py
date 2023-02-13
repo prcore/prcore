@@ -15,6 +15,11 @@ class AllEventLogsResponse(BaseModel):
     event_logs: list[EventLog] = []
 
 
+class EventLogResponse(BaseModel):
+    message: str
+    event_log: EventLog
+
+
 class UploadEventLogResponse(BaseModel):
     message: str
     event_log_id: int

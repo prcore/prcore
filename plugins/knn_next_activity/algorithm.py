@@ -75,10 +75,10 @@ class Algorithm:
 
                 # Evaluate the model on the validation set
                 y_pred = knn.predict(x_val)
-                accuracy = knn.score(x_val, y_val)
-                precision = precision_score(y_val, y_pred, average='weighted', zero_division=1)
-                recall = recall_score(y_val, y_pred, average='weighted', zero_division=1)
-                f1 = f1_score(y_val, y_pred, average='weighted')
+                accuracy = round(knn.score(x_val, y_val), 4)
+                precision = round(precision_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+                recall = round(recall_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+                f1 = round(f1_score(y_val, y_pred, average="weighted"), 4)
                 self.data["scores"][length] = {
                     "accuracy": accuracy,
                     "precision": precision,

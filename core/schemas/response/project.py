@@ -13,7 +13,7 @@ class AllProjectsResponse(BaseModel):
     projects: list[Project] = []
 
 
-class ReadProjectResponse(BaseModel):
+class ProjectResponse(BaseModel):
     message: str
     project: Project
 

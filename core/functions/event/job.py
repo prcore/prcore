@@ -3,6 +3,7 @@ import logging
 from pandas import to_datetime
 
 from core.enums.definition import ColumnDefinition
+from core.functions.definition.util import get_start_timestamp
 from core.functions.message.sender import send_prescription_request_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 
@@ -23,8 +24,7 @@ def prepare_prefix_and_send(project_id: int, model_names: dict[str, str], event_
                     element[columns_definition[column]] = element.pop(column)
 
         # Get timestamp column
-        timestamp_column = (ColumnDefinition.TIMESTAMP if ColumnDefinition.TIMESTAMP in columns_definition
-                            else ColumnDefinition.START_TIMESTAMP)
+        timestamp_column = columns_definition[get_start_timestamp(columns_definition)]
 
         # Sort data's element by timestamp
         data.sort(key=lambda x: to_datetime(x[timestamp_column]))

@@ -15,6 +15,7 @@ from core.functions.general.etc import process_daemon
 from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
+from core.functions.project.simulation import stop_simulation
 from core.functions.project.validation import validate_project_definition
 from core.security.token import validate_token
 
@@ -66,15 +67,6 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     }
 
 
-@router.get("/{project_id}", response_model=project_response.ReadProjectResponse)
-def read_project(request: Request, project_id: int, db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Read project - from IP {get_real_ip(request)}")
-    return {
-        "message": "Project retrieved successfully",
-        "project": project_crud.get_project_by_id(db, project_id)
-    }
-
-
 @router.get("/all", response_model=project_response.AllProjectsResponse)
 def read_projects(request: Request, skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
                   _: bool = Depends(validate_token)):
@@ -85,8 +77,17 @@ def read_projects(request: Request, skip: int = 0, limit: int = 100, db: Session
     }
 
 
+@router.get("/{project_id}", response_model=project_response.ProjectResponse)
+def read_project(request: Request, project_id: int, db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Read project - from IP {get_real_ip(request)}")
+    return {
+        "message": "Project retrieved successfully",
+        "project": project_crud.get_project_by_id(db, project_id)
+    }
+
+
 @router.put("/{project_id}/simulate/start", response_model=project_response.SimulateProjectResponse)
-def start_simulation(request: Request, project_id: int, db: Session = Depends(get_db),
+def simulation_start(request: Request, project_id: int, db: Session = Depends(get_db),
                      _: bool = Depends(validate_token)):
     logger.warning(f"Start simulation - from IP {get_real_ip(request)}")
 
@@ -108,4 +109,26 @@ def start_simulation(request: Request, project_id: int, db: Session = Depends(ge
     send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
     return {
         "message": "Project simulation started successfully"
+    }
+
+
+@router.put("/{project_id}/simulate/stop", response_model=project_response.SimulateProjectResponse)
+def simulation_stop(request: Request, project_id: int, db: Session = Depends(get_db),
+                    _: bool = Depends(validate_token)):
+    logger.warning(f"Stop simulation - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail="No valid project provided")
+    if db_project.status == ProjectStatus.ACTIVATING:
+        raise HTTPException(status_code=400, detail="Project is activating")
+    if db_project.status != ProjectStatus.SIMULATING:
+        raise HTTPException(status_code=400, detail="Simulation not started")
+
+    # Stop the simulation
+    stop_simulation(db, db_project)
+
+    return {
+        "message": "Project simulation stopped successfully"
     }

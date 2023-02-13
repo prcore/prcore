@@ -66,3 +66,9 @@ def get_available_options(definition: dict[str, ColumnDefinition], type_: str = 
         logger.warning(f"Get available options error: {e}", exc_info=True)
 
     return result
+
+
+def get_start_timestamp(columns_definition: dict[str, ColumnDefinition]) -> str:
+    # Get start timestamp column name
+    return (get_defined_column_name(columns_definition, ColumnDefinition.TIMESTAMP)
+            or get_defined_column_name(columns_definition, ColumnDefinition.START_TIMESTAMP))

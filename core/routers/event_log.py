@@ -117,3 +117,18 @@ def read_event_logs(request: Request, skip: int = 0, limit: int = 100, db: Sessi
         "message": "Event logs retrieved successfully",
         "event_logs": event_log_crud.get_event_logs(db, skip, limit)
     }
+
+
+@router.get("/{event_log_id}", response_model=event_log_response.EventLogResponse)
+def read_event_log(request: Request, event_log_id: int, db: Session = Depends(get_db),
+                   _: bool = Depends(validate_token)):
+    logger.warning(f"Read event log: {event_log_id} - from IP {get_real_ip(request)}")
+    db_event_log = event_log_crud.get_event_log(db, event_log_id)
+
+    if not db_event_log:
+        raise HTTPException(status_code=404, detail="Event log not found")
+
+    return {
+        "message": "Event log retrieved successfully",
+        "event_log": db_event_log
+    }

@@ -11,13 +11,12 @@ logger = logging.getLogger(__name__)
 class EventBase(BaseModel):
     project_id: int
     attributes: dict[str, str | bool | int | float | None] = {}
-    prescriptions: dict[str, Any] = {}
-    prescribed: bool = False
-    sent: bool = False
 
 
 class EventCreate(EventBase):
-    pass
+    prescriptions: dict[str, Any] = {}
+    prescribed: bool = False
+    sent: bool = False
 
 
 class Event(EventBase):

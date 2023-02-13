@@ -14,8 +14,10 @@ import core.crud.project as project_crud
 from core.starters.database import SessionLocal
 from core.enums.message import MessageType
 from core.enums.status import PluginStatus, ProjectStatus
+from core.functions.project.simulation import proceed_simulation
 from core.functions.message.util import get_data_from_body
 from core.functions.plugin.collector import is_plugin_active, get_active_plugins
+from core.functions.project.simulation import stop_simulation
 from core.functions.project.util import get_project_status
 from core.starters import memory
 
@@ -107,8 +109,11 @@ def update_project_status(db: Session, project_id: int) -> None:
     project = project_crud.get_project_by_id(db, project_id)
     if project.status == ProjectStatus.SIMULATING:
         if get_active_plugins() and all([plugin.status == PluginStatus.STREAMING for plugin in project.plugins]):
-            # TODO: start simulation script
-            pass
+            proceed_simulation(
+                simulation_df_name=project.event_log.simulation_df_name,
+                project_id=project.id,
+                columns_definition=project.event_log.definition.columns_definition
+            )
         return
     if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
             and project_status):
@@ -168,13 +173,17 @@ def handle_prescription_result(data: dict) -> None:
     event_id = data["event_id"]
     result = data["data"]
     with SessionLocal() as db:
-        project = project_crud.get_project_by_id(db, project_id)
-        if not project:
+        db_project = project_crud.get_project_by_id(db, project_id)
+        if not db_project:
             return
         event = event_crud.get_event_by_id(db, event_id)
         if not event:
             return
         event = event_crud.add_prescription(db, event, plugin_key, result)
         # Check if all plugins have finished
-        if all([event.prescriptions.get(plugin.key) for plugin in project.plugins if is_plugin_active(plugin.key)]):
+        if all([event.prescriptions.get(plugin.key) for plugin in db_project.plugins if is_plugin_active(plugin.key)]):
             event_crud.mark_as_prescribed(db, event)
+        # Check if the simulation is finished
+        end_event = memory.simulation_events.get(project_id)
+        if not end_event or end_event.is_set():
+            stop_simulation(db, db_project)
