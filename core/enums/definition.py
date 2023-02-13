@@ -18,6 +18,7 @@ class ColumnDefinition(str, Enum):
     COST = "COST"
     START_TIMESTAMP = "START_TIMESTAMP"
     END_TIMESTAMP = "END_TIMESTAMP"
+    COMPLETE_INDICATOR = "COMPLETE_INDICATOR"
 
 
 class DefinitionType(str, Enum):

@@ -13,6 +13,7 @@ from core.enums.definition import ColumnDefinition
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event.job import prepare_prefix_and_send
 from core.functions.general.request import get_real_ip, get_db
+from core.functions.project.simulation import check_simulation
 from core.security.token import validate_token
 
 # Enable logging
@@ -52,6 +53,18 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
         event=event_schema.EventCreate(project_id=project_id, attributes=request_body),
         case_id=db_case.id
     )
+
+    # Check if there is a complete indicator
+    complete_indicator = get_defined_column_name(columns_definition, ColumnDefinition.COMPLETE_INDICATOR)
+    complete_indicator = complete_indicator or ColumnDefinition.COMPLETE_INDICATOR
+    if complete_indicator in request_body and request_body[complete_indicator] in ["1", "true", "True", "TRUE", True]:
+        case_crud.mark_as_completed(db, db_case)
+        db_event = event_crud.mark_as_prescribed(db, db_event)
+        check_simulation(db, db_project)
+        return {
+            "message": "Event received successfully, this is the last event of the case",
+            "event": db_event
+        }
 
     # Send the event to the plugins
     prepare_prefix_and_send(

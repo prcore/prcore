@@ -30,14 +30,22 @@ def load_simulation_df(simulation_df_name: str) -> DataFrame:
 
 def preprocess_df(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
     # Preprocess a simulation dataframe
+    # Convert all columns to string
     df = df.astype(str)
+    # Convert timestamp column to datetime
     timestamp_column = get_start_timestamp(columns_definition)
     df[timestamp_column] = pd.to_datetime(df[timestamp_column], errors="coerce")
+    # Sort by timestamp
     df.sort_values(by=timestamp_column, inplace=True)
     df[timestamp_column] = df[timestamp_column].astype(str)
+    # Add case prefix
     case_prefix = random_str(8)
     case_id_column = get_defined_column_name(columns_definition, ColumnDefinition.CASE_ID)
     df[case_id_column] = df[case_id_column].apply(lambda x: f"{case_prefix}-{x}")
+    # Add new column indicating the case is completed or not
+    df["COMPLETE_INDICATOR"] = False
+    grouped = df.groupby(case_id_column)
+    df.loc[grouped.tail(1).index, "COMPLETE_INDICATOR"] = True
     return df
 
 

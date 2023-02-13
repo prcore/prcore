@@ -33,6 +33,14 @@ def create_case(db: Session, case: schema.CaseCreate) -> model.Case:
     return db_case
 
 
+def mark_as_completed(db: Session, db_case: model.Case) -> model.Case | None:
+    # Mark a case as completed
+    db_case.completed = True
+    db.commit()
+    db.refresh(db_case)
+    return db_case
+
+
 def delete_case(db: Session, case_id: int) -> None:
     # Delete a case
     db_case = get_case_by_id(db, case_id=case_id)

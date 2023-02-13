@@ -158,3 +158,18 @@ def simulation_clear(request: Request, project_id: int, db: Session = Depends(ge
     return {
         "message": "Project simulation cleared successfully"
     }
+
+
+@router.put("/{project_id}/streaming/result")
+async def streaming_result(request: Request, project_id: int, db: Session = Depends(get_db),
+                           _: bool = Depends(validate_token)):
+    logger.warning(f"Streaming result - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    if db_project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
+
+    return

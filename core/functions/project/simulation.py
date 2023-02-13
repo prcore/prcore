@@ -30,6 +30,14 @@ def proceed_simulation(simulation_df_name: str, project_id: int,
     return True
 
 
+def check_simulation(db: Session, db_project: project_model.Project) -> bool:
+    # Check if the simulation is finished
+    end_event = memory.simulation_events.get(db_project.id)
+    if not end_event or end_event.is_set():
+        stop_simulation(db, db_project)
+    return True
+
+
 def stop_simulation(db: Session, db_project: project_model.Project) -> bool:
     # Stop the simulation
     db_project = project_crud.update_status(db, db_project, ProjectStatus.TRAINED)
