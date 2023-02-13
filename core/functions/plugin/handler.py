@@ -1,8 +1,9 @@
 import logging
-from typing import Callable
+from typing import Any, Callable
 
 from pika.adapters.blocking_connection import BlockingChannel
 
+from core.confs import config
 from core.enums.message import MessageType
 from core.functions.general.etc import thread
 from core.functions.message.util import send_message_by_channel
@@ -46,7 +47,7 @@ def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
     return result
 
 
-def handle_streaming_prepare(ch: BlockingChannel, data: dict, activate_instance_from_model_file: Callable) -> bool:
+def handle_streaming_prepare(ch: BlockingChannel, data: dict, activate_instance_from_model_file: Callable) -> None:
     project_id = data["project_id"]
     model_name = data["model_name"]
     plugin_ud = activate_instance_from_model_file(project_id, model_name)
@@ -59,5 +60,14 @@ def handle_streaming_prepare(ch: BlockingChannel, data: dict, activate_instance_
         )
 
 
-def handle_prescription_request(ch: BlockingChannel, data: dict) -> bool:
-    pass
+def handle_prescription_request(ch: BlockingChannel, data: dict, instance: Any) -> None:
+    project_id = data["project_id"]
+    event_id = data["event_id"]
+    prefix = data["data"]
+    result = instance.predict(prefix)
+    send_message_by_channel(
+        channel=ch,
+        receiver_id="core",
+        message_type=MessageType.PRESCRIPTION_RESULT,
+        data={"project_id": project_id, "plugin_key": config.APP_ID, "event_id": event_id, "data": result}
+    )

@@ -8,12 +8,14 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 from sqlalchemy.orm import Session
 
+import core.crud.event as event_crud
 import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
 from core.starters.database import SessionLocal
 from core.enums.message import MessageType
 from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.message.util import get_data_from_body
+from core.functions.plugin.collector import is_plugin_active
 from core.functions.project.util import get_project_status
 from core.starters import memory
 
@@ -156,4 +158,18 @@ def handle_streaming_ready(data: dict) -> None:
 
 
 def handle_prescription_result(data: dict) -> None:
-    pass
+    project_id = data["project_id"]
+    plugin_key = data["plugin_key"]
+    event_id = data["event_id"]
+    result = data["result"]
+    with SessionLocal() as db:
+        project = project_crud.get_project_by_id(db, project_id)
+        if not project:
+            return
+        event = event_crud.get_event_by_id(db, event_id)
+        if not event:
+            return
+        event = event_crud.add_prescription(db, event, plugin_key, result)
+        # Check if all plugins have finished
+        if all([event.prescriptions.get(plugin_key) for plugin_key in project.plugins if is_plugin_active(plugin_key)]):
+            event_crud.mark_as_prescribed(db, event)

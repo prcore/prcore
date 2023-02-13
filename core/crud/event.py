@@ -28,6 +28,24 @@ def create_event(db: Session, event: schema.EventCreate, project_id: int, case_i
     return db_event
 
 
+def add_prescription(db: Session, db_event: model.Event, plugin_key: str, prescription: dict) -> model.Event:
+    # Add a prescription to an event
+    db_event.prescriptions[plugin_key] = prescription
+    db.add(db_event)
+    db.commit()
+    db.refresh(db_event)
+    return db_event
+
+
+def mark_as_prescribed(db: Session, db_event: model.Event) -> model.Event:
+    # Mark an event as prescribed
+    db_event.prescribed = True
+    db.add(db_event)
+    db.commit()
+    db.refresh(db_event)
+    return db_event
+
+
 def delete_event(db: Session, event_id: int) -> None:
     # Delete an event
     db_event = get_event_by_id(db, event_id=event_id)
