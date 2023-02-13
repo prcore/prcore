@@ -29,4 +29,4 @@ def get_new_instance(project_id: int, plugin_id: int, training_df: DataFrame) ->
 def preprocess_and_train(project_id: int, plugin_id: int, training_df: DataFrame) -> None:
     # Pre-process and train the model
     instance = get_instance(project_id, plugin_id, training_df)
-    start_training(project_id, instance)
+    start_training(instance)

@@ -72,17 +72,40 @@ def get_null_output(plugin_name: str, plugin_type: str, detail: str) -> dict:
     }
 
 
-def start_training(project_id: int, instance: Any) -> None:
+def start_training(instance: Any) -> None:
     preprocess_result = instance.preprocess()
     if not preprocess_result:
-        send_message("core", MessageType.ERROR_REPORT, {"project_id": project_id, "detail": "Pre-process failed"})
+        send_message("core", MessageType.ERROR_REPORT, get_error_data(instance, "Pre-process failed"))
     else:
-        send_message("core", MessageType.TRAINING_START, {"project_id": project_id})
+        send_message(
+            receiver_id="core",
+            message_type=MessageType.TRAINING_START,
+            data={
+                "project_id": instance.get_project_id(),
+                "plugin_id": instance.get_plugin_id()
+            }
+        )
     train_result = instance.train()
     if not train_result:
-        send_message("core", MessageType.ERROR_REPORT, {"project_id": project_id, "detail": "Train failed"})
+        send_message("core", MessageType.ERROR_REPORT, get_error_data(instance, "Train failed"))
     model_name = instance.save_model()
     if not model_name:
-        send_message("core", MessageType.ERROR_REPORT, {"project_id": project_id, "detail": "Save model failed"})
+        send_message("core", MessageType.ERROR_REPORT, get_error_data(instance, "Save model failed"))
     else:
-        send_message("core", MessageType.MODEL_NAME, {"project_id": project_id, "model_name": model_name})
+        send_message(
+            receiver_id="core",
+            message_type=MessageType.MODEL_NAME,
+            data={
+                "project_id": instance.get_project_id(),
+                "plugin_id": instance.get_plugin_id(),
+                "model_name": model_name
+            }
+        )
+
+
+def get_error_data(instance: Any, detail: str) -> dict:
+    return {
+        "project_id": instance.get_project_id(),
+        "plugin_id": instance.get_plugin_id(),
+        "detail": detail
+    }

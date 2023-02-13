@@ -51,6 +51,16 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, _: BasicProperties, bod
             handle_online_report(data)
         elif message_type == MessageType.DATA_REPORT:
             handle_data_report(data)
+        elif message_type == MessageType.ERROR_REPORT:
+            handle_error_report(data)
+        elif message_type == MessageType.TRAINING_START:
+            handle_training_start(data)
+        elif message_type == MessageType.MODEL_NAME:
+            handle_model_name(data)
+        elif message_type == MessageType.STREAMING_READY:
+            handle_streaming_ready(data)
+        elif message_type == MessageType.PRESCRIPTION_RESULT:
+            handle_prescription_result(data)
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -124,6 +134,7 @@ def handle_model_name(data: dict) -> None:
         plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
         if not plugin:
             return
+        plugin_crud.update_status(db, plugin, PluginStatus.TRAINED)
         plugin_crud.update_model_name(db, plugin, model_name)
         update_project_status(db, project_id)
 

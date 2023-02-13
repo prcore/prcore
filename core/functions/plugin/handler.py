@@ -31,7 +31,7 @@ def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
             channel=ch,
             receiver_id="core",
             message_type=MessageType.DATA_REPORT,
-            data={"project_id": project_id, "applicable": applicable}
+            data={"project_id": project_id, "plugin_id": plugin_id, "applicable": applicable}
         )
         thread(preprocess_and_train, (project_id, plugin_id, training_df))
     except Exception as e:

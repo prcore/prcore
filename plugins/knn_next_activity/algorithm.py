@@ -36,6 +36,12 @@ class Algorithm:
             "mapping": {}
         }
 
+    def get_project_id(self) -> int:
+        return self.data["project_id"]
+
+    def get_plugin_id(self) -> int:
+        return self.data["plugin_id"]
+
     def preprocess(self) -> bool:
         # Pre-process the data
         try:
