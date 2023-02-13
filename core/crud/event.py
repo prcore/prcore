@@ -24,6 +24,11 @@ def get_events_by_case_id_and_project_id(db: Session, case_id: int, project_id: 
     return db.query(model.Event).filter_by(case_id=case_id, project_id=project_id).all()  # type: ignore
 
 
+def get_events_prescribed_but_not_sent_by_project_id(db: Session, project_id: int) -> list[model.Event]:
+    # Get all events prescribed but not sent by project id
+    return db.query(model.Event).filter_by(project_id=project_id, prescribed=True, sent=False).all()  # type: ignore
+
+
 def create_event(db: Session, event: schema.EventCreate, case_id: int) -> model.Event:
     # Create an event
     db_event = model.Event(**event.dict(), case_id=case_id)

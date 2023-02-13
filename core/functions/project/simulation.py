@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
 import core.models.project as project_model
-from core.enums.definition import ColumnDefinition
+import core.schemas.definition as definition_schema
 from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.general.etc import process_daemon
 from core.functions.message.sender import send_streaming_stop_to_all_plugins
@@ -17,8 +17,7 @@ from simulation import run_simulation
 logger = logging.getLogger(__name__)
 
 
-def proceed_simulation(simulation_df_name: str, project_id: int,
-                       columns_definition: dict[str, ColumnDefinition]) -> bool:
+def proceed_simulation(simulation_df_name: str, project_id: int, definition: definition_schema.Definition) -> bool:
     # Proceed simulation
     if memory.simulation_events.get(project_id) is None:
         end_event = multiprocessing.Event()
@@ -26,7 +25,7 @@ def proceed_simulation(simulation_df_name: str, project_id: int,
         end_event = memory.simulation_events[project_id]
         end_event.clear()
     memory.simulation_events[project_id] = end_event
-    process_daemon(run_simulation, (simulation_df_name, end_event, project_id, columns_definition))
+    process_daemon(run_simulation, (simulation_df_name, end_event, project_id, definition))
     return True
 
 

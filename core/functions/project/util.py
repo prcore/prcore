@@ -1,19 +1,6 @@
 import logging
-from datetime import datetime
-from threading import Event
-from time import sleep
 
-from pika import BlockingConnection, URLParameters
-from pika.adapters.blocking_connection import BlockingChannel
-from pika.spec import Basic, BasicProperties
-
-import core.crud.plugin as plugin_crud
-import core.crud.project as project_crud
-from core.starters.database import SessionLocal
-from core.enums.message import MessageType
 from core.enums.status import PluginStatus, PluginStatusGroup, ProjectStatus
-from core.functions.message.util import get_data_from_body
-from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)

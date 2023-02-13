@@ -112,7 +112,7 @@ def update_project_status(db: Session, project_id: int) -> None:
             proceed_simulation(
                 simulation_df_name=project.event_log.simulation_df_name,
                 project_id=project.id,
-                columns_definition=project.event_log.definition.columns_definition
+                definition=project.event_log.definition
             )
         return
     if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
