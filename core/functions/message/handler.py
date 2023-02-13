@@ -42,11 +42,16 @@ def start_consuming(parameters: URLParameters, queue: str, callback_function: ca
     consuming_stopped.set()
 
 
-def callback(ch: BlockingChannel, method: Basic.Deliver, _: BasicProperties, body: bytes) -> None:
+def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:
     message_type, data = get_data_from_body(body)
     print(message_type, data)
 
     try:
+        message_id = properties.message_id
+        if memory.processed_messages.get(message_id):
+            return
+        else:
+            memory.processed_messages[message_id] = datetime.now()
         if message_type == MessageType.ONLINE_REPORT:
             handle_online_report(data)
         elif message_type == MessageType.DATA_REPORT:

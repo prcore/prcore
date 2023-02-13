@@ -26,6 +26,17 @@ def get_new_instance(project_id: int, plugin_id: int, training_df: DataFrame) ->
     return Algorithm(project_id, plugin_id, training_df)
 
 
+def activate_instance_from_model_file(project_id: int, model_name: str) -> int:
+    # Get instance from model file
+    if project_id in memory.instances:
+        instance = memory.instances[project_id]
+    else:
+        instance = Algorithm(project_id, None, None, model_name)
+    instance.load_model()
+    memory.instances[project_id] = instance
+    return instance.get_plugin_id()
+
+
 def preprocess_and_train(project_id: int, plugin_id: int, training_df: DataFrame) -> None:
     # Pre-process and train the model
     instance = get_instance(project_id, plugin_id, training_df)

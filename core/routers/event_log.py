@@ -9,7 +9,6 @@ import core.schemas.response.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
 from core.confs import path
-from core.starters.database import get_db
 from core.functions.definition.util import get_available_options
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.csv import get_dataframe_from_csv
@@ -19,7 +18,7 @@ from core.functions.event_log.xes import get_dataframe_from_xes
 from core.functions.event_log.validation import validate_column_definition
 from core.functions.event_log.zip import get_dataframe_from_zip
 from core.functions.general.etc import get_current_time_label
-from core.functions.general.request import get_real_ip
+from core.functions.general.request import get_real_ip, get_db
 from core.functions.general.file import get_extension, get_new_path
 from core.security.token import validate_token
 

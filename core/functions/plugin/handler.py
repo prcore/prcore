@@ -46,8 +46,17 @@ def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
     return result
 
 
-def handle_streaming_prepare(ch: BlockingChannel, data: dict) -> bool:
-    pass
+def handle_streaming_prepare(ch: BlockingChannel, data: dict, activate_instance_from_model_file: Callable) -> bool:
+    project_id = data["project_id"]
+    model_name = data["model_name"]
+    plugin_ud = activate_instance_from_model_file(project_id, model_name)
+    if plugin_ud:
+        send_message_by_channel(
+            channel=ch,
+            receiver_id="core",
+            message_type=MessageType.STREAMING_READY,
+            data={"project_id": project_id, "plugin_id": plugin_ud}
+        )
 
 
 def handle_prescription_request(ch: BlockingChannel, data: dict) -> bool:

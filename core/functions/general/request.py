@@ -24,3 +24,7 @@ def get_real_ip(request: Request) -> str:
         logger.warning(f"Get real ip error: {e}", exc_info=True)
 
     return result
+
+
+def get_db(request: Request):
+    return request.state.db

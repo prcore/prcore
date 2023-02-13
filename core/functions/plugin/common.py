@@ -2,22 +2,31 @@ import logging
 from datetime import datetime
 from typing import Any, Callable, List
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from pandas import DataFrame, read_pickle
 from pika import BlockingConnection
+from tzlocal import get_localzone
 
 from core.confs import config, path
 from core.enums.definition import ColumnDefinition
 from core.enums.message import MessageType
 from core.functions.message.util import get_body, send_message
+from core.functions.tool.timers import log_rotation
 from core.starters.rabbitmq import parameters
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
-def plugin_run(basic_info: dict, callback: Callable):
+def plugin_run(basic_info: dict, callback: Callable, processed_messages_clean: Callable) -> None:
     connection = None
     try:
+        # Start the scheduler
+        scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
+        scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
+        scheduler.add_job(processed_messages_clean, "interval", minutes=5)
+        scheduler.start()
+        # Start the rabbitmq connection
         connection = BlockingConnection(parameters)
         channel = connection.channel()
         channel.queue_declare(queue=config.APP_ID)

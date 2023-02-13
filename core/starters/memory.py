@@ -11,3 +11,4 @@ logger = logging.getLogger(__name__)
 dataframes: dict[int, DataFrame] = {}
 pre_processing_tasks: dict[int, Process] = {}
 available_plugins: dict[str, dict[str, datetime | str]] = {}
+processed_messages: dict[str, datetime] = {}

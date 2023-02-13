@@ -1,12 +1,12 @@
 import logging
 from time import sleep
-from tzlocal import get_localzone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from sqlalchemy.orm import close_all_sessions
+from tzlocal import get_localzone
 
 from core import security
 from core.starters.database import Base, engine, SessionLocal
@@ -14,7 +14,7 @@ from core.starters.rabbitmq import parameters
 from core.functions.general.etc import thread
 from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.message.sender import send_online_inquires
-from core.functions.tool.timers import log_rotation
+from core.functions.tool.timers import log_rotation, processed_messages_clean
 from core.routers import event_log, plugin, project
 
 # Enable logging
@@ -76,6 +76,7 @@ def shutdown_event():
 scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
 scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
 scheduler.add_job(send_online_inquires, "interval", minutes=5)
+scheduler.add_job(processed_messages_clean, "interval", minutes=5)
 scheduler.start()
 
 # Start a thread to consume messages
