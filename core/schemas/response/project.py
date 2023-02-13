@@ -25,3 +25,5 @@ class CreateProjectResponse(BaseModel):
 
 class SimulateProjectResponse(BaseModel):
     message: str
+    project_id: int
+

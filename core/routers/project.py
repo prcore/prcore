@@ -116,7 +116,8 @@ def simulation_start(request: Request, project_id: int, db: Session = Depends(ge
     model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
     send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
     return {
-        "message": "Project simulation started successfully"
+        "message": "Project simulation started successfully",
+        "project_id": project_id
     }
 
 
@@ -138,7 +139,8 @@ def simulation_stop(request: Request, project_id: int, db: Session = Depends(get
     stop_simulation(db, db_project)
 
     return {
-        "message": "Project simulation stopped successfully"
+        "message": "Project simulation stopped successfully",
+        "project_id": project_id
     }
 
 
@@ -161,7 +163,8 @@ def simulation_clear(request: Request, project_id: int, db: Session = Depends(ge
     case_crud.delete_all_cases_by_project_id(db, db_project.id)
 
     return {
-        "message": "Project simulation cleared successfully"
+        "message": "Project simulation cleared successfully",
+        "project_id": project_id
     }
 
 
