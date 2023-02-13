@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from sqlalchemy.orm import close_all_sessions
+from sqlalchemy.exc import OperationalError
 from tzlocal import get_localzone
 
 from core import security
@@ -21,7 +22,14 @@ from core.routers import event, event_log, plugin, project
 logger = logging.getLogger(__name__)
 
 # Create all tables
-Base.metadata.create_all(bind=engine)
+while True:
+    try:
+        Base.metadata.create_all(bind=engine)
+        break
+    except OperationalError:
+        print("Database is not ready. Trying again in 5 seconds...")
+        sleep(5)
+print("Database is connected")
 
 # Create the app
 app = FastAPI(debug=True)

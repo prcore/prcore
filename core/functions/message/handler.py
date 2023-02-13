@@ -5,6 +5,7 @@ from time import sleep
 
 from pika import BlockingConnection, URLParameters
 from pika.adapters.blocking_connection import BlockingChannel
+from pika.exceptions import AMQPConnectionError
 from pika.spec import Basic, BasicProperties
 from sqlalchemy.orm import Session
 
@@ -31,7 +32,14 @@ consuming_stopped = Event()
 
 def start_consuming(parameters: URLParameters, queue: str, callback_function: callable,
                     prefetch_count: int = 0) -> None:
-    connection = BlockingConnection(parameters)
+    while True:
+        try:
+            connection = BlockingConnection(parameters)
+            break
+        except AMQPConnectionError:
+            print("Connection to RabbitMQ failed. Trying again in 5 seconds...")
+            sleep(5)
+    print("Connection to RabbitMQ established")
     channel = connection.channel()
     channel.queue_declare(queue=queue)
     prefetch_count and channel.basic_qos(prefetch_count=prefetch_count)

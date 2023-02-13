@@ -1,10 +1,12 @@
 import logging
 from datetime import datetime
+from time import sleep
 from typing import Any, Callable, List
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from pandas import DataFrame, read_pickle
 from pika import BlockingConnection
+from pika.exceptions import AMQPConnectionError
 from tzlocal import get_localzone
 
 from core.confs import config, path
@@ -27,7 +29,14 @@ def plugin_run(basic_info: dict, callback: Callable, processed_messages_clean: C
         scheduler.add_job(processed_messages_clean, "interval", minutes=5)
         scheduler.start()
         # Start the rabbitmq connection
-        connection = BlockingConnection(parameters)
+        while True:
+            try:
+                connection = BlockingConnection(parameters)
+                break
+            except AMQPConnectionError:
+                logger.warning("Connection to RabbitMQ failed. Trying again in 5 seconds...")
+                sleep(5)
+        print("Connection to RabbitMQ established")
         channel = connection.channel()
         channel.queue_declare(queue=config.APP_ID)
         channel.basic_consume(queue=config.APP_ID, on_message_callback=callback)
