@@ -46,3 +46,21 @@ def send_streaming_prepare(plugin_key: str, project_id: int, model_name: str) ->
         "project_id": project_id,
         "model_name": model_name
     })
+
+
+def send_prescription_request_to_all_plugins(project_id: int, plugins: list[str], model_names: dict[str, str],
+                                             event_id: int, prefix: list[dict]) -> bool:
+    # Send prescription request to all plugins
+    return all(send_prescription_request(plugin_key, project_id, model_names[plugin_key], event_id, prefix)
+               for plugin_key in plugins)
+
+
+def send_prescription_request(plugin_key: str, project_id: int, model_name: str, event_id: int,
+                              prefix: list[dict]) -> bool:
+    # Send prescription request to a specific plugin
+    return send_message(plugin_key, MessageType.PRESCRIPTION_REQUEST, {
+        "project_id": project_id,
+        "model_name": model_name,
+        "event_id": event_id,
+        "data": prefix
+    })

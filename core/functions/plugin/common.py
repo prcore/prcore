@@ -71,7 +71,7 @@ def get_timestamp_columns(df: DataFrame) -> List[str]:
 
 def get_null_output(plugin_name: str, plugin_type: str, detail: str) -> dict:
     return {
-        "date": datetime.now(),
+        "date": datetime.now().isoformat(),
         "type": plugin_type,
         "outcome": None,
         "model": {

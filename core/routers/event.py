@@ -1,12 +1,19 @@
 import logging
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.orm import Session
 
-from core import glovar
-from core.models.case import Case
-from core.models.event import Event
-from core.models.identifier import get_identifier
+import core.crud.case as case_crud
+import core.crud.event as event_crud
+import core.crud.project as project_crud
+import core.schemas.case as case_schema
+import core.schemas.event as event_schema
+import core.schemas.response.event as event_response
+from core.enums.definition import ColumnDefinition
+from core.functions.definition.util import get_defined_column_name
+from core.functions.event.job import prepare_prefix_and_send
+from core.functions.general.request import get_real_ip, get_db
+from core.security.token import validate_token
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -15,68 +22,46 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/event")
 
 
-class Request(BaseModel):
-    case_id: int
-    dashboard_id: int
-    activity: str
-    start_timestamp: int
-    end_timestamp: int
-    resource: str = ""
-    attributes: dict = {}
-    status: str
+@router.post("/{project_id}", response_model=event_response.PostEventResponse)
+async def receive_event(request: Request, project_id: int, db: Session = Depends(get_db),
+                        _: bool = Depends(validate_token)):
+    logger.warning(f"Receive event - from IP {get_real_ip(request)}")
+    request_body = await request.json()
 
+    # Get columns definition from the database
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail="No valid project provided")
+    db_definition = db_project.event_log.definition
+    columns_definition = db_definition.columns_definition
 
-@router.post("")
-def receive_event(request: Request):
-    # Create new event
-    dash_board_id = request.dashboard_id
+    # Check if request body has all the columns previously defined
+    for column in columns_definition:
+        if column not in request_body:
+            raise HTTPException(status_code=400, detail=f"Missing column {column.name}")
 
-    # Find dashboard
-    with glovar.save_lock:
-        for dashboard in glovar.dashboards:
-            if dashboard.id == dash_board_id:
-                break
-        else:
-            return {"message": "Dashboard not found"}
+    # Check if there is already a case with the same case ID
+    case_id = str(request_body[get_defined_column_name(columns_definition, ColumnDefinition.CASE_ID)])
+    db_case = case_crud.get_case_by_project_id_and_case_id(db, project_id, case_id)
+    if not db_case:
+        db_case = case_crud.create_case(db, case_schema.CaseCreate(project_id=project_id, case_id=case_id))
 
-    print("Event received")
-
-    # Create new event
-    event = Event(
-        id=get_identifier(),
-        activity=request.activity,
-        start_timestamp=request.start_timestamp,
-        end_timestamp=request.end_timestamp,
-        resource=request.resource,
-        attributes=request.attributes
+    # Create the event
+    db_event = event_crud.create_event(
+        db=db,
+        event=event_schema.EventCreate(project_id=project_id, attributes=request_body),
+        case_id=db_case.id
     )
-    event.save(new=True)
-    print("Event created")
 
-    # Find case
-    case_id = request.case_id
-
-    for case in dashboard.current_event_log.cases:
-        if case.id == case_id:
-            break
-    else:
-        # Create new case
-        case = Case(
-            id=case_id,
-            status="ongoing",
-            events=[],
-            results=[]
-        )
-        case.save(new=True)
-        dashboard.current_event_log.cases.append(case)
-        print("Case created")
-
-    # Append event to case
-    case.status = request.status
-    case.events.append(event)
-    print("Event appended to case")
-    case.prescribe(dashboard.algorithms)
-    print(f"Result: {case.get_predicted_result()}")
-    case.save()
-
-    return {"message": "Event received", "case": case}
+    # Send the event to the plugins
+    prepare_prefix_and_send(
+        project_id=project_id,
+        model_names={plugin.key: plugin.model_name for plugin in db_project.plugins},
+        event_id=db_event.id,
+        columns_definition=columns_definition,
+        data=[db_event.attributes for db_event in db_case.events]
+    )
+    return {
+        "message": "Event received successfully",
+        "event": db_event
+    }

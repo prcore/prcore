@@ -19,9 +19,14 @@ def get_event_by_id(db: Session, event_id: int) -> model.Event | None:
     return db.query(model.Event).filter_by(id=event_id).first()
 
 
-def create_event(db: Session, event: schema.EventCreate, project_id: int, case_id: int) -> model.Event:
+def get_events_by_case_id_and_project_id(db: Session, case_id: int, project_id: int) -> list[model.Event]:
+    # Get all events by case id and project id
+    return db.query(model.Event).filter_by(case_id=case_id, project_id=project_id).all()  # type: ignore
+
+
+def create_event(db: Session, event: schema.EventCreate, case_id: int) -> model.Event:
     # Create an event
-    db_event = model.Event(**event.dict(), project_id=project_id, case_id=case_id)
+    db_event = model.Event(**event.dict(), case_id=case_id)
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
@@ -30,7 +35,7 @@ def create_event(db: Session, event: schema.EventCreate, project_id: int, case_i
 
 def add_prescription(db: Session, db_event: model.Event, plugin_key: str, prescription: dict) -> model.Event:
     # Add a prescription to an event
-    db_event.prescriptions[plugin_key] = prescription
+    db_event.prescriptions = {**db_event.prescriptions, plugin_key: prescription}
     db.add(db_event)
     db.commit()
     db.refresh(db_event)

@@ -46,7 +46,7 @@ class Algorithm:
         # Pre-process the data
         try:
             encoded_df, mapping = get_ordinal_encoded_df(self.df, ColumnDefinition.ACTIVITY)
-            self.data["mapping"] = mapping
+            self.data["mapping"] = {v: k for k, v in mapping.items()}
             case_ids = encoded_df[ColumnDefinition.CASE_ID].values
             activities = encoded_df[ColumnDefinition.ACTIVITY].values
             unique_case_ids = np.unique(case_ids)
@@ -69,7 +69,7 @@ class Algorithm:
                 x = [group[:length] for group in self.grouped_activities if len(group) > length]
                 y = [group[length] for group in self.grouped_activities if len(group) > length]
                 x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
-                knn = KNeighborsClassifier(n_neighbors=5)
+                knn = KNeighborsClassifier(n_neighbors=self.parameters["n_neighbors"])
                 knn.fit(x_train, y_train)
                 self.data["models"][length] = knn
 
@@ -119,14 +119,14 @@ class Algorithm:
     def predict(self, prefix: list[dict]) -> dict:
         # Predict the next activity
         if any(x["ACTIVITY"] not in self.data["mapping"] for x in prefix):
-            return get_null_output(basic_info["name"], basic_info["type"],
+            return get_null_output(basic_info["name"], basic_info["prescription_type"],
                                    "The prefix contains an activity that is not in the training set")
 
         # Get the length of the prefix
         length = len(prefix)
         model = self.data["models"].get(length)
         if not model:
-            return get_null_output(basic_info["name"], basic_info["type"],
+            return get_null_output(basic_info["name"], basic_info["prescription_type"],
                                    "The model is not trained for the given prefix length")
 
         # Get the features of the prefix
@@ -136,8 +136,8 @@ class Algorithm:
         prediction = model.predict([features])[0]
         output = list(self.data["mapping"].keys())[list(self.data["mapping"].values()).index(prediction)]
         return {
-            "date": datetime.now(),
-            "type": basic_info["type"],
+            "date": datetime.now().isoformat(),
+            "type": basic_info["prescription_type"],
             "output": output,
             "plugin": {
                 "name": basic_info["name"],

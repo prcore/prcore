@@ -68,6 +68,8 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
             handle_streaming_ready(data)
         elif message_type == MessageType.PRESCRIPTION_RESULT:
             handle_prescription_result(data)
+    except Exception as e:
+        logger.error(f"Error while handling message: {e}", exc_info=True)
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -164,7 +166,7 @@ def handle_prescription_result(data: dict) -> None:
     project_id = data["project_id"]
     plugin_key = data["plugin_key"]
     event_id = data["event_id"]
-    result = data["result"]
+    result = data["data"]
     with SessionLocal() as db:
         project = project_crud.get_project_by_id(db, project_id)
         if not project:
@@ -174,5 +176,5 @@ def handle_prescription_result(data: dict) -> None:
             return
         event = event_crud.add_prescription(db, event, plugin_key, result)
         # Check if all plugins have finished
-        if all([event.prescriptions.get(plugin_key) for plugin_key in project.plugins if is_plugin_active(plugin_key)]):
+        if all([event.prescriptions.get(plugin.key) for plugin in project.plugins if is_plugin_active(plugin.key)]):
             event_crud.mark_as_prescribed(db, event)

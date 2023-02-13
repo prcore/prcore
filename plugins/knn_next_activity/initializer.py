@@ -30,6 +30,15 @@ def get_instance_from_memory(project_id: int) -> Optional[Algorithm]:
     return None
 
 
+def get_instance_from_model_file(project_id: int, model_name: str) -> Optional[Algorithm]:
+    instance = get_instance_from_memory(project_id)
+    if instance is None:
+        instance = Algorithm(project_id, None, None, model_name)
+    instance.load_model()
+    memory.instances[project_id] = instance
+    return instance
+
+
 def get_new_instance(project_id: int, plugin_id: int, training_df: DataFrame) -> Algorithm:
     # Get new instance
     return Algorithm(project_id, plugin_id, training_df)
@@ -37,11 +46,7 @@ def get_new_instance(project_id: int, plugin_id: int, training_df: DataFrame) ->
 
 def activate_instance_from_model_file(project_id: int, model_name: str) -> int:
     # Get instance from model file
-    instance = get_instance_from_memory(project_id)
-    if instance is None:
-        instance = Algorithm(project_id, None, None, model_name)
-    instance.load_model()
-    memory.instances[project_id] = instance
+    instance = get_instance_from_model_file(project_id, model_name)
     return instance.get_plugin_id()
 
 

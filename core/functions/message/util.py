@@ -1,5 +1,6 @@
 import logging
 import json
+from datetime import datetime
 from typing import Any, Tuple
 
 from pika import BasicProperties, BlockingConnection
@@ -60,6 +61,9 @@ def get_body(message_type: MessageType, data: dict) -> bytes:
     result = b""
 
     try:
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                data[key] = value.isoformat()
         result = json.dumps({
             "type": message_type,
             "data": data

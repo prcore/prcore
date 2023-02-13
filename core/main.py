@@ -15,7 +15,7 @@ from core.functions.general.etc import thread
 from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.message.sender import send_online_inquires
 from core.functions.tool.timers import log_rotation, processed_messages_clean
-from core.routers import event_log, plugin, project
+from core.routers import event, event_log, plugin, project
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(event.router)
 app.include_router(event_log.router)
 app.include_router(plugin.router)
 app.include_router(project.router)

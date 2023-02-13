@@ -19,9 +19,14 @@ def get_case_by_id(db: Session, case_id: int) -> model.Case | None:
     return db.query(model.Case).filter_by(id=case_id).first()
 
 
-def create_case(db: Session, case: schema.CaseCreate, project_id: int) -> model.Case:
+def get_case_by_project_id_and_case_id(db: Session, project_id: int, case_id: str) -> model.Case | None:
+    # Get a case by project id and case id
+    return db.query(model.Case).filter_by(project_id=project_id, case_id=case_id).first()
+
+
+def create_case(db: Session, case: schema.CaseCreate) -> model.Case:
     # Create a case
-    db_case = model.Case(**case.dict(), project_id=project_id)
+    db_case = model.Case(**case.dict())
     db.add(db_case)
     db.commit()
     db.refresh(db_case)

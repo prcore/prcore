@@ -9,7 +9,7 @@ from core.functions.message.util import get_data_from_body
 from core.functions.plugin.handler import (handle_online_inquiry, handle_training_data, handle_streaming_prepare,
                                            handle_prescription_request)
 from plugins.knn_next_activity.config import basic_info, needed_columns
-from plugins.knn_next_activity.initializer import (activate_instance_from_model_file, get_instance_from_memory,
+from plugins.knn_next_activity.initializer import (activate_instance_from_model_file, get_instance_from_model_file,
                                                    preprocess_and_train)
 from plugins.knn_next_activity import memory
 
@@ -34,7 +34,10 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
         elif message_type == MessageType.STREAMING_PREPARE:
             handle_streaming_prepare(ch, data, activate_instance_from_model_file)
         elif message_type == MessageType.PRESCRIPTION_REQUEST:
-            handle_prescription_request(ch, data, get_instance_from_memory(data.get("project_id")))
+            instance = get_instance_from_model_file(data["project_id"], data["model_name"])
+            handle_prescription_request(ch, data, instance)
+    except Exception as e:
+        logger.warning(f"Callback error: {e}", exc_info=True)
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
