@@ -57,7 +57,12 @@ async def db_session_middleware(request: Request, call_next):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {
+        "API": "https://prcore.chaos.run",
+        "Documentation": "https://prcore-docs.chaos.run",
+        "Swagger UI": "https://prcore.chaos.run/docs",
+        "RabbitMQ Management": "https://prcore-rabbitmq.chaos.run"
+    }
 
 
 @app.on_event("shutdown")

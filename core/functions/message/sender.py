@@ -64,3 +64,15 @@ def send_prescription_request(plugin_key: str, project_id: int, model_name: str,
         "event_id": event_id,
         "data": prefix
     })
+
+
+def send_streaming_stop_to_all_plugins(project_id: int, plugins: list[str]) -> bool:
+    # Send streaming stop to all plugins
+    return all(send_streaming_stop(plugin_key, project_id) for plugin_key in plugins)
+
+
+def send_streaming_stop(plugin_key: str, project_id: int) -> bool:
+    # Send streaming stop to a specific plugin
+    return send_message(plugin_key, MessageType.STREAMING_STOP, {
+        "project_id": project_id
+    })

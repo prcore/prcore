@@ -9,6 +9,7 @@ import core.models.project as project_model
 from core.enums.definition import ColumnDefinition
 from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.general.etc import process_daemon
+from core.functions.message.sender import send_streaming_stop_to_all_plugins
 from core.starters import memory
 from simulation import run_simulation
 
@@ -33,7 +34,9 @@ def stop_simulation(db: Session, db_project: project_model.Project) -> bool:
     # Stop the simulation
     db_project = project_crud.update_status(db, db_project, ProjectStatus.TRAINED)
     for plugin in db_project.plugins:
-        plugin_crud.update_status(db, plugin, PluginStatus.TRAINED)
+        if plugin.status == PluginStatus.STREAMING:
+            plugin_crud.update_status(db, plugin, PluginStatus.TRAINED)
     end_event = memory.simulation_events.get(db_project.id)
     end_event and end_event.set()
+    send_streaming_stop_to_all_plugins(db_project.id, [plugin.key for plugin in db_project.plugins])
     return True

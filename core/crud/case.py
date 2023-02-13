@@ -39,4 +39,9 @@ def delete_case(db: Session, case_id: int) -> None:
     if db_case:
         db.delete(db_case)
         db.commit()
-    return db_case
+
+
+def delete_all_cases_by_project_id(db: Session, project_id: int) -> None:
+    # Delete cases by project id
+    db.query(model.Case).filter_by(project_id=project_id).delete(synchronize_session="fetch")
+    db.commit()

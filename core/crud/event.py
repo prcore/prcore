@@ -57,4 +57,9 @@ def delete_event(db: Session, event_id: int) -> None:
     if db_event:
         db.delete(db_event)
         db.commit()
-    return db_event
+
+
+def delete_all_events_by_project_id(db: Session, project_id: int) -> None:
+    # Delete events by project id
+    db.query(model.Event).filter_by(project_id=project_id).delete(synchronize_session="fetch")
+    db.commit()

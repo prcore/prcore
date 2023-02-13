@@ -54,3 +54,9 @@ def preprocess_and_train(project_id: int, plugin_id: int, training_df: DataFrame
     # Pre-process and train the model
     instance = get_instance(project_id, plugin_id, training_df)
     start_training(instance)
+
+
+def deactivate_instance(project_id: int) -> None:
+    # Deactivate instance
+    if project_id in memory.instances:
+        del memory.instances[project_id]

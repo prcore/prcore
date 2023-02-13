@@ -3,12 +3,15 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
+import core.crud.case as case_crud
 import core.crud.definition as definition_crud
+import core.crud.event as event_crud
 import core.crud.event_log as event_log_crud
 import core.crud.project as project_crud
 import core.schemas.request.project as project_request
 import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
+from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
 from core.functions.event_log.job import start_pre_processing
 from core.functions.general.etc import process_daemon
@@ -94,13 +97,13 @@ def simulation_start(request: Request, project_id: int, db: Session = Depends(ge
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
-        raise HTTPException(status_code=400, detail="No valid project provided")
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
     if db_project.status == ProjectStatus.ACTIVATING:
-        raise HTTPException(status_code=400, detail="Project is activating")
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
     if db_project.status == ProjectStatus.SIMULATING:
-        raise HTTPException(status_code=400, detail="Simulation already started")
+        raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_STARTED)
     if db_project.status != ProjectStatus.TRAINED:
-        raise HTTPException(status_code=400, detail="Project not trained")
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_TRAINED)
 
     # Start the simulation
     db_project = project_crud.update_status(db, db_project, ProjectStatus.SIMULATING)
@@ -120,15 +123,38 @@ def simulation_stop(request: Request, project_id: int, db: Session = Depends(get
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
-        raise HTTPException(status_code=400, detail="No valid project provided")
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
     if db_project.status == ProjectStatus.ACTIVATING:
-        raise HTTPException(status_code=400, detail="Project is activating")
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
     if db_project.status != ProjectStatus.SIMULATING:
-        raise HTTPException(status_code=400, detail="Simulation not started")
+        raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_NOT_STARTED)
 
     # Stop the simulation
     stop_simulation(db, db_project)
 
     return {
         "message": "Project simulation stopped successfully"
+    }
+
+
+@router.put("/{project_id}/simulate/clear", response_model=project_response.SimulateProjectResponse)
+def simulation_clear(request: Request, project_id: int, db: Session = Depends(get_db),
+                     _: bool = Depends(validate_token)):
+    logger.warning(f"Clear simulation - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    if db_project.status == ProjectStatus.ACTIVATING:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
+    if db_project.status == ProjectStatus.SIMULATING:
+        stop_simulation(db, db_project)
+
+    # Remove all the cases and events belonging to the project
+    event_crud.delete_all_events_by_project_id(db, db_project.id)
+    case_crud.delete_all_cases_by_project_id(db, db_project.id)
+
+    return {
+        "message": "Project simulation cleared successfully"
     }

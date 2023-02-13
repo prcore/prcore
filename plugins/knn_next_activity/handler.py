@@ -10,7 +10,7 @@ from core.functions.plugin.handler import (handle_online_inquiry, handle_trainin
                                            handle_prescription_request)
 from plugins.knn_next_activity.config import basic_info, needed_columns
 from plugins.knn_next_activity.initializer import (activate_instance_from_model_file, get_instance_from_model_file,
-                                                   preprocess_and_train)
+                                                   preprocess_and_train, deactivate_instance)
 from plugins.knn_next_activity import memory
 
 # Enable logging
@@ -36,6 +36,8 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
         elif message_type == MessageType.PRESCRIPTION_REQUEST:
             instance = get_instance_from_model_file(data["project_id"], data["model_name"])
             handle_prescription_request(ch, data, instance)
+        elif message_type == MessageType.STREAMING_STOP:
+            deactivate_instance(data["project_id"])
     except Exception as e:
         logger.warning(f"Callback error: {e}", exc_info=True)
     finally:
