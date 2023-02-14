@@ -7,7 +7,9 @@ class ErrorType(str, Enum):
     EVENT_LOG_DEFINITION_NOT_FOUND = "Event log definition not found"
 
     PROJECT_NOT_FOUND = "Project not found"
+    PROJECT_EXISTED = "Project already existed for this event log"
     PROJECT_ACTIVATING = "Project is activating"
+    PROJECT_NOT_READY = "Project not ready"
     PROJECT_NOT_TRAINED = "Project not trained"
     PROJECT_NOT_STREAMING = "Project not streaming"
     PROJECT_ALREADY_READING = "Project streaming result already be reading"

@@ -39,7 +39,7 @@ def check_simulation(db: Session, db_project: project_model.Project) -> bool:
 
 def stop_simulation(db: Session, db_project: project_model.Project, redefined: bool = False) -> bool:
     # Stop the simulation
-    new_project_status = ProjectStatus.TRAINED if redefined else ProjectStatus.WAITING
+    new_project_status = ProjectStatus.WAITING if redefined else ProjectStatus.TRAINED
     db_project = project_crud.update_status(db, db_project, new_project_status)
     for plugin in db_project.plugins:
         if redefined:

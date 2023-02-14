@@ -42,10 +42,10 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     # Get the data from the database, and validate it
     db_event_log = event_log_crud.get_event_log(db, create_body.event_log_id)
     if not db_event_log:
-        raise HTTPException(status_code=400, detail="No valid event log provided")
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_NOT_FOUND)
     db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
     if db_project:
-        raise HTTPException(status_code=400, detail="Project already exists for this event log")
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_EXISTED)
 
     # Validate the user's input
     validate_project_definition(create_body.positive_outcome, db_event_log.definition.columns_definition)
@@ -91,6 +91,66 @@ def read_project(request: Request, project_id: int, db: Session = Depends(get_db
     return {
         "message": "Project retrieved successfully",
         "project": project_crud.get_project_by_id(db, project_id)
+    }
+
+
+@router.put("/{project_id}", response_model=project_response.ProjectResponse)
+def update_project(request: Request, project_id: int, update_body: project_request.BasicUpdateProjectRequest,
+                   db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Update project - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    # Set name or description
+    db_project = project_crud.update_name_and_description(db, db_project, update_body.name, update_body.description)
+    return {
+        "message": "Project's basic information updated successfully",
+        "project": db_project
+    }
+
+
+@router.put("/{project_id}/definition", response_model=project_response.CreateProjectResponse)
+def update_project_definition(request: Request, project_id: int,
+                              update_body: project_request.UpdateProjectRequest,
+                              db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Update project definition - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    elif db_project.status not in {ProjectStatus.WAITING, ProjectStatus.TRAINED, ProjectStatus.STREAMING,
+                                   ProjectStatus.SIMULATING}:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
+    db_event_log = event_log_crud.get_event_log(db, db_project.event_log_id)
+    if not db_event_log:
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_NOT_FOUND)
+
+    # Validate the user's input
+    validate_project_definition(update_body.positive_outcome, db_event_log.definition.columns_definition)
+    validate_project_definition(update_body.treatment, db_event_log.definition.columns_definition)
+    stop_simulation(db, db_project, True)
+
+    # Update the project
+    definition_crud.set_outcome_treatment_definition(
+        db=db,
+        db_definition=db_event_log.definition,
+        outcome=update_body.positive_outcome,
+        treatment=update_body.treatment,
+        fast_mode=update_body.fast_mode,
+        start_transition=update_body.start_transition,
+        end_transition=update_body.end_transition
+    )
+
+    # Start the pre-processing
+    project_crud.update_status(db, db_project, ProjectStatus.PREPROCESSING)
+    process_daemon(start_pre_processing, (db_project.id, db_event_log.id, get_active_plugins(), True))
+
+    return {
+        "message": "Project definition updated successfully",
+        "project": db_project
     }
 
 

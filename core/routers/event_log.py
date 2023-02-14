@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 
 import core.crud.event_log as event_log_crud
+import core.crud.project as project_crud
 import core.schemas.response.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 from core.confs import path
+from core.enums.status import ProjectStatus
 from core.functions.definition.util import get_available_options
 from core.enums.error import ErrorType
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
@@ -79,6 +81,10 @@ async def update_event_log(request: Request, event_log_id: int,
 
     if not db_event_log:
         raise HTTPException(status_code=404, detail=ErrorType.EVENT_LOG_NOT_FOUND)
+    db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
+    if db_project and db_project.status not in {ProjectStatus.WAITING, ProjectStatus.TRAINED, ProjectStatus.STREAMING,
+                                                ProjectStatus.SIMULATING}:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
     db_event_log = set_definition(db, db_event_log, request_body)
     df = get_dataframe(db_event_log)
