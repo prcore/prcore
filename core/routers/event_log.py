@@ -10,6 +10,7 @@ import core.schemas.event_log as event_log_schema
 import core.schemas.definition as definition_schema
 from core.confs import path
 from core.functions.definition.util import get_available_options
+from core.enums.error import ErrorType
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.csv import get_dataframe_from_csv
 from core.functions.event_log.dataset import get_completed_transition_df
@@ -35,7 +36,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
     logger.warning(f"Upload event log: {file} - from IP {get_real_ip(request)}")
 
     if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail="No valid file provided")
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
 
     # Save the file
     raw_path = get_new_path(
@@ -79,7 +80,7 @@ async def update_event_log(request: Request, event_log_id: int,
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:
-        raise HTTPException(status_code=404, detail="Event log not found")
+        raise HTTPException(status_code=404, detail=ErrorType.EVENT_LOG_NOT_FOUND)
 
     df = get_dataframe(db_event_log)
     validate_column_definition(request_body, df)
@@ -126,10 +127,10 @@ def read_event_log_definition(request: Request, event_log_id: int, db: Session =
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:
-        raise HTTPException(status_code=404, detail="Event log not found")
+        raise HTTPException(status_code=404, detail=ErrorType.EVENT_LOG_NOT_FOUND)
 
     if not db_event_log.definition:
-        raise HTTPException(status_code=404, detail="Event log definition not found")
+        raise HTTPException(status_code=404, detail=ErrorType.EVENT_LOG_DEFINITION_NOT_FOUND)
 
     df = get_dataframe(db_event_log)
     brief = get_brief_with_inferred_definition(df)
@@ -150,7 +151,7 @@ def read_event_log(request: Request, event_log_id: int, db: Session = Depends(ge
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:
-        raise HTTPException(status_code=404, detail="Event log not found")
+        raise HTTPException(status_code=404, detail=ErrorType.EVENT_LOG_NOT_FOUND)
 
     return {
         "message": "Event log retrieved successfully",
