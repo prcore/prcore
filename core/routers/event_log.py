@@ -119,6 +119,30 @@ def read_event_logs(request: Request, skip: int = 0, limit: int = 100, db: Sessi
     }
 
 
+@router.get("/{event_log_id}/definition", response_model=event_log_response.EventLogDefinitionResponse)
+def read_event_log_definition(request: Request, event_log_id: int, db: Session = Depends(get_db),
+                              _: bool = Depends(validate_token)):
+    logger.warning(f"Read event log definition: {event_log_id} - from IP {get_real_ip(request)}")
+    db_event_log = event_log_crud.get_event_log(db, event_log_id)
+
+    if not db_event_log:
+        raise HTTPException(status_code=404, detail="Event log not found")
+
+    if not db_event_log.definition:
+        raise HTTPException(status_code=404, detail="Event log definition not found")
+
+    df = get_dataframe(db_event_log)
+    brief = get_brief_with_inferred_definition(df)
+
+    return {
+        "message": "Event log definition retrieved successfully",
+        "event_log_id": db_event_log.id,
+        "columns_header": list(db_event_log.definition.columns_definition.keys()),
+        "columns_old_definition": list(db_event_log.definition.columns_definition.values()),
+        "columns_data": brief[2:]
+    }
+
+
 @router.get("/{event_log_id}", response_model=event_log_response.EventLogResponse)
 def read_event_log(request: Request, event_log_id: int, db: Session = Depends(get_db),
                    _: bool = Depends(validate_token)):

@@ -20,6 +20,14 @@ class EventLogResponse(BaseModel):
     event_log: EventLog
 
 
+class EventLogDefinitionResponse(BaseModel):
+    message: str
+    event_log_id: int
+    columns_header: list[str]
+    columns_old_definition: list[ColumnDefinition | None]
+    columns_data: list[list[str | Timestamp | None]]
+
+
 class UploadEventLogResponse(BaseModel):
     message: str
     event_log_id: int
