@@ -85,7 +85,6 @@ class Algorithm:
                     "recall": recall,
                     "f1_score": f1
                 }
-            print("train", self.data["models"].keys())
         except Exception as e:
             logger.warning(f"Training failed: {e}", exc_info=True)
             return False

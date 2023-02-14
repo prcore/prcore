@@ -12,7 +12,7 @@ services:
       - rabbitmq
     restart: always
     environment:
-      ENABLED_PLUGINS: "plugin-knn-next-activity || plugin-random-forest-alarm"
+      ENABLED_PLUGINS: "plugin-knn-next-activity || plugin-random-forest-alarm || plugin-causallift-treatment-effect"
       APP_ID: "core"
       API_TOKEN: ${API_TOKEN}
       API_USERNAME: ${API_USERNAME}
@@ -45,6 +45,27 @@ services:
     restart: always
     environment:
       APP_ID: "plugin-knn-next-activity"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+    volumes:
+      - ./data/event_logs:/code/data/event_logs
+      - ./data/plugins:/code/data/plugins
+      - ./data/tmp:/code/data/tmp
+    networks:
+      - prcore
+
+  plugin-causallift-treatment-effect:
+    build:
+      context: .
+      dockerfile: plugins/causallift_treatment_effect/Dockerfile
+    container_name: prcore-plugin-causallift-treatment-effect
+    depends_on:
+      - core
+    restart: always
+    environment:
+      APP_ID: "plugin-causallift-treatment-effect"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: ${RABBITMQ_USER}
