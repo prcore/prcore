@@ -1,12 +1,12 @@
 import logging
 import pickle
 from datetime import datetime
+from typing import List, Union
 
 import numpy as np
+import pandas as pd
+from causallift import CausalLift
 from pandas import DataFrame
-from sklearn.metrics import precision_score, recall_score, f1_score
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
 
 from core.confs import path
 from core.enums.definition import ColumnDefinition
@@ -14,26 +14,28 @@ from core.functions.general.file import get_new_path
 from core.functions.plugin.common import get_null_output
 from core.functions.training.util import get_ordinal_encoded_df
 
-from plugins.knn_next_activity.config import basic_info
+from plugins.causallift_treatment_effect.config import basic_info
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
 class Algorithm:
-    def __init__(self, project_id: int, plugin_id: int | None, df: DataFrame | None, model_name: str = None,
-                 parameters: dict = basic_info["parameters"]):
+    def __init__(self, project_id: int, plugin_id: Union[int, None], df: Union[DataFrame, None], model_name: str = None,
+                 parameters: dict = basic_info["parameters"], treatment_definition: list = None):
         self.df: DataFrame = df
         self.model_name: str = model_name
         self.parameters: dict = parameters
         self.grouped_activities = []
+        self.grouped_outcomes = []
+        self.grouped_treatments = []
         self.lengths = []
         self.data = {
             "project_id": project_id,
             "plugin_id": plugin_id,
-            "models": {},
-            "scores": {},
-            "mapping": {}
+            "training_dfs": {},
+            "mapping": {},
+            "treatment_definition": treatment_definition
         }
 
     def get_project_id(self) -> int:
@@ -49,8 +51,12 @@ class Algorithm:
             self.data["mapping"] = {v: k for k, v in mapping.items()}
             case_ids = encoded_df[ColumnDefinition.CASE_ID].values
             activities = encoded_df[ColumnDefinition.ACTIVITY].values
+            outcomes = encoded_df[ColumnDefinition.OUTCOME].values
+            treatments = encoded_df[ColumnDefinition.TREATMENT].values
             unique_case_ids = np.unique(case_ids)
             self.grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
+            self.grouped_outcomes = [outcomes[case_ids == case_id][0] for case_id in unique_case_ids]
+            self.grouped_treatments = [treatments[case_ids == case_id][0] for case_id in unique_case_ids]
             self.lengths = [len(case) for case in self.grouped_activities]
         except Exception as e:
             logger.warning(f"Pre-processing failed: {e}", exc_info=True)
@@ -66,26 +72,19 @@ class Algorithm:
             for length in range(min_length, max_length):
                 if len([group for group in self.grouped_activities if len(group) > length]) < threshold:
                     continue
-                x = [group[:length] for group in self.grouped_activities if len(group) > length]
-                y = [group[length] for group in self.grouped_activities if len(group) > length]
-                x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
-                knn = KNeighborsClassifier(n_neighbors=self.parameters["n_neighbors"])
-                knn.fit(x_train, y_train)
-                self.data["models"][length] = knn
-
-                # Evaluate the model on the validation set
-                y_pred = knn.predict(x_val)
-                accuracy = round(knn.score(x_val, y_val), 4)
-                precision = round(precision_score(y_val, y_pred, average="weighted", zero_division=1), 4)
-                recall = round(recall_score(y_val, y_pred, average="weighted", zero_division=1), 4)
-                f1 = round(f1_score(y_val, y_pred, average="weighted"), 4)
-                self.data["scores"][length] = {
-                    "accuracy": accuracy,
-                    "precision": precision,
-                    "recall": recall,
-                    "f1_score": f1
-                }
-            print("train", self.data["models"].keys())
+                training_data = []
+                for i, group in enumerate(self.grouped_activities):
+                    if len(group) < length:
+                        continue
+                    x = group[:length]
+                    y = self.grouped_outcomes[i]
+                    t = self.grouped_treatments[i]
+                    training_data.append([x, y, t])
+                training_df = pd.DataFrame(training_data, columns=["Activities", "Outcome", "Treatment"])
+                activities_df = pd.DataFrame(np.stack(training_df["Activities"], axis=0),
+                                             columns=[f"Activity_{i}" for i in range(length)])
+                training_df = pd.concat([activities_df, training_df[["Outcome", "Treatment"]]], axis=1)
+                self.data["training_dfs"][length] = training_df
         except Exception as e:
             logger.warning(f"Training failed: {e}", exc_info=True)
             return False
@@ -105,7 +104,7 @@ class Algorithm:
 
     def load_model(self) -> bool:
         # Load the model
-        if self.data["models"]:
+        if self.data["training_dfs"]:
             return True
         if not self.model_name:
             return False
@@ -117,7 +116,7 @@ class Algorithm:
             return False
         return True
 
-    def predict(self, prefix: list[dict]) -> dict:
+    def predict(self, prefix: List[dict]) -> dict:
         # Predict the next activity
         if any(x["ACTIVITY"] not in self.data["mapping"] for x in prefix):
             return get_null_output(basic_info["name"], basic_info["prescription_type"],
@@ -125,29 +124,35 @@ class Algorithm:
 
         # Get the length of the prefix
         length = len(prefix)
-        print("predict", self.data["models"].keys())
-        model = self.data["models"].get(length)
-        if not model:
+        training_df = self.data["training_dfs"].get(length)
+        if training_df is None:
             return get_null_output(basic_info["name"], basic_info["prescription_type"],
                                    "The model is not trained for the given prefix length")
 
         # Get the features of the prefix
         features = [self.data["mapping"][x["ACTIVITY"]] for x in prefix]
 
-        # Predict the next activity
-        prediction = model.predict([features])[0]
-        output = list(self.data["mapping"].keys())[list(self.data["mapping"].values()).index(prediction)]
+        # Get the CATE using two models approach
+        test_df = DataFrame([features], columns=[f"Activity_{i}" for i in range(length)])
+        cl = CausalLift(train_df=training_df, test_df=test_df, enable_ipw=True)
+        train_df, test_df = cl.estimate_cate_by_2_models()
+        proba_if_treated = round(test_df["Proba_if_Treated"].values[0].item(), 4)
+        proba_if_untreated = round(test_df["Proba_if_Untreated"].values[0].item(), 4)
+        cate = round(test_df["CATE"].values[0].item(), 4)
+
+        output = {
+            "proba_if_treated": proba_if_treated,
+            "proba_if_untreated": proba_if_untreated,
+            "cate": cate,
+            "treatment": self.data["treatment_definition"]
+        }
         return {
             "date": datetime.now().isoformat(),
             "type": basic_info["prescription_type"],
             "output": output,
             "plugin": {
                 "name": basic_info["name"],
-                "model": length,
-                "accuracy": self.data["scores"][length]["accuracy"],
-                "precision": self.data["scores"][length]["precision"],
-                "recall": self.data["scores"][length]["recall"],
-                "f1_score": self.data["scores"][length]["f1_score"]
+                "model": length
             }
         }
 

@@ -37,5 +37,6 @@ def start_pre_processing(project_id: int, event_log_id: int, active_plugins: dic
                 project_id=project_id
             )
             plugins[plugin_key] = plugin.id
-        send_training_data_to_all_plugins(project_id, training_df_name, plugins)
+        treatment_definition = db_event_log.definition.treatment_definition
+        send_training_data_to_all_plugins(project_id, training_df_name, treatment_definition, plugins)
     return True

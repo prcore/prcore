@@ -18,18 +18,21 @@ def send_online_inquiry(plugin_id: str) -> bool:
     return send_message(plugin_id, MessageType.ONLINE_INQUIRY, {})
 
 
-def send_training_data_to_all_plugins(project_id: int, training_df_name: str, plugins: dict[str, int]) -> bool:
+def send_training_data_to_all_plugins(project_id: int, training_df_name: str, treatment_definition: list,
+                                      plugins: dict[str, int]) -> bool:
     # Send training data to all plugins
-    return all(send_training_data(plugin_key, project_id, plugins[plugin_key], training_df_name)
+    return all(send_training_data(plugin_key, project_id, plugins[plugin_key], training_df_name, treatment_definition)
                for plugin_key in plugins)
 
 
-def send_training_data(plugin_key: str, project_id: int, plugin_id: int, training_df_name: str) -> bool:
+def send_training_data(plugin_key: str, project_id: int, plugin_id: int, training_df_name: str,
+                       treatment_definition: list) -> bool:
     # Send training data to a specific plugin
     return send_message(plugin_key, MessageType.TRAINING_DATA, {
         "project_id": project_id,
         "plugin_id": plugin_id,
-        "training_df_name": training_df_name
+        "training_df_name": training_df_name,
+        "treatment_definition": treatment_definition
     })
 
 

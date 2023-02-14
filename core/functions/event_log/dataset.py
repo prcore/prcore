@@ -56,10 +56,12 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
 
         # Save the data
         training_df_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DF_PATH}/", suffix=".pkl")
+        training_csv_path = training_df_path.replace(".pkl", ".csv")
         training_df_name = training_df_path.split("/")[-1]
         simulation_df_path = get_new_path(base_path=f"{path.EVENT_LOG_SIMULATION_DF_PATH}/", suffix=".pkl")
         simulation_df_name = simulation_df_path.split("/")[-1]
         processed_df.to_pickle(training_df_path)
+        processed_df.to_csv(training_csv_path, index=False)
         simulation_df.to_pickle(simulation_df_path)
 
         # Update the database

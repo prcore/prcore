@@ -15,7 +15,8 @@ from core.starters.rabbitmq import parameters
 from core.functions.general.etc import thread
 from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.message.sender import send_online_inquires
-from core.functions.tool.timers import log_rotation, processed_messages_clean
+from core.functions.tool.timers import processed_messages_clean
+from core.functions.plugin.common import log_rotation
 from core.routers import event, event_log, plugin, project
 
 # Enable logging

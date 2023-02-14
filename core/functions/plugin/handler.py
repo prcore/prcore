@@ -26,6 +26,7 @@ def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
         project_id = data["project_id"]
         plugin_id = data["plugin_id"]
         training_df_name = data["training_df_name"]
+        treatment_definition = data["treatment_definition"]
         training_df = read_training_df(training_df_name)
         applicable = check_training_df(training_df, needed_columns)
         send_message_by_channel(
@@ -34,15 +35,15 @@ def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
             message_type=MessageType.DATA_REPORT,
             data={"project_id": project_id, "plugin_id": plugin_id, "applicable": applicable}
         )
-        thread(preprocess_and_train, (project_id, plugin_id, training_df))
+        thread(preprocess_and_train, (project_id, plugin_id, training_df, treatment_definition))
     except Exception as e:
         send_message_by_channel(
             channel=ch,
             receiver_id="core",
-            message_type=MessageType.DATA_REPORT,
+            message_type=MessageType.ERROR_REPORT,
             data={"project_id": project_id, "result": "Error while processing data"}
         )
-        logger.warning(f"Handle training data failed: {e}")
+        logger.warning(f"Handle training data failed: {e}", exc_info=True)
 
     return result
 

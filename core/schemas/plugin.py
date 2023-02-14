@@ -11,7 +11,7 @@ class PluginBase(BaseModel):
     name: str
     prescription_type: str
     description: str | None = None
-    parameters: dict[str, str | bool | int | float] = {}
+    parameters: dict[str, str | bool | int | float | list] = {}
     status: str | None = None
 
 

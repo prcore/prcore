@@ -50,7 +50,7 @@ def activate_instance_from_model_file(project_id: int, model_name: str) -> int:
     return instance.get_plugin_id()
 
 
-def preprocess_and_train(project_id: int, plugin_id: int, training_df: DataFrame) -> None:
+def preprocess_and_train(project_id: int, plugin_id: int, training_df: DataFrame, _: list) -> None:
     # Pre-process and train the model
     instance = get_instance(project_id, plugin_id, training_df)
     start_training(instance)
