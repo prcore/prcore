@@ -4,10 +4,8 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 
 import core.crud.event_log as event_log_crud
-import core.crud.definition as definition_crud
 import core.schemas.response.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
-import core.schemas.definition as definition_schema
 from core.confs import path
 from core.functions.definition.util import get_available_options
 from core.enums.error import ErrorType
@@ -15,8 +13,8 @@ from core.functions.event_log.analysis import get_activities_count, get_brief_wi
 from core.functions.event_log.csv import get_dataframe_from_csv
 from core.functions.event_log.dataset import get_completed_transition_df
 from core.functions.event_log.df import get_dataframe, save_dataframe
+from core.functions.event_log.job import set_definition
 from core.functions.event_log.xes import get_dataframe_from_xes
-from core.functions.event_log.validation import validate_column_definition
 from core.functions.event_log.zip import get_dataframe_from_zip
 from core.functions.general.etc import get_current_time_label
 from core.functions.general.request import get_real_ip, get_db
@@ -82,31 +80,17 @@ async def update_event_log(request: Request, event_log_id: int,
     if not db_event_log:
         raise HTTPException(status_code=404, detail=ErrorType.EVENT_LOG_NOT_FOUND)
 
+    db_event_log = set_definition(db, db_event_log, request_body)
     df = get_dataframe(db_event_log)
-    validate_column_definition(request_body, df)
     df = get_completed_transition_df(df, request_body)
-
-    if db_event_log.definition:
-        db_definition = definition_crud.update_definition(db, definition_schema.Definition(
-            id=db_event_log.definition.id,
-            columns_definition=request_body,
-            outcome_definition=db_event_log.definition.outcome_definition,
-            treatment_definition=db_event_log.definition.treatment_definition
-        ))
-    else:
-        db_definition = definition_crud.create_definition(db, definition_schema.DefinitionCreate(
-            columns_definition=request_body
-        ))
-
-    db_event_log = event_log_crud.associate_definition(db, event_log_id, db_definition.id)
 
     return {
         "message": "Event log updated",
         "event_log_id": db_event_log.id,
-        "received_definition": db_definition.columns_definition,
-        "activities_count": get_activities_count(df, db_definition.columns_definition),
-        "outcome_options": get_available_options(db_definition.columns_definition, "outcome"),
-        "treatment_options": get_available_options(db_definition.columns_definition, "treatment")
+        "received_definition": db_event_log.definition.columns_definition,
+        "activities_count": get_activities_count(df, db_event_log.definition.columns_definition),
+        "outcome_options": get_available_options(db_event_log.definition.columns_definition, "outcome"),
+        "treatment_options": get_available_options(db_event_log.definition.columns_definition, "treatment")
     }
 
 

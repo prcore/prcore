@@ -37,11 +37,14 @@ def check_simulation(db: Session, db_project: project_model.Project) -> bool:
     return True
 
 
-def stop_simulation(db: Session, db_project: project_model.Project) -> bool:
+def stop_simulation(db: Session, db_project: project_model.Project, redefined: bool = False) -> bool:
     # Stop the simulation
-    db_project = project_crud.update_status(db, db_project, ProjectStatus.TRAINED)
+    new_project_status = ProjectStatus.TRAINED if redefined else ProjectStatus.WAITING
+    db_project = project_crud.update_status(db, db_project, new_project_status)
     for plugin in db_project.plugins:
-        if plugin.status == PluginStatus.STREAMING:
+        if redefined:
+            plugin_crud.update_status(db, plugin, PluginStatus.WAITING)
+        elif plugin.status == PluginStatus.STREAMING:
             plugin_crud.update_status(db, plugin, PluginStatus.TRAINED)
     end_event = memory.simulation_events.get(db_project.id)
     end_event and end_event.set()
