@@ -21,7 +21,7 @@ from core.functions.general.etc import process_daemon
 from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
-from core.functions.project.simulation import stop_simulation
+from core.functions.project.simulation import stop_simulation, simulation_disconnected
 from core.functions.project.streaming import get_data, mark_as_sent
 from core.functions.project.validation import validate_project_definition
 from core.starters import memory
@@ -231,23 +231,22 @@ def simulation_clear(request: Request, project_id: int, db: Session = Depends(ge
 @router.get("/{project_id}/streaming/result")
 async def streaming_result(request: Request, project_id: int, db: Session = Depends(get_db),
                            _: bool = Depends(validate_token)):
-    try:
-        logger.warning(f"Streaming result - from IP {get_real_ip(request)}")
+    logger.warning(f"Streaming result - from IP {get_real_ip(request)}")
 
-        # Get the data from the database, and validate it
-        db_project = project_crud.get_project_by_id(db, project_id)
-        if not db_project:
-            raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-        if db_project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
-            raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    if db_project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
 
-        # Check if the project is already being read
-        if project_id in memory.reading_projects:
-            raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ALREADY_READING)
-        else:
-            memory.reading_projects.add(project_id)
+    # Check if the project is already being read
+    if project_id in memory.reading_projects:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ALREADY_READING)
+    memory.reading_projects.add(project_id)
 
-        async def event_generator():
+    async def event_generator():
+        try:
             while True:
                 if await request.is_disconnected():
                     break
@@ -265,7 +264,8 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
                 event_ids = [event["id"] for event in data]
                 mark_as_sent(db, event_ids)
                 await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            memory.reading_projects.discard(project_id)
+            simulation_disconnected(db, project_id)
 
-        return EventSourceResponse(event_generator())
-    finally:
-        memory.reading_projects.discard(project_id)
+    return EventSourceResponse(event_generator())

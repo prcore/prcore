@@ -50,3 +50,21 @@ def stop_simulation(db: Session, db_project: project_model.Project, redefined: b
     end_event and end_event.set()
     send_streaming_stop_to_all_plugins(db_project.id, [plugin.key for plugin in db_project.plugins])
     return True
+
+
+def simulation_disconnected(db: Session, project_id: int) -> bool:
+    # Handle simulation disconnection
+    result = False
+
+    try:
+        db_project = project_crud.get_project_by_id(db, project_id)
+
+        if db_project.status != ProjectStatus.SIMULATING:
+            return True
+
+        end_event = memory.simulation_events.get(project_id)
+        end_event and end_event.set()
+    except Exception as e:
+        logger.warning(f"Handling simulation disconnection error: {e}")
+
+    return result
