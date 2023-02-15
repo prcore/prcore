@@ -96,6 +96,3 @@ scheduler.start()
 
 # Start a thread to consume messages
 thread(start_consuming, (parameters, "core", callback, 1))
-
-# Send online inquires
-send_online_inquires()

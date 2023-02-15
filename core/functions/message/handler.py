@@ -15,9 +15,10 @@ import core.crud.project as project_crud
 from core.starters.database import SessionLocal
 from core.enums.message import MessageType
 from core.enums.status import PluginStatus, ProjectStatus
-from core.functions.project.simulation import proceed_simulation
+from core.functions.message.sender import send_online_inquires
 from core.functions.message.util import get_data_from_body
 from core.functions.plugin.collector import is_plugin_active, get_active_plugins
+from core.functions.project.simulation import proceed_simulation
 from core.functions.project.simulation import check_simulation
 from core.functions.project.util import get_project_status
 from core.starters import memory
@@ -44,6 +45,7 @@ def start_consuming(parameters: URLParameters, queue: str, callback_function: ca
     channel.queue_declare(queue=queue)
     prefetch_count and channel.basic_qos(prefetch_count=prefetch_count)
     channel.basic_consume(queue=queue, on_message_callback=callback_function)
+    send_online_inquires()
 
     while not stop_consuming.is_set():
         connection.process_data_events()
