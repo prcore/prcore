@@ -11,7 +11,7 @@ from core.functions.general.file import get_new_path
 from core.starters import memory
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def get_dataframe(db_event_log: EventLog) -> DataFrame | None:

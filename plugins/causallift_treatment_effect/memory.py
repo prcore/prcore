@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 # Data stored in memory
 instances: Dict[int, Any] = {}

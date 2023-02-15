@@ -10,7 +10,7 @@ from core.functions.message.util import send_message_by_channel
 from core.functions.plugin.common import check_training_df, read_training_df
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def handle_online_inquiry(ch: BlockingChannel, basic_info: dict) -> None:

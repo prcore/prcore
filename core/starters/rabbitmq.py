@@ -6,7 +6,7 @@ from pika import URLParameters
 from core.confs import config
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 # RabbitMQ connection settings
 parameters = URLParameters(f"amqp://{config.RABBITMQ_USER}:{quote(config.RABBITMQ_PASS)}"

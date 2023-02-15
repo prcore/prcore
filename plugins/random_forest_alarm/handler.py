@@ -14,7 +14,7 @@ from plugins.random_forest_alarm.initializer import (activate_instance_from_mode
 from plugins.random_forest_alarm import memory
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:

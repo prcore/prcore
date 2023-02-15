@@ -4,7 +4,7 @@ from datetime import datetime
 from core.starters import memory
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def get_active_plugins() -> dict:

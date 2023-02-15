@@ -3,7 +3,7 @@ import logging
 from fastapi import Request
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def get_real_ip(request: Request) -> str:

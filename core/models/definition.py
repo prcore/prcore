@@ -8,7 +8,7 @@ from core.starters.database import Base
 from core.enums.definition import Transition
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 class Definition(Base):

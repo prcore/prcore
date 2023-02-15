@@ -6,7 +6,7 @@ import core.models.case as model
 import core.schemas.case as schema
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def get_cases(db: Session, skip: int = 0, limit: int = 100) -> list[model.Case]:

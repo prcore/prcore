@@ -5,7 +5,7 @@ from core.enums.message import MessageType
 from core.functions.message.util import send_message
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def send_online_inquires() -> bool:

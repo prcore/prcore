@@ -20,7 +20,9 @@ from core.functions.plugin.common import log_rotation
 from core.routers import event, event_log, plugin, project
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
+for _ in ["pika.adapters.blocking_connection"]:
+    logging.getLogger(_).setLevel(logging.CRITICAL)
 
 # Create all tables
 while True:

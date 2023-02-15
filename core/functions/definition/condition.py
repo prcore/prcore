@@ -11,7 +11,7 @@ from core.functions.definition.util import get_supported_operators
 from core.schemas.definition import ProjectDefinition
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def check_or_conditions(group: DataFrame, conditions: list[list[ProjectDefinition]],

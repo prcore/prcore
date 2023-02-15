@@ -14,7 +14,7 @@ from core.starters import memory
 from simulation import run_simulation
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def proceed_simulation(simulation_df_name: str, project_id: int, definition: definition_schema.Definition) -> bool:

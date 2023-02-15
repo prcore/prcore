@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from core.schemas.plugin import Plugin
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 class AllPluginsResponse(BaseModel):

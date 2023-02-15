@@ -13,4 +13,4 @@ logging.basicConfig(
     filename=f"{log_path}/log",
     filemode="a"
 )
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)

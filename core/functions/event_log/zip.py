@@ -10,7 +10,7 @@ from core.functions.event_log.xes import get_dataframe_from_xes
 from core.functions.general.file import delete_file, get_extension, get_new_path
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def get_dataframe_from_zip(file_path: str, seperator: str) -> DataFrame | None:

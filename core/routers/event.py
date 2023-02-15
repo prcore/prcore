@@ -17,7 +17,7 @@ from core.functions.project.simulation import check_simulation
 from core.security.token import validate_token
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 # Create the router
 router = APIRouter(prefix="/event")

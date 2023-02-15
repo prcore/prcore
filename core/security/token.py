@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from core.confs import config
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/token")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

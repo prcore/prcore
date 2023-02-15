@@ -24,7 +24,7 @@ from core.functions.general.file import get_extension, get_new_path
 from core.security.token import validate_token
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 # Create the router
 router = APIRouter(prefix="/event_log")

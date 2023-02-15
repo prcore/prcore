@@ -7,7 +7,7 @@ from core.schemas.definition import ProjectDefinition
 from core.functions.definition.util import is_supported_operator
 
 # Enable logging
-logger = logging.getLogger("prcore")
+logger = logging.getLogger(__name__)
 
 
 def validate_project_definition(project_definition: list[list[ProjectDefinition]],
