@@ -7,8 +7,9 @@ if [ "$current_dir" != "scripts" ]; then
     exit 1
 fi
 
+bash mkdir.sh
 cd ..
-git pull origin main
-docker compose down
 docker compose build
 docker compose up -d
+
+echo "Installation completed!"

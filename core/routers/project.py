@@ -88,9 +88,15 @@ def read_projects(request: Request, skip: int = 0, limit: int = 100, db: Session
 @router.get("/{project_id}", response_model=project_response.ProjectResponse)
 def read_project(request: Request, project_id: int, db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Read project - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
     return {
         "message": "Project retrieved successfully",
-        "project": project_crud.get_project_by_id(db, project_id)
+        "project": db_project
     }
 
 

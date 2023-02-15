@@ -124,8 +124,8 @@ services:
       - ./data/rabbitmq/data:/var/lib/rabbitmq
       - ./data/rabbitmq/log:/var/log/rabbitmq
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_MANAGEMENT_PORT}:15672
     networks:
       - prcore
 

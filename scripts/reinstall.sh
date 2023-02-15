@@ -8,7 +8,12 @@ if [ "$current_dir" != "scripts" ]; then
 fi
 
 cd ..
-git pull origin main
 docker compose down
+sudo rm -rf ./data
+cd ./scripts || exit
+bash mkdir.sh
+cd ..
 docker compose build
 docker compose up -d
+
+echo "Re-installation completed!"
