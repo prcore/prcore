@@ -40,7 +40,7 @@ def plugin_run(basic_info: dict, callback: Callable, processed_messages_clean: C
             except AMQPConnectionError:
                 logger.warning("Connection to RabbitMQ failed. Trying again in 5 seconds...")
                 sleep(5)
-        print("Connection to RabbitMQ established")
+        logger.warning("Connection to RabbitMQ established")
         channel = connection.channel()
         channel.queue_declare(queue=config.APP_ID)
         channel.basic_consume(queue=config.APP_ID, on_message_callback=callback)

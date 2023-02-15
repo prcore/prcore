@@ -31,9 +31,9 @@ while True:
         Base.metadata.create_all(bind=engine)
         break
     except OperationalError:
-        print("Database is not ready. Trying again in 5 seconds...")
+        logger.warning("Database is not ready. Trying again in 5 seconds...")
         sleep(5)
-print("Database is connected")
+logger.warning("Database is connected")
 
 # Create the app
 app = FastAPI(debug=True)

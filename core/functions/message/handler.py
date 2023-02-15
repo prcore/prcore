@@ -38,9 +38,9 @@ def start_consuming(parameters: URLParameters, queue: str, callback_function: ca
             connection = BlockingConnection(parameters)
             break
         except AMQPConnectionError:
-            print("Connection to RabbitMQ failed. Trying again in 5 seconds...")
+            logger.warning("Connection to RabbitMQ failed. Trying again in 5 seconds...")
             sleep(5)
-    print("Connection to RabbitMQ established")
+    logger.warning("Connection to RabbitMQ established")
     channel = connection.channel()
     channel.queue_declare(queue=queue)
     prefetch_count and channel.basic_qos(prefetch_count=prefetch_count)
