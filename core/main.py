@@ -21,8 +21,9 @@ from core.routers import event, event_log, plugin, project
 
 # Enable logging
 logger = logging.getLogger(__name__)
-for _ in ["pika.adapters.blocking_connection"]:
-    logging.getLogger(_).setLevel(logging.CRITICAL)
+for _ in logging.root.manager.loggerDict:
+    if _.startswith("pika"):
+        logging.getLogger(_).setLevel(logging.CRITICAL)
 
 # Create all tables
 while True:
