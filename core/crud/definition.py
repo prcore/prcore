@@ -7,7 +7,7 @@ import core.schemas.definition as schema
 from core.enums.definition import ColumnDefinition
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def create_definition(db: Session, definition: schema.DefinitionCreate) -> model.Definition:

@@ -11,7 +11,7 @@ from core.functions.general.etc import get_message_id
 from core.starters.rabbitmq import parameters
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def send_message(receiver_id: str, message_type: MessageType, data: dict) -> bool:

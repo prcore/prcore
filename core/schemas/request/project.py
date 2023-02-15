@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from core.schemas.definition import ProjectDefinition, Transition
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class CreateProjectRequest(BaseModel):

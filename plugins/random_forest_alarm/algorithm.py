@@ -18,7 +18,7 @@ from core.functions.training.util import get_ordinal_encoded_df
 from plugins.random_forest_alarm.config import basic_info
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_negative_proba(predictions: List[Tuple[int, float]]) -> float:

@@ -3,7 +3,7 @@ import logging
 from core.enums.status import PluginStatus, PluginStatusGroup, ProjectStatus
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_project_status(plugin_statuses: list[PluginStatus | str]) -> ProjectStatus | str | None:

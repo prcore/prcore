@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from core.enums.definition import ColumnDefinition, Operator, Transition
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class ProjectDefinition(BaseModel):

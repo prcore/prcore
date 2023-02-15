@@ -6,7 +6,7 @@ from plugins.causallift_treatment_effect.config import basic_info
 from plugins.causallift_treatment_effect.handler import callback, processed_messages_clean
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 if __name__ == "__main__":

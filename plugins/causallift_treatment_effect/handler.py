@@ -15,7 +15,7 @@ from plugins.causallift_treatment_effect.initializer import (activate_instance_f
 from plugins.causallift_treatment_effect import memory
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:

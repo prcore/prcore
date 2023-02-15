@@ -6,7 +6,7 @@ from core.enums.definition import ColumnDefinition
 from core.enums.plugin import PluginType
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 # Pre-defined configuration
 basic_info: Dict[str, Any] = {

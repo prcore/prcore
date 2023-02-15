@@ -9,7 +9,7 @@ from core.functions.general.request import get_real_ip, get_db
 from core.security.token import validate_token
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 # Create the router
 router = APIRouter(prefix="/plugin")

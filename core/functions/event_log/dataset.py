@@ -17,7 +17,7 @@ from core.functions.event_log.df import get_dataframe
 from core.functions.general.file import get_new_path
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_completed_transition_df(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:

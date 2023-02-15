@@ -8,7 +8,7 @@ from sqlalchemy.sql import func
 from core.starters.database import Base
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class Event(Base):

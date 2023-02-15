@@ -28,7 +28,7 @@ from core.starters import memory
 from core.security.token import validate_token
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 # Create the router
 router = APIRouter(prefix="/project")

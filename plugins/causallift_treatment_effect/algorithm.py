@@ -17,7 +17,7 @@ from core.functions.training.util import get_ordinal_encoded_df
 from plugins.causallift_treatment_effect.config import basic_info
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class Algorithm:

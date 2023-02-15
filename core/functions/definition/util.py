@@ -3,7 +3,7 @@ import logging
 from core.enums.definition import ColumnDefinition, DefinitionType, Operator, SupportedOperators
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def is_supported_operator(operator: Operator, column_definition: ColumnDefinition) -> bool:

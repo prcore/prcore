@@ -14,7 +14,7 @@ from core.functions.event_log.dataset import get_timestamped_dataframe, get_tran
 from core.functions.general.etc import random_str
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 BASE_URL = f"http://localhost:8000"
 SLEEP_INTERVAL = 5

@@ -19,7 +19,7 @@ from core.functions.project.simulation import stop_simulation
 from core.starters.database import SessionLocal
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def set_definition(db: Session, db_event_log: event_log_model.EventLog, request_body: dict) -> event_log_model.EventLog:

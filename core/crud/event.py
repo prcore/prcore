@@ -6,7 +6,7 @@ import core.models.event as model
 import core.schemas.event as schema
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_events(db: Session, skip: int = 0, limit: int = 100) -> list[model.Event]:

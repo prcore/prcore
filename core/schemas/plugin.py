@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class PluginBase(BaseModel):

@@ -6,7 +6,7 @@ from plugins.knn_next_activity.config import basic_info
 from plugins.knn_next_activity.handler import callback, processed_messages_clean
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 if __name__ == "__main__":

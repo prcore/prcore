@@ -7,7 +7,7 @@ from core.enums.definition import ColumnDefinition
 from core.schemas.event_log import EventLog
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class AllEventLogsResponse(BaseModel):

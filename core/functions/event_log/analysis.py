@@ -6,7 +6,7 @@ from core.enums.definition import ColumnDefinition
 from core.functions.definition.util import get_defined_column_name
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_brief_with_inferred_definition(df: DataFrame) -> list[list[str | int | float | bool | ColumnDefinition | None]]:

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from core.schemas.definition import Definition
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class EventLogBase(BaseModel):

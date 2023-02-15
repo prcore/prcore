@@ -3,7 +3,7 @@ import logging
 from pandas import read_csv, DataFrame
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_dataframe_from_csv(path: str, seperator: str) -> DataFrame:

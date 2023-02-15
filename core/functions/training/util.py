@@ -4,7 +4,7 @@ from typing import Tuple
 from pandas import DataFrame
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_ordinal_encoded_df(df: DataFrame, column: str) -> Tuple[DataFrame, dict]:

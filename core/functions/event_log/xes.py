@@ -4,7 +4,7 @@ from pandas import DataFrame
 from pm4py import read_xes
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_dataframe_from_xes(path: str) -> DataFrame:

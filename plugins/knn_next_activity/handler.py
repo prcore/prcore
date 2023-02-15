@@ -14,7 +14,7 @@ from plugins.knn_next_activity.initializer import (activate_instance_from_model_
 from plugins.knn_next_activity import memory
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:

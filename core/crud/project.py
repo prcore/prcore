@@ -7,7 +7,7 @@ import core.schemas.project as schema
 from core.enums.status import ProjectStatus
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_project_by_id(db: Session, project_id: int) -> model.Project | None:

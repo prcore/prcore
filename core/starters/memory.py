@@ -5,7 +5,7 @@ from multiprocessing import Event
 from pandas import DataFrame
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 # Data in memory
 dataframes: dict[int, DataFrame] = {}

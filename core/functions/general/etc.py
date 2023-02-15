@@ -8,7 +8,7 @@ from time import localtime, strftime
 from typing import Callable, Tuple
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_current_time_label() -> str:

@@ -20,7 +20,7 @@ from core.functions.plugin.common import log_rotation
 from core.routers import event, event_log, plugin, project
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 # Create all tables
 while True:

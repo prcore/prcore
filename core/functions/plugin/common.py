@@ -21,7 +21,7 @@ from core.functions.message.util import get_body, send_message
 from core.starters.rabbitmq import parameters
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def plugin_run(basic_info: dict, callback: Callable, processed_messages_clean: Callable) -> None:

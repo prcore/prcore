@@ -6,7 +6,7 @@ import core.models.plugin as model
 import core.schemas.plugin as schema
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_plugins(db: Session, skip: int = 0, limit: int = 100) -> list[model.Plugin]:

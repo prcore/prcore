@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class EventBase(BaseModel):

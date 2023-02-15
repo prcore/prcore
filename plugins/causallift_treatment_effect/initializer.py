@@ -9,7 +9,7 @@ from plugins.causallift_treatment_effect import memory
 from plugins.causallift_treatment_effect.algorithm import Algorithm
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_instance(project_id: int, plugin_id: int, training_df: DataFrame, treatment_definition: list) -> Algorithm:

@@ -6,7 +6,7 @@ from pandas import DataFrame
 from core.enums.definition import ColumnDefinition
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def validate_column_definition(column_definition: dict[str, ColumnDefinition | None], df: DataFrame) -> bool:

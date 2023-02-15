@@ -6,7 +6,7 @@ from shutil import move
 from core.functions.general.etc import random_str
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def delete_file(path: str) -> bool:

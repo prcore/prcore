@@ -8,7 +8,7 @@ from core.functions.message.sender import send_prescription_request_to_all_plugi
 from core.functions.plugin.collector import get_active_plugins
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def prepare_prefix_and_send(project_id: int, model_names: dict[str, str], event_id: int,

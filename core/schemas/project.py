@@ -6,7 +6,7 @@ from core.schemas.event_log import EventLog
 from core.schemas.plugin import Plugin
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 class ProjectBase(BaseModel):

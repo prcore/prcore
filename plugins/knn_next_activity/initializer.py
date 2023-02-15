@@ -9,7 +9,7 @@ from plugins.knn_next_activity import memory
 from plugins.knn_next_activity.algorithm import Algorithm
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_instance(project_id: int, plugin_id: int, training_df: DataFrame) -> Algorithm:

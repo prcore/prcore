@@ -6,7 +6,7 @@ import core.crud.event as event_crud
 from core.enums.definition import ColumnDefinition
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 
 def get_data(db: Session, project_id: int) -> list[dict]:

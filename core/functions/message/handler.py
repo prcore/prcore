@@ -24,7 +24,7 @@ from core.functions.project.util import get_project_status
 from core.starters import memory
 
 # Enable logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("prcore")
 
 # Set events for consuming
 stop_consuming = Event()
