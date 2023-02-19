@@ -5,7 +5,7 @@ from time import sleep
 
 from pika import BlockingConnection, URLParameters
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.exceptions import AMQPConnectionError
+from pika.exceptions import AMQPConnectionError, ConnectionClosedByBroker
 from pika.spec import Basic, BasicProperties
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,7 @@ from core.starters.database import SessionLocal
 from core.enums.message import MessageType
 from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.message.sender import send_online_inquires
-from core.functions.message.util import get_data_from_body
+from core.functions.message.util import get_connection, get_data_from_body
 from core.functions.plugin.collector import is_plugin_active, get_active_plugins
 from core.functions.project.simulation import proceed_simulation
 from core.functions.project.simulation import check_simulation
@@ -33,13 +33,7 @@ consuming_stopped = Event()
 
 def start_consuming(parameters: URLParameters, queue: str, callback_function: callable,
                     prefetch_count: int = 0) -> None:
-    while True:
-        try:
-            connection = BlockingConnection(parameters)
-            break
-        except AMQPConnectionError:
-            logger.warning("Connection to RabbitMQ failed. Trying again in 5 seconds...")
-            sleep(5)
+    connection = get_connection(parameters)
     logger.warning("Connection to RabbitMQ established")
     channel = connection.channel()
     channel.queue_declare(queue=queue)
@@ -48,7 +42,12 @@ def start_consuming(parameters: URLParameters, queue: str, callback_function: ca
     send_online_inquires()
 
     while not stop_consuming.is_set():
-        connection.process_data_events()
+        try:
+            connection.process_data_events()
+        except ConnectionClosedByBroker:
+            logger.warning("Connection to RabbitMQ closed by broker. Trying again in 5 seconds...")
+            sleep(5)
+            return start_consuming(parameters, queue, callback_function, prefetch_count)
         sleep(0.1)
 
     channel.stop_consuming()

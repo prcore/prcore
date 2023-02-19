@@ -2,7 +2,10 @@ import logging
 
 from fastapi import HTTPException
 
+import core.models.project as project_model
 from core.enums.definition import ColumnDefinition
+from core.enums.error import ErrorType
+from core.enums.status import ProjectStatus
 from core.schemas.definition import ProjectDefinition
 from core.functions.definition.util import is_supported_operator
 
@@ -32,5 +35,23 @@ def validate_project_definition(project_definition: list[list[ProjectDefinition]
                     detail=(f"Operator '{project_definition.operator}' not supported "
                             f"for column '{project_definition.column}'")
                 )
+
+    return True
+
+
+def validate_simulation_status(db_project: project_model.Project, operation: str) -> bool:
+    # Check if the simulation is finished
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    if db_project.status == ProjectStatus.ACTIVATING:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
+
+    if operation == "start":
+        if db_project.status == ProjectStatus.SIMULATING:
+            raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_STARTED)
+        if db_project.status != ProjectStatus.TRAINED:
+            raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_TRAINED)
+    elif operation == "stop" and db_project.status != ProjectStatus.SIMULATING:
+        raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_NOT_STARTED)
 
     return True

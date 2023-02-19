@@ -1,7 +1,5 @@
 import logging
-import json
 
-import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
@@ -21,9 +19,9 @@ from core.functions.general.etc import process_daemon
 from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
-from core.functions.project.simulation import stop_simulation, simulation_disconnected
-from core.functions.project.streaming import get_data, mark_as_sent
-from core.functions.project.validation import validate_project_definition
+from core.functions.project.simulation import stop_simulation
+from core.functions.project.streaming import event_generator
+from core.functions.project.validation import validate_project_definition, validate_simulation_status
 from core.starters import memory
 from core.security.token import validate_token
 
@@ -167,14 +165,7 @@ def simulation_start(request: Request, project_id: int, db: Session = Depends(ge
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    if db_project.status == ProjectStatus.ACTIVATING:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
-    if db_project.status == ProjectStatus.SIMULATING:
-        raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_STARTED)
-    if db_project.status != ProjectStatus.TRAINED:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_TRAINED)
+    validate_simulation_status(db_project, "start")
 
     # Start the simulation
     db_project = project_crud.update_status(db, db_project, ProjectStatus.SIMULATING)
@@ -194,12 +185,7 @@ def simulation_stop(request: Request, project_id: int, db: Session = Depends(get
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    if db_project.status == ProjectStatus.ACTIVATING:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
-    if db_project.status != ProjectStatus.SIMULATING:
-        raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_NOT_STARTED)
+    validate_simulation_status(db_project, "stop")
 
     # Stop the simulation
     stop_simulation(db, db_project)
@@ -217,10 +203,9 @@ def simulation_clear(request: Request, project_id: int, db: Session = Depends(ge
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    if db_project.status == ProjectStatus.ACTIVATING:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
+    validate_simulation_status(db_project, "clear")
+
+    # Stop the simulation
     if db_project.status == ProjectStatus.SIMULATING:
         stop_simulation(db, db_project)
 
@@ -251,27 +236,4 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ALREADY_READING)
     memory.reading_projects.add(project_id)
 
-    async def event_generator():
-        try:
-            while True:
-                if await request.is_disconnected():
-                    break
-                project = project_crud.get_project_by_id(db, project_id)
-                if project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
-                    break
-                data = get_data(db, project_id)
-                if data:
-                    yield {
-                        "event": "NEW_RESULT",
-                        "id": data[0]["id"],
-                        "retry": 15000,
-                        "data": json.dumps(data)
-                    }
-                event_ids = [event["id"] for event in data]
-                mark_as_sent(db, event_ids)
-                await asyncio.sleep(1)
-        except asyncio.CancelledError:
-            memory.reading_projects.discard(project_id)
-            simulation_disconnected(db, project_id)
-
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(event_generator(request, db, project_id))

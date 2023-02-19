@@ -1,12 +1,43 @@
+import asyncio
 import logging
+import json
 
+from fastapi import Request
 from sqlalchemy.orm import Session
 
 import core.crud.event as event_crud
+import core.crud.project as project_crud
 from core.enums.definition import ColumnDefinition
+from core.enums.status import ProjectStatus
+from core.functions.project.simulation import simulation_disconnected
+from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+async def event_generator(request: Request, db: Session, project_id: int):
+    try:
+        while True:
+            if await request.is_disconnected():
+                break
+            project = project_crud.get_project_by_id(db, project_id)
+            if project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+                break
+            data = get_data(db, project_id)
+            if data:
+                yield {
+                    "event": "NEW_RESULT",
+                    "id": data[0]["id"],
+                    "retry": 15000,
+                    "data": json.dumps(data)
+                }
+            event_ids = [event["id"] for event in data]
+            mark_as_sent(db, event_ids)
+            await asyncio.sleep(1)
+    except asyncio.CancelledError:
+        memory.reading_projects.discard(project_id)
+        simulation_disconnected(db, project_id)
 
 
 def get_data(db: Session, project_id: int) -> list[dict]:
