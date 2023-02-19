@@ -5,9 +5,10 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 
 from core.enums.message import MessageType
-from core.functions.message.util import get_data_from_body
-from core.functions.plugin.handler import (handle_online_inquiry, handle_training_data, handle_streaming_prepare,
+from core.functions.common.handler import (handle_online_inquiry, handle_training_data, handle_streaming_prepare,
                                            handle_prescription_request)
+from core.functions.message.util import get_data_from_body
+
 from plugins.knn_next_activity.config import basic_info, needed_columns
 from plugins.knn_next_activity.initializer import (activate_instance_from_model_file, get_instance_from_model_file,
                                                    preprocess_and_train, deactivate_instance)
