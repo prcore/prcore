@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from subprocess import run
 from time import sleep
-from typing import Any, Callable, List
+from typing import Any, Callable, Dict, List
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from pandas import DataFrame, read_pickle, read_csv
@@ -23,11 +23,11 @@ from core.starters.rabbitmq import parameters
 logger = logging.getLogger(__name__)
 
 
-def plugin_scheduler(processed_messages_clean: Callable) -> None:
+def plugin_scheduler(processed_messages_clean: Callable, processed_messages: Dict[str, datetime]) -> None:
     # Start the scheduler
     scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
     scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
-    scheduler.add_job(processed_messages_clean, "interval", minutes=5)
+    scheduler.add_job(processed_messages_clean, "interval", [processed_messages], minutes=5)
     scheduler.start()
 
 

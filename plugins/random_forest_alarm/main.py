@@ -2,6 +2,7 @@ import logging
 
 from core.functions.plugin.common import plugin_run, plugin_scheduler
 
+from plugins.random_forest_alarm import memory
 from plugins.random_forest_alarm.config import basic_info
 from plugins.random_forest_alarm.handler import callback, processed_messages_clean
 
@@ -13,5 +14,5 @@ for _ in logging.root.manager.loggerDict:
 
 
 if __name__ == "__main__":
-    plugin_scheduler(processed_messages_clean)
+    plugin_scheduler(processed_messages_clean, memory.processed_messages)
     plugin_run(basic_info, callback)

@@ -15,9 +15,11 @@ from core.starters.rabbitmq import parameters
 from core.functions.general.etc import thread
 from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.message.sender import send_online_inquires
-from core.functions.tool.timers import processed_messages_clean
+from core.functions.tool.timers import stop_unread_simulations
+from core.functions.common.timer import processed_messages_clean
 from core.functions.plugin.common import log_rotation
 from core.routers import event, event_log, plugin, project
+from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -94,7 +96,8 @@ def shutdown_event():
 scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
 scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
 scheduler.add_job(send_online_inquires, "interval", minutes=5)
-scheduler.add_job(processed_messages_clean, "interval", minutes=5)
+scheduler.add_job(processed_messages_clean, "interval", [memory.processed_messages], minutes=5)
+scheduler.add_job(stop_unread_simulations, "interval", minutes=5)
 scheduler.start()
 
 # Start a thread to consume messages
