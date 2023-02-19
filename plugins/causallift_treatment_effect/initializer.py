@@ -3,7 +3,7 @@ from typing import Optional
 
 from pandas import DataFrame
 
-from core.functions.plugin.common import start_training
+from core.functions.common.algorithm import start_training
 
 from plugins.causallift_treatment_effect import memory
 from plugins.causallift_treatment_effect.algorithm import Algorithm

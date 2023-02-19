@@ -10,8 +10,8 @@ from pandas import DataFrame
 
 from core.confs import path
 from core.enums.definition import ColumnDefinition
+from core.functions.common.algorithm import get_null_output
 from core.functions.general.file import get_new_path
-from core.functions.plugin.common import get_null_output
 from core.functions.training.util import get_ordinal_encoded_df
 
 from plugins.causallift_treatment_effect.config import basic_info

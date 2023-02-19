@@ -5,9 +5,9 @@ from pika.adapters.blocking_connection import BlockingChannel
 
 from core.confs import config
 from core.enums.message import MessageType
+from core.functions.common.algorithm import read_training_df, check_training_df
 from core.functions.general.etc import thread
 from core.functions.message.util import send_message_by_channel
-from core.functions.plugin.common import check_training_df, read_training_df
 
 # Enable logging
 logger = logging.getLogger(__name__)
