@@ -1,10 +1,11 @@
 import logging
 
+from core.functions.common.timer import processed_messages_clean
 from core.functions.plugin.common import plugin_run, plugin_scheduler
 
 from plugins.random_forest_alarm import memory
 from plugins.random_forest_alarm.config import basic_info
-from plugins.random_forest_alarm.handler import callback, processed_messages_clean
+from plugins.random_forest_alarm.handler import callback
 
 # Enable logging
 logger = logging.getLogger(__name__)

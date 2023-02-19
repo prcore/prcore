@@ -1,10 +1,11 @@
 import logging
 
+from core.functions.common.timer import processed_messages_clean
 from core.functions.plugin.common import plugin_run, plugin_scheduler
 
 from plugins.knn_next_activity import memory
 from plugins.knn_next_activity.config import basic_info
-from plugins.knn_next_activity.handler import callback, processed_messages_clean
+from plugins.knn_next_activity.handler import callback
 
 # Enable logging
 logger = logging.getLogger(__name__)

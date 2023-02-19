@@ -1,10 +1,11 @@
 import logging
 
+from core.functions.common.timer import processed_messages_clean
 from core.functions.plugin.common import plugin_run, plugin_scheduler
 
 from plugins.causallift_treatment_effect import memory
 from plugins.causallift_treatment_effect.config import basic_info
-from plugins.causallift_treatment_effect.handler import callback, processed_messages_clean
+from plugins.causallift_treatment_effect.handler import callback
 
 # Enable logging
 logger = logging.getLogger(__name__)
