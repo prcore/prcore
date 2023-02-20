@@ -22,4 +22,4 @@ class Definition(Base):
     treatment_definition = Column(JSONB)
     fast_mode = Column(Boolean, default=True)
     start_transition = Column(String, default=Transition.START)
-    end_transition = Column(String, default=Transition.COMPLETE)
+    complete_transition = Column(String, default=Transition.COMPLETE)

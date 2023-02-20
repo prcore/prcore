@@ -20,7 +20,7 @@ class DefinitionBase(BaseModel):
     treatment_definition: list[list[ProjectDefinition]] | None = None
     fast_mode: bool = True
     start_transition: str = Transition.START
-    end_transition: str = Transition.COMPLETE
+    complete_transition: str = Transition.COMPLETE
 
 
 class DefinitionCreate(DefinitionBase):

@@ -145,20 +145,20 @@ def get_transition_recognized_dataframe(df: DataFrame, definition: definition_sc
 
     transition_column = get_defined_column_name(columns_definition, ColumnDefinition.TRANSITION)
     start_transition = definition.start_transition
-    end_transition = definition.end_transition
+    complete_transition = definition.complete_transition
     value_counts = df[transition_column].value_counts()
     value_counts.index = value_counts.index.str.upper()
 
-    if value_counts.get(start_transition, 0) == 0 and value_counts.get(end_transition, 0) == 0:
+    if value_counts.get(start_transition, 0) == 0 and value_counts.get(complete_transition, 0) == 0:
         return df
     elif value_counts.get(start_transition, 0) == 0:
-        return df[df[transition_column].str.upper() == end_transition]
-    elif value_counts.get(end_transition, 0) == 0:
+        return df[df[transition_column].str.upper() == complete_transition]
+    elif value_counts.get(complete_transition, 0) == 0:
         return df[df[transition_column].str.upper() == start_transition]
     elif definition.fast_mode:
-        return df[df[transition_column].str.upper() == end_transition]
+        return df[df[transition_column].str.upper() == complete_transition]
     else:
-        df = df[df[transition_column].str.upper().isin([start_transition, end_transition])]
+        df = df[df[transition_column].str.upper().isin([start_transition, complete_transition])]
         return get_timestamped_dataframe_by_transition(df, definition)
 
 
@@ -170,7 +170,7 @@ def get_timestamped_dataframe_by_transition(df: DataFrame, definition: definitio
     transition_column = get_defined_column_name(columns_definition, ColumnDefinition.TRANSITION)
     timestamp_column = get_defined_column_name(columns_definition, ColumnDefinition.TIMESTAMP)
     start_transition = definition.start_transition
-    end_transition = definition.end_transition
+    complete_transition = definition.complete_transition
 
     df = df.sort_values([case_id_column, timestamp_column])
     df = df.reset_index(drop=True)
@@ -190,7 +190,7 @@ def get_timestamped_dataframe_by_transition(df: DataFrame, definition: definitio
                 pending_events[activity] = row
                 pending_events[activity][ColumnDefinition.START_TIMESTAMP] = row[timestamp_column]
                 pending_events[activity][ColumnDefinition.END_TIMESTAMP] = row[timestamp_column]
-            elif row[transition_column].upper() == end_transition.upper():
+            elif row[transition_column].upper() == complete_transition.upper():
                 if activity in pending_events:
                     # If activity has start and end transition, get start time from pending events, then add to events
                     events[i] = pending_events.pop(activity)

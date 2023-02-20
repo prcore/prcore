@@ -50,7 +50,7 @@ def get_definition() -> Definition:
         treatment_definition=[],
         fast_mode=True,
         start_transition="start",
-        end_transition="complete"
+        complete_transition="complete"
     )
 
 

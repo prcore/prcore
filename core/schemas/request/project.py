@@ -14,7 +14,7 @@ class CreateProjectRequest(BaseModel):
     treatment: list[list[ProjectDefinition]]
     fast_mode: bool = True
     start_transition: str = Transition.START
-    end_transition: str = Transition.COMPLETE
+    complete_transition: str = Transition.COMPLETE
 
 
 class UpdateProjectRequest(BaseModel):
@@ -22,7 +22,7 @@ class UpdateProjectRequest(BaseModel):
     treatment: list[list[ProjectDefinition]]
     fast_mode: bool = True
     start_transition: str = Transition.START
-    end_transition: str = Transition.COMPLETE
+    complete_transition: str = Transition.COMPLETE
 
 
 class BasicUpdateProjectRequest(BaseModel):
