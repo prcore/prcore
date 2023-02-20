@@ -251,10 +251,6 @@ def get_outcome_and_treatment_dataframe(df: DataFrame, definition: definition_sc
     elif treatment_definition:
         return get_labelled_dataframe_by_one(df, case_id_column, definition, by_outcome=False)
 
-    result = df.groupby(case_id_column, group_keys=True).apply(lambda x: label_outcome_and_treatment(x, definition))
-    result.columns = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]
-    result = result.reset_index(drop=True)
-    df = df.merge(result, left_index=True, right_index=True)
     return df
 
 
@@ -271,9 +267,10 @@ def get_labelled_dataframe_by_one(df: DataFrame, case_id_column: str, definition
                                   by_outcome: bool = True) -> DataFrame:
     # Get labelled dataframe by one
     column_name = ColumnDefinition.OUTCOME if by_outcome else ColumnDefinition.TREATMENT
-    df[column_name] = df.groupby(case_id_column).apply(
-        lambda x: label_one_column(x, definition, by_outcome)
-    ).reset_index(drop=True)
+    result = df.groupby(case_id_column, group_keys=True).apply(lambda x: label_one_column(x, definition, by_outcome))
+    result.columns = [column_name]
+    result = result.reset_index(drop=True)
+    df = df.merge(result, left_index=True, right_index=True)
     return df
 
 
@@ -285,10 +282,10 @@ def label_outcome_and_treatment(group: DataFrame, definition: definition_schema.
     return pd.concat([outcome_label, treatment_label], axis=1)
 
 
-def label_one_column(group: DataFrame, definition: definition_schema.Definition, by_outcome: bool = True) -> Series:
+def label_one_column(group: DataFrame, definition: definition_schema.Definition, by_outcome: bool = True) -> DataFrame:
     # Label on column
     label = get_label(group, definition, by_outcome)
-    return pd.Series(1 if label else 0, index=group.index).reset_index(drop=True)
+    return pd.concat([pd.Series(1 if label else 0, index=group.index)], axis=1)
 
 
 def get_labels(group: DataFrame, definition: definition_schema.Definition) -> tuple[bool, bool]:

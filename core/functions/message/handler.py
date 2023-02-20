@@ -3,9 +3,9 @@ from datetime import datetime
 from threading import Event
 from time import sleep
 
-from pika import BlockingConnection, URLParameters
+from pika import URLParameters
 from pika.adapters.blocking_connection import BlockingChannel
-from pika.exceptions import AMQPConnectionError, ConnectionClosedByBroker
+from pika.exceptions import ConnectionClosedByBroker
 from pika.spec import Basic, BasicProperties
 from sqlalchemy.orm import Session
 

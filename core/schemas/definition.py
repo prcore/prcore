@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class ProjectDefinition(BaseModel):
     column: str
     operator: Operator
-    value: datetime | int | float | str | bool | None = None
+    value: str | None = None
 
 
 class DefinitionBase(BaseModel):

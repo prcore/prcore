@@ -17,4 +17,4 @@ basic_info: Dict[str, Any] = {
                     "and probability of outcome if treatment is applied or not"),
     "parameters": {}
 }
-needed_columns: List[ColumnDefinition] = []
+needed_columns: List[ColumnDefinition] = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]

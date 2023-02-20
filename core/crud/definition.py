@@ -59,8 +59,10 @@ def set_outcome_treatment_definition(db: Session, db_definition: model.Definitio
                                      fast_mode: bool, start_transition: str, complete_transition: str,
                                      abort_transition: str) -> model.Definition:
     # Set outcome and treatment definition
-    db_definition.outcome_definition = [[d.dict() for d in data] for data in outcome]
-    db_definition.treatment_definition = [[d.dict() for d in data] for data in treatment]
+    if outcome:
+        db_definition.outcome_definition = [[d.dict() for d in data] for data in outcome]
+    if treatment:
+        db_definition.treatment_definition = [[d.dict() for d in data] for data in treatment]
     db_definition.fast_mode = fast_mode
     db_definition.start_transition = start_transition
     db_definition.complete_transition = complete_transition

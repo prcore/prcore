@@ -28,6 +28,7 @@ def send_training_data_to_all_plugins(project_id: int, training_df_name: str, tr
 def send_training_data(plugin_key: str, project_id: int, plugin_id: int, training_df_name: str,
                        treatment_definition: list) -> bool:
     # Send training data to a specific plugin
+    print(f"Sending training data to {plugin_key}")
     return send_message(plugin_key, MessageType.TRAINING_DATA, {
         "project_id": project_id,
         "plugin_id": plugin_id,

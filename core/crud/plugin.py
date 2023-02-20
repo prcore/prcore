@@ -44,10 +44,8 @@ def update_model_name(db: Session, db_plugin: model.Plugin, model_name: str) -> 
     return db_plugin
 
 
-def delete_plugin(db: Session, plugin_id: int) -> None:
+def delete_plugin(db: Session, db_plugin: model.Plugin) -> None:
     # Delete a plugin
-    db_plugin = get_plugin_by_id(db, plugin_id=plugin_id)
-    if db_plugin:
-        db.delete(db_plugin)
-        db.commit()
-    return db_plugin
+    db.delete(db_plugin)
+    db.commit()
+    return

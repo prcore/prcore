@@ -47,8 +47,11 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_EXISTED)
 
     # Validate the user's input
-    validate_project_definition(create_body.positive_outcome, db_event_log.definition.columns_definition)
-    validate_project_definition(create_body.treatment, db_event_log.definition.columns_definition)
+    columns_definition = db_event_log.definition.columns_definition
+    positive_outcome = create_body.positive_outcome
+    treatment = create_body.treatment
+    positive_outcome and validate_project_definition(positive_outcome, columns_definition)
+    treatment and validate_project_definition(treatment, columns_definition)
 
     # Create the project
     definition_crud.set_outcome_treatment_definition(
@@ -109,8 +112,10 @@ def update_project(request: Request, project_id: int, update_body: project_reque
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
     # Set name or description
     db_project = project_crud.update_name_and_description(db, db_project, update_body.name, update_body.description)
+
     return {
         "message": "Project's basic information updated successfully",
         "project": db_project
@@ -135,8 +140,11 @@ def update_project_definition(request: Request, project_id: int,
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_NOT_FOUND)
 
     # Validate the user's input
-    validate_project_definition(update_body.positive_outcome, db_event_log.definition.columns_definition)
-    validate_project_definition(update_body.treatment, db_event_log.definition.columns_definition)
+    columns_definition = db_event_log.definition.columns_definition
+    positive_outcome = update_body.positive_outcome
+    treatment = update_body.treatment
+    positive_outcome and validate_project_definition(positive_outcome, columns_definition)
+    treatment and validate_project_definition(treatment, columns_definition)
     stop_simulation(db, db_project, True)
 
     # Update the project

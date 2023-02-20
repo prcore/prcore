@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 class CreateProjectRequest(BaseModel):
     event_log_id: int
-    positive_outcome: list[list[ProjectDefinition]]
-    treatment: list[list[ProjectDefinition]]
+    positive_outcome: list[list[ProjectDefinition]] | None = None
+    treatment: list[list[ProjectDefinition]] | None = None
     fast_mode: bool = True
     start_transition: str = Transition.START
     complete_transition: str = Transition.COMPLETE
@@ -19,8 +19,8 @@ class CreateProjectRequest(BaseModel):
 
 
 class UpdateProjectRequest(BaseModel):
-    positive_outcome: list[list[ProjectDefinition]]
-    treatment: list[list[ProjectDefinition]]
+    positive_outcome: list[list[ProjectDefinition]] | None = None
+    treatment: list[list[ProjectDefinition]] | None = None
     fast_mode: bool = True
     start_transition: str = Transition.START
     complete_transition: str = Transition.COMPLETE

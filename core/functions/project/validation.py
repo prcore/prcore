@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 def validate_project_definition(project_definition: list[list[ProjectDefinition]],
-                                columns_definition: dict[str, ColumnDefinition]) -> bool:
+                                columns_definition: dict[str, ColumnDefinition]) -> None:
     # Check if the nested definition is valid
-    if not project_definition or not isinstance(project_definition, list) or len(project_definition) < 1:
+    if not isinstance(project_definition, list) or len(project_definition) < 1:
         raise HTTPException(status_code=400, detail="Invalid definition")
 
     for sub_list in project_definition:
@@ -35,8 +35,6 @@ def validate_project_definition(project_definition: list[list[ProjectDefinition]
                     detail=(f"Operator '{project_definition.operator}' not supported "
                             f"for column '{project_definition.column}'")
                 )
-
-    return True
 
 
 def validate_simulation_status(db_project: project_model.Project, operation: str) -> bool:
