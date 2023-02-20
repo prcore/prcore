@@ -35,7 +35,8 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog, request_
             treatment_definition=None,
             fast_mode=True,
             start_transition=Transition.START,
-            complete_transition=Transition.COMPLETE
+            complete_transition=Transition.COMPLETE,
+            abort_transition=Transition.ATE_ABORT
         ))
         db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
         stop_simulation(db, db_project, redefined=True)

@@ -23,3 +23,4 @@ class Definition(Base):
     fast_mode = Column(Boolean, default=True)
     start_transition = Column(String, default=Transition.START)
     complete_transition = Column(String, default=Transition.COMPLETE)
+    abort_transition = Column(String, default=Transition.ATE_ABORT)

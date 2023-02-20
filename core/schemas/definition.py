@@ -19,8 +19,9 @@ class DefinitionBase(BaseModel):
     outcome_definition: list[list[ProjectDefinition]] | None = None
     treatment_definition: list[list[ProjectDefinition]] | None = None
     fast_mode: bool = True
-    start_transition: str = Transition.START
-    complete_transition: str = Transition.COMPLETE
+    start_transition: Transition = Transition.START
+    complete_transition: Transition = Transition.COMPLETE
+    abort_transition: Transition = Transition.ATE_ABORT
 
 
 class DefinitionCreate(DefinitionBase):

@@ -58,7 +58,8 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         treatment=create_body.treatment,
         fast_mode=create_body.fast_mode,
         start_transition=create_body.start_transition,
-        complete_transition=create_body.complete_transition
+        complete_transition=create_body.complete_transition,
+        abort_transition=create_body.abort_transition
     )
     db_project = project_crud.create_project(
         db=db,
@@ -146,7 +147,8 @@ def update_project_definition(request: Request, project_id: int,
         treatment=update_body.treatment,
         fast_mode=update_body.fast_mode,
         start_transition=update_body.start_transition,
-        complete_transition=update_body.complete_transition
+        complete_transition=update_body.complete_transition,
+        abort_transition=update_body.abort_transition
     )
 
     # Start the pre-processing

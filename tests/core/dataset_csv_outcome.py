@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pandas import DataFrame, read_csv
 
-from core.enums.definition import ColumnDefinition, Operator
+from core.enums.definition import ColumnDefinition, Operator, Transition
 from core.schemas.definition import ProjectDefinition, Definition
 from core.functions.event_log.dataset import get_processed_dataframe
 
@@ -33,15 +33,6 @@ def get_definition() -> Definition:
             )
         ]
     ]
-    treatment_definition = [
-        [
-            ProjectDefinition(
-                column="Activity",
-                operator=Operator.EQUAL,
-                value="O_SENT_BACK"
-            )
-        ]
-    ]
     return Definition(
         id=1,
         created_at=datetime.now(),
@@ -49,8 +40,9 @@ def get_definition() -> Definition:
         outcome_definition=outcome_definition,
         treatment_definition=[],
         fast_mode=True,
-        start_transition="start",
-        complete_transition="complete"
+        start_transition=Transition.START,
+        complete_transition=Transition.COMPLETE,
+        abort_transition=Transition.ATE_ABORT
     )
 
 

@@ -15,6 +15,7 @@ class CreateProjectRequest(BaseModel):
     fast_mode: bool = True
     start_transition: str = Transition.START
     complete_transition: str = Transition.COMPLETE
+    abort_transition: str = Transition.ATE_ABORT
 
 
 class UpdateProjectRequest(BaseModel):
@@ -23,6 +24,7 @@ class UpdateProjectRequest(BaseModel):
     fast_mode: bool = True
     start_transition: str = Transition.START
     complete_transition: str = Transition.COMPLETE
+    abort_transition: str = Transition.ATE_ABORT
 
 
 class BasicUpdateProjectRequest(BaseModel):
