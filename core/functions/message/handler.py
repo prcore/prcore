@@ -81,7 +81,7 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
         elif message_type == MessageType.PRESCRIPTION_RESULT:
             handle_prescription_result(data)
     except Exception as e:
-        logger.error(f"Error while handling message: {e}", exc_info=True)
+        logger.error(f"Error while handling message {message_type}: {e}", exc_info=True)
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
