@@ -43,6 +43,8 @@ def check_atomic_condition(group: DataFrame, condition: ProjectDefinition,
     # Check if the data of the row satisfies the condition
     column_name = condition.column
     column_definition = columns_definition.get(condition.column)
+    if condition.column == ColumnDefinition.DURATION:
+        column_definition = ColumnDefinition.DURATION
     operator = condition.operator
     threshold = condition.value
     supported_operators = get_supported_operators(column_definition)
