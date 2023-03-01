@@ -13,7 +13,7 @@ import core.schemas.definition as definition_schema
 from core.confs import path
 from core.enums.definition import ColumnDefinition, DefinitionType, Transition
 from core.functions.definition.condition import check_or_conditions
-from core.functions.definition.util import get_defined_column_name
+from core.functions.definition.util import get_defined_column_name, get_start_timestamp
 from core.functions.event_log.df import get_dataframe
 from core.functions.general.file import get_new_path
 
@@ -402,4 +402,29 @@ def get_test_dataset_path(db_event_log: event_log_model.EventLog) -> str:
     except Exception as e:
         logger.warning(f"Get test dataset path failed: {e}")
 
+    return result
+
+
+def get_testing_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
+    # Get testing dataframe
+    df = df.astype(str)
+    timestamp_column = get_start_timestamp(definition.columns_definition)
+    df = get_timestamped_dataframe(df, definition.columns_definition)
+    df = get_transition_recognized_dataframe(df, definition)
+    df.sort_values(by=timestamp_column, inplace=True)
+    df = df.astype(str)
+    return df
+
+
+def get_cases_result_skeleton(df: DataFrame, definition: definition_schema.Definition) -> dict[str, dict[str, list]]:
+    # Get cases result skeleton
+    result = {}
+    df = get_testing_dataframe(df, definition)
+    case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
+    grouped_df = df.groupby(case_id_column)
+    for case_id, group in grouped_df:
+        result[str(case_id)] = {
+            "prescriptions": [],
+            "events": group.values.tolist()
+        }
     return result

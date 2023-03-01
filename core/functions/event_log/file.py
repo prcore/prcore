@@ -2,15 +2,40 @@ import logging
 from zipfile import ZipFile
 
 from fastapi import HTTPException
-from pandas import DataFrame
+from pandas import DataFrame, read_csv
+from pm4py import read_xes
 
 from core.confs import path
-from core.functions.event_log.csv import get_dataframe_from_csv
-from core.functions.event_log.xes import get_dataframe_from_xes
-from core.functions.general.file import delete_file, get_extension, get_new_path
+from core.functions.general.file import get_extension, get_new_path, delete_file
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def get_dataframe_from_file(file_path: str, extension: str, seperator: str) -> DataFrame:
+    if extension == "xes":
+        df = get_dataframe_from_xes(file_path)
+    elif extension == "csv":
+        df = get_dataframe_from_csv(file_path, seperator)
+    else:
+        df = get_dataframe_from_zip(file_path, seperator)
+    return df
+
+
+def get_dataframe_from_xes(file_path: str) -> DataFrame:
+    # Get dataframe from xes file
+    df = read_xes(file_path)
+    df = df.astype(str)
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    return df
+
+
+def get_dataframe_from_csv(file_path: str, seperator: str) -> DataFrame:
+    # Get dataframe from csv file
+    df = read_csv(file_path, sep=seperator, dtype=str)
+    df_obj = df.select_dtypes(["object"])
+    df[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
+    return df
 
 
 def get_dataframe_from_zip(file_path: str, seperator: str) -> DataFrame | None:

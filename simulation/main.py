@@ -10,7 +10,7 @@ from core.confs import config
 from core.confs import path
 from core.enums.definition import ColumnDefinition
 from core.functions.definition.util import get_defined_column_name, get_start_timestamp
-from core.functions.event_log.dataset import get_timestamped_dataframe, get_transition_recognized_dataframe
+from core.functions.event_log.dataset import get_testing_dataframe
 from core.functions.general.etc import random_str
 
 # Enable logging
@@ -30,15 +30,7 @@ def load_simulation_df(simulation_df_name: str) -> DataFrame:
 
 def preprocess_df(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
     # Preprocess a simulation dataframe
-    # Convert all columns to string
-    df = df.astype(str)
-    # Convert timestamp column to datetime
-    timestamp_column = get_start_timestamp(definition.columns_definition)
-    df = get_timestamped_dataframe(df, definition.columns_definition)
-    df = get_transition_recognized_dataframe(df, definition)
-    # Sort by timestamp
-    df.sort_values(by=timestamp_column, inplace=True)
-    df = df.astype(str)
+    df = get_testing_dataframe(df, definition)
     # Add case prefix
     case_prefix = random_str(8)
     case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)

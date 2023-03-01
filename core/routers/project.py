@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime
+from time import sleep
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
@@ -14,14 +15,16 @@ import core.crud.project as project_crud
 import core.schemas.request.project as project_request
 import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
+from core.confs import path
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
-from core.functions.event_log.dataset import get_test_dataset_path
+from core.functions.event_log.dataset import get_test_dataset_path, get_cases_result_skeleton
+from core.functions.event_log.file import get_dataframe_from_file
 from core.functions.event_log.job import start_pre_processing
-from core.functions.general.etc import delay, process_daemon
-from core.functions.general.file import delete_file
+from core.functions.general.etc import delay, process_daemon, random_str
+from core.functions.general.file import delete_file, get_extension, get_new_path
 from core.functions.general.request import get_real_ip, get_db
-from core.functions.message.sender import send_streaming_prepare_to_all_plugins
+from core.functions.message.sender import send_ongoing_dataset_to_all_plugins, send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.simulation import stop_simulation
 from core.functions.project.streaming import event_generator
@@ -191,6 +194,60 @@ def update_project_definition(request: Request, project_id: int,
         "message": "Project definition updated successfully",
         "project": db_project
     }
+
+
+@router.post("/{project_id}/result", response_model=project_response.ProjectResultResponse)
+def get_prescription_result(request: Request, project_id: int, file: UploadFile = Form(), seperator: str = Form(","),
+                            db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Get prescription result - from IP {get_real_ip(request)}")
+
+    if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
+
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
+    temp_path = get_new_path(f"{path.TEMP_PATH}/", suffix=f".{extension}")
+    with open(temp_path, "wb") as f:
+        f.write(file.file.read())
+
+    # Get dataframe from file
+    df = get_dataframe_from_file(temp_path, extension, seperator)
+
+    # Get the result skeleton
+    columns = df.columns.tolist()
+    columns_definition = [db_project.event_log.definition.columns_definition.get(column) for column in columns]
+    cases = get_cases_result_skeleton(df, db_project.event_log.definition)
+    cases_count = len(cases)
+    result = {
+        "message": "Prescription results generated successfully",
+        "cases_count": cases_count,
+        "columns": columns,
+        "columns_definition": columns_definition,
+        "cases": cases
+    }
+
+    # Send the result request to the plugins
+    while (result_key := random_str(8)) in memory.ongoing_results:
+        continue
+    memory.ongoing_results[result_key] = {}
+    plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
+    model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
+    send_ongoing_dataset_to_all_plugins(project_id, plugins, model_names, result_key, temp_path)
+
+    # Wait for the plugins to finish prescribing
+    while len(memory.ongoing_results[result_key]) < len(plugins):
+        sleep(1)
+
+    print("Start to merge the results")
+    for plugin_result in memory.ongoing_results[result_key].values():
+        for case_id, case_result in plugin_result.items():
+            result["cases"]: dict[str, dict[str, list]]
+            result["cases"][case_id]["prescriptions"].append(case_result)
+    print("Finished merging the results")
+
+    return result
 
 
 @router.put("/{project_id}/simulate/start", response_model=project_response.SimulateProjectResponse)

@@ -37,6 +37,23 @@ def send_training_data(plugin_key: str, project_id: int, plugin_id: int, trainin
     })
 
 
+def send_ongoing_dataset_to_all_plugins(project_id: int, plugins: dict[str, int], model_names: dict[int, str],
+                                        result_key: str, dataset_name: str) -> bool:
+    # Send ongoing dataset to all plugins
+    return all(send_ongoing_dataset(plugin_key, project_id, model_names[plugins[plugin_key]], result_key, dataset_name)
+               for plugin_key in plugins)
+
+
+def send_ongoing_dataset(plugin_key: str, project_id: int, model_name: str, result_key: str, dataset_name: str) -> bool:
+    # Send ongoing dataset to a specific plugin
+    return send_message(plugin_key, MessageType.ONGOING_DATASET, {
+        "project_id": project_id,
+        "model_name": model_name,
+        "result_key": result_key,
+        "dataset_name": dataset_name
+    })
+
+
 def send_streaming_prepare_to_all_plugins(project_id: int, plugins: dict[str, int],
                                           model_names: dict[int, str]) -> bool:
     # Send streaming prepare to all plugins

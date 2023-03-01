@@ -12,12 +12,10 @@ from core.enums.status import ProjectStatus
 from core.functions.definition.util import get_available_options
 from core.enums.error import ErrorType
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
-from core.functions.event_log.csv import get_dataframe_from_csv
 from core.functions.event_log.dataset import get_completed_transition_df
 from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.job import set_definition
-from core.functions.event_log.xes import get_dataframe_from_xes
-from core.functions.event_log.zip import get_dataframe_from_zip
+from core.functions.event_log.file import get_dataframe_from_file
 from core.functions.general.etc import get_current_time_label
 from core.functions.general.request import get_real_ip, get_db
 from core.functions.general.file import get_extension, get_new_path
@@ -49,12 +47,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
         f.write(file.file.read())
 
     # Get dataframe from file
-    if extension == "xes":
-        df = get_dataframe_from_xes(raw_path)
-    elif extension == "csv":
-        df = get_dataframe_from_csv(raw_path, seperator)
-    else:
-        df = get_dataframe_from_zip(raw_path, seperator)
+    df = get_dataframe_from_file(raw_path, extension, seperator)
 
     db_event_log = event_log_crud.create_event_log(db, event_log_schema.EventLogCreate(
         file_name=file.filename,

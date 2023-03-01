@@ -23,6 +23,19 @@ class CreateProjectResponse(BaseModel):
     project: Project
 
 
+class ProjectResultCaseResponse(BaseModel):
+    prescriptions: list[dict]
+    events: list[list]
+
+
+class ProjectResultResponse(BaseModel):
+    message: str
+    cases_count: int
+    columns: list[str]
+    columns_definition: list[str]
+    cases: dict[str, ProjectResultCaseResponse]
+
+
 class SimulateProjectResponse(BaseModel):
     message: str
     project_id: int
