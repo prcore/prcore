@@ -16,8 +16,7 @@ from core.functions.general.etc import random_str
 # Enable logging
 logger = logging.getLogger(__name__)
 
-BASE_URL = f"http://localhost:8000"
-SLEEP_INTERVAL = 5
+BASE_URL = "http://localhost:8000"
 REQUEST_HEADERS = {
     "Authorization": f"Bearer {config.API_TOKEN}",
     "Content-Type": "application/json",
@@ -65,6 +64,6 @@ def run_simulation(simulation_df_name: str, end_event: Event, project_id: int,
             json=row.to_dict()
         )
         print(response.json()["message"])
-        sleep(5)
+        sleep(config.SIMULATION_INTERVAL)
     end_event.set()
     print("Simulation finished")

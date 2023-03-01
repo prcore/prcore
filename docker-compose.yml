@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
 
@@ -26,6 +26,7 @@ services:
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASS: ${RABBITMQ_PASS}
+      SIMULATION_INTERVAL: ${SIMULATION_INTERVAL}
     volumes:
       - ./data/event_logs:/code/data/event_logs
       - ./data/logs:/code/data/logs

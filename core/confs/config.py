@@ -15,6 +15,7 @@ RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST")
 RABBITMQ_PORT = os.environ.get("RABBITMQ_PORT")
 RABBITMQ_USER = os.environ.get("RABBITMQ_USER")
 RABBITMQ_PASS = os.environ.get("RABBITMQ_PASS")
+SIMULATION_INTERVAL = os.environ.get("SIMULATION_INTERVAL")
 
 # Check if all environment variables are set
 if APP_ID is None:
@@ -24,7 +25,8 @@ if APP_ID == "core":
     all_envs = {API_TOKEN, API_USERNAME, API_PASSWORD,
                 ENABLED_PLUGINS,
                 POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD,
-                RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASS}
+                RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_USER, RABBITMQ_PASS,
+                SIMULATION_INTERVAL}
     ENABLED_PLUGINS = [p.strip() for p in ENABLED_PLUGINS.split("||")]
 elif APP_ID == "test":
     all_envs = set()
