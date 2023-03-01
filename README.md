@@ -14,7 +14,6 @@ Steps:
 1. Clone the repository
 2. Create a `.env` file from the `example.env` file
 3. Run `install.sh`
-4. Done!
 
 Example:
 
