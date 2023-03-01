@@ -26,7 +26,10 @@ def validate_project_definition(project_definition: list[list[ProjectDefinition]
         for project_definition in sub_list:
             column_definition = columns_definition.get(project_definition.column)
 
-            if column_definition is None and project_definition.column != ColumnDefinition.DURATION:
+            if project_definition.column == ColumnDefinition.DURATION:
+                column_definition = ColumnDefinition.DURATION
+
+            if column_definition is None:
                 raise HTTPException(status_code=400, detail=f"Column '{project_definition.column}' is not defined")
 
             if is_supported_operator(project_definition.operator, column_definition) is False:
