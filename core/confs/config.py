@@ -35,3 +35,9 @@ else:
 
 if any(env is None for env in all_envs):
     raise ValueError("Missing environment variables")
+
+if APP_ID == "core":
+    try:
+        SIMULATION_INTERVAL = int(SIMULATION_INTERVAL)
+    except ValueError:
+        raise ValueError("SIMULATION_INTERVAL must be an integer")
