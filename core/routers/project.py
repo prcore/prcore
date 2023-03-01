@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
@@ -15,8 +16,10 @@ import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
+from core.functions.event_log.dataset import get_test_dataset_path
 from core.functions.event_log.job import start_pre_processing
-from core.functions.general.etc import process_daemon
+from core.functions.general.etc import delay, process_daemon
+from core.functions.general.file import delete_file
 from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
@@ -101,6 +104,27 @@ def read_project(request: Request, project_id: int, db: Session = Depends(get_db
         "message": "Project retrieved successfully",
         "project": db_project
     }
+
+
+@router.get("/{project_id}/dataset/test")
+def download_test_dataset(request: Request, project_id: int, db: Session = Depends(get_db),
+                          _: bool = Depends(validate_token)):
+    logger.warning(f"Download test dataset - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
+    temp_path = get_test_dataset_path(db_project.event_log)
+
+    if not temp_path:
+        raise HTTPException(status_code=400, detail=ErrorType.DATASET_ERROR)
+
+    try:
+        return FileResponse(temp_path, media_type="text/csv", filename="test_dataset.csv")
+    finally:
+        delay(300, delete_file, [temp_path])
 
 
 @router.put("/{project_id}", response_model=project_response.ProjectResponse)

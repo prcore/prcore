@@ -1,15 +1,16 @@
 import logging
+from random import randint
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from sklearn.model_selection import GroupShuffleSplit
 from sqlalchemy.orm import Session
 
+import core.crud.event_log as event_log_crud
 import core.models.event_log as event_log_model
 import core.schemas.definition as definition_schema
 from core.confs import path
-from core.crud.event_log import set_datasets_name
 from core.enums.definition import ColumnDefinition, DefinitionType, Transition
 from core.functions.definition.condition import check_or_conditions
 from core.functions.definition.util import get_defined_column_name
@@ -65,7 +66,7 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
         simulation_df.to_pickle(simulation_df_path)
 
         # Update the database
-        set_datasets_name(db, db_event_log, training_df_name, simulation_df_name)
+        event_log_crud.set_datasets_name(db, db_event_log, training_df_name, simulation_df_name)
         result = training_df_name
     except Exception as e:
         logger.warning(f"Pre-processing failed: {e}", exc_info=True)
@@ -376,3 +377,29 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
     df = df.rename(columns=columns_need_to_rename)
     df.drop(columns=[c for c in df.columns if c not in needed_definitions], axis=1, inplace=True)
     return df
+
+
+def get_test_dataset_path(db_event_log: event_log_model.EventLog) -> str:
+    # Get test dataset path
+    result = ""
+
+    try:
+        temp_path = get_new_path(path.TEMP_PATH, suffix=".csv")
+        simulation_df = pd.read_pickle(f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{db_event_log.simulation_df_name}")
+        case_id_column = get_defined_column_name(db_event_log.definition.columns_definition, ColumnDefinition.CASE_ID)
+        grouped_df = simulation_df.groupby(case_id_column)
+        ongoing_cases = []
+        columns = simulation_df.columns.tolist()
+        for _, group in grouped_df:
+            values = group.values
+            if group.shape[0] < 3:
+                continue
+            length = randint(3, group.shape[0])
+            ongoing_cases.extend(values[:length])
+        ongoing_cases_df = pd.DataFrame(ongoing_cases, columns=columns)
+        ongoing_cases_df.to_csv(temp_path, index=False)
+        result = temp_path
+    except Exception as e:
+        logger.warning(f"Get test dataset path failed: {e}")
+
+    return result

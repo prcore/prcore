@@ -3,12 +3,26 @@ from datetime import datetime
 from multiprocessing import Process
 from random import choice
 from string import ascii_letters, digits
-from threading import active_count, Thread
+from threading import active_count, Thread, Timer
 from time import localtime, strftime
 from typing import Callable, Tuple
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def delay(secs: int, target: Callable, args: list = None) -> bool:
+    # Call a function with delay
+    result = False
+
+    try:
+        t = Timer(secs, target, args)
+        t.daemon = True
+        result = t.start() or True
+    except Exception as e:
+        logger.warning(f"Delay error: {e}", exc_info=True)
+
+    return result
 
 
 def get_current_time_label() -> str:

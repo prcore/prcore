@@ -2,6 +2,8 @@ from enum import Enum
 
 
 class ErrorType(str, Enum):
+    DATASET_ERROR = "Dataset error"
+
     EVENT_LOG_INVALID = "No valid event log provided"
     EVENT_LOG_NOT_FOUND = "Event log not found"
     EVENT_LOG_DEFINITION_NOT_FOUND = "Event log definition not found"
