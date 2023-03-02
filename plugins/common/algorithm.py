@@ -40,6 +40,10 @@ class Algorithm:
         # Get data
         return self.__data
 
+    def get_parameter_value(self, key: str) -> Any:
+        # Get parameter value
+        return self.__data["parameters"][key]
+
     def set_data_value(self, key: str, value: Any):
         # Set data value
         self.__data[key] = value
