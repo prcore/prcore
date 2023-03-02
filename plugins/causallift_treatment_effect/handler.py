@@ -5,10 +5,10 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic, BasicProperties
 
 from core.enums.message import MessageType
-from core.functions.common.handler import (handle_online_inquiry, handle_training_data, handle_streaming_prepare,
-                                           handle_prescription_request)
 from core.functions.message.util import get_data_from_body
 
+from plugins.common.handler import (handle_online_inquiry, handle_training_data, handle_streaming_prepare,
+                                    handle_prescription_request)
 from plugins.causallift_treatment_effect.config import basic_info, needed_columns
 from plugins.causallift_treatment_effect.initializer import (activate_instance_from_model_file, deactivate_instance,
                                                              get_instance_from_model_file, preprocess_and_train)

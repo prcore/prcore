@@ -11,9 +11,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from core.confs import path
 from core.enums.definition import ColumnDefinition
 from core.functions.general.file import get_new_path
-from core.functions.common.algorithm import get_null_output
 from core.functions.training.util import get_ordinal_encoded_df
 
+from plugins.common.algorithm import get_null_output
 from plugins.knn_next_activity.config import basic_info
 
 # Enable logging

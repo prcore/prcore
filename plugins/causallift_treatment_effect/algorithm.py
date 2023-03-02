@@ -10,10 +10,10 @@ from pandas import DataFrame
 
 from core.confs import path
 from core.enums.definition import ColumnDefinition
-from core.functions.common.algorithm import get_null_output
 from core.functions.general.file import get_new_path
 from core.functions.training.util import get_ordinal_encoded_df
 
+from plugins.common.algorithm import get_null_output
 from plugins.causallift_treatment_effect.config import basic_info
 
 # Enable logging
@@ -134,7 +134,7 @@ class Algorithm:
 
         # Get the CATE using two models approach
         test_df = DataFrame([features], columns=[f"Activity_{i}" for i in range(length)])
-        cl = CausalLift(train_df=training_df, test_df=test_df, enable_ipw=True)
+        cl = CausalLift(train_df=training_df, test_df=test_df, enable_ipw=True, logging_config=None)
         train_df, test_df = cl.estimate_cate_by_2_models()
         proba_if_treated = round(test_df["Proba_if_Treated"].values[0].item(), 4)
         proba_if_untreated = round(test_df["Proba_if_Untreated"].values[0].item(), 4)

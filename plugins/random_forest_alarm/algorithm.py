@@ -12,9 +12,9 @@ from sklearn.model_selection import train_test_split
 from core.confs import path
 from core.enums.definition import ColumnDefinition
 from core.functions.general.file import get_new_path
-from core.functions.common.algorithm import get_null_output
 from core.functions.training.util import get_ordinal_encoded_df
 
+from plugins.common.algorithm import get_null_output
 from plugins.random_forest_alarm.config import basic_info
 
 # Enable logging

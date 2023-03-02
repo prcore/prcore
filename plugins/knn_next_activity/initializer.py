@@ -3,8 +3,7 @@ from typing import Optional
 
 from pandas import DataFrame
 
-from core.functions.common.algorithm import start_training
-
+from plugins.common.algorithm import start_training
 from plugins.knn_next_activity import memory
 from plugins.knn_next_activity.algorithm import Algorithm
 

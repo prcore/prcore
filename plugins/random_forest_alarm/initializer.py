@@ -3,8 +3,7 @@ from typing import Optional
 
 from pandas import DataFrame
 
-from core.functions.common.algorithm import start_training
-
+from plugins.common.algorithm import start_training
 from plugins.random_forest_alarm import memory
 from plugins.random_forest_alarm.algorithm import Algorithm
 

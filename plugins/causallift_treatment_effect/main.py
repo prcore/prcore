@@ -1,8 +1,8 @@
 import logging
 
-from core.functions.common.plugin import plugin_scheduler, plugin_run
 from core.functions.common.timer import processed_messages_clean
 
+from plugins.common.starter import plugin_scheduler, plugin_run
 from plugins.causallift_treatment_effect import memory
 from plugins.causallift_treatment_effect.config import basic_info
 from plugins.causallift_treatment_effect.handler import callback
