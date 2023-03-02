@@ -1,11 +1,8 @@
 import logging
 
-from core.functions.common.timer import processed_messages_clean
-
 from plugins.common.starter import plugin_scheduler, plugin_run
-from plugins.causallift_treatment_effect import memory
-from plugins.causallift_treatment_effect.config import basic_info
-from plugins.causallift_treatment_effect.handler import callback
+from plugins.causallift_treatment_effect.algorithm import CausalLiftAlgorithm
+from plugins.causallift_treatment_effect.config import basic_info, needed_columns
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -15,5 +12,5 @@ for _ in logging.root.manager.loggerDict:
 
 
 if __name__ == "__main__":
-    plugin_scheduler(processed_messages_clean, memory.processed_messages)
-    plugin_run(basic_info, callback)
+    plugin_scheduler()
+    plugin_run(basic_info, needed_columns, CausalLiftAlgorithm)

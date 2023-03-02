@@ -1,25 +1,60 @@
 import logging
-from typing import Any, Callable
+from datetime import datetime
+from typing import Any, Dict, List, Type
 
+from pika import BasicProperties
 from pika.adapters.blocking_connection import BlockingChannel
+from pika.spec import Basic
 
 from core.confs import config
+from core.enums.definition import ColumnDefinition
 from core.enums.message import MessageType
-from core.functions.general.etc import thread
-from core.functions.message.util import send_message_by_channel
+from core.functions.message.util import send_message_by_channel, get_data_from_body
 
-from plugins.common.algorithm import read_training_df, check_training_df
+from plugins.common import memory
+from plugins.common.algorithm import Algorithm, read_training_df, check_training_df
+from plugins.common.initializer import (preprocess_and_train, activate_instance_from_model_file,
+                                        get_instance_from_model_file, deactivate_instance)
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes,
+             basic_info: Dict[str, Any], needed_columns: List[ColumnDefinition], algo: Type[Algorithm]) -> None:
+    message_type, data = get_data_from_body(body)
+    print(message_type, properties.message_id, data)
+    print("-" * 24)
+
+    try:
+        message_id = properties.message_id
+        if memory.processed_messages.get(message_id):
+            return
+        else:
+            memory.processed_messages[message_id] = datetime.now()
+        if message_type == MessageType.ONLINE_INQUIRY:
+            handle_online_inquiry(ch, basic_info)
+        elif message_type == MessageType.TRAINING_DATA:
+            handle_training_data(ch, data, algo, basic_info, needed_columns)
+        elif message_type == MessageType.STREAMING_PREPARE:
+            handle_streaming_prepare(ch, data, algo, basic_info)
+        elif message_type == MessageType.PRESCRIPTION_REQUEST:
+            instance = get_instance_from_model_file(algo, basic_info, data["project_id"], data["model_name"])
+            handle_prescription_request(ch, data, instance)
+        elif message_type == MessageType.STREAMING_STOP:
+            deactivate_instance(data["project_id"])
+    except Exception as e:
+        logger.warning(f"Callback error: {e}", exc_info=True)
+    finally:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def handle_online_inquiry(ch: BlockingChannel, basic_info: dict) -> None:
     send_message_by_channel(ch, "core", MessageType.ONLINE_REPORT, basic_info)
 
 
-def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
-                         preprocess_and_train: Callable) -> bool:
+def handle_training_data(ch: BlockingChannel, data: dict, algo: Type[Algorithm], basic_info: Dict[str, Any],
+                         needed_columns: list) -> bool:
     result = False
     project_id = None
 
@@ -38,7 +73,8 @@ def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
         )
         if not applicable:
             return False
-        result = thread(preprocess_and_train, (project_id, plugin_id, training_df, treatment_definition))
+        preprocess_and_train(algo, basic_info, project_id, plugin_id, training_df, treatment_definition)
+        result = True
     except Exception as e:
         send_message_by_channel(
             channel=ch,
@@ -51,10 +87,11 @@ def handle_training_data(ch: BlockingChannel, data: dict, needed_columns: list,
     return result
 
 
-def handle_streaming_prepare(ch: BlockingChannel, data: dict, activate_instance_from_model_file: Callable) -> None:
+def handle_streaming_prepare(ch: BlockingChannel, data: dict, algo: Type[Algorithm],
+                             basic_info: Dict[str, Any]) -> None:
     project_id = data["project_id"]
     model_name = data["model_name"]
-    plugin_ud = activate_instance_from_model_file(project_id, model_name)
+    plugin_ud = activate_instance_from_model_file(algo, basic_info, project_id, model_name)
     if plugin_ud:
         send_message_by_channel(
             channel=ch,
@@ -64,7 +101,7 @@ def handle_streaming_prepare(ch: BlockingChannel, data: dict, activate_instance_
         )
 
 
-def handle_prescription_request(ch: BlockingChannel, data: dict, instance: Any) -> None:
+def handle_prescription_request(ch: BlockingChannel, data: dict, instance: Algorithm) -> None:
     project_id = data["project_id"]
     event_id = data["event_id"]
     prefix = data["data"]

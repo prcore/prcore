@@ -1,6 +1,7 @@
 import logging
 import pickle
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from pandas import DataFrame
@@ -14,19 +15,15 @@ from core.functions.general.file import get_new_path
 from core.functions.training.util import get_ordinal_encoded_df
 
 from plugins.common.algorithm import get_null_output
-from plugins.knn_next_activity.config import basic_info
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
 class Algorithm:
-    def __init__(self, project_id: int, plugin_id: int | None, df: DataFrame | None, model_name: str = None,
-                 parameters: dict = basic_info["parameters"]):
-        self.df: DataFrame = df
-        self.model_name: str = model_name
-        self.parameters: dict = parameters
-        self.grouped_activities = []
+    def __init__(self, basic_info: Dict[str, Any], project_id: int, plugin_id: Optional[int] = None,
+                 df: Optional[DataFrame] = None, model_name: str = None, treatment_definition: list = None):
+        self.__grouped_activities = []
         self.lengths = []
         self.data = {
             "project_id": project_id,
@@ -50,8 +47,8 @@ class Algorithm:
             case_ids = encoded_df[ColumnDefinition.CASE_ID].values
             activities = encoded_df[ColumnDefinition.ACTIVITY].values
             unique_case_ids = np.unique(case_ids)
-            self.grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
-            self.lengths = [len(case) for case in self.grouped_activities]
+            self.__grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
+            self.lengths = [len(case) for case in self.__grouped_activities]
         except Exception as e:
             logger.warning(f"Pre-processing failed: {e}", exc_info=True)
             return False
@@ -64,10 +61,10 @@ class Algorithm:
             max_length = max(self.lengths)
             threshold = 100  # The minimum number of cases needed to train the model
             for length in range(min_length, max_length):
-                if len([group for group in self.grouped_activities if len(group) > length]) < threshold:
+                if len([group for group in self.__grouped_activities if len(group) > length]) < threshold:
                     continue
-                x = [group[:length] for group in self.grouped_activities if len(group) > length]
-                y = [group[length] for group in self.grouped_activities if len(group) > length]
+                x = [group[:length] for group in self.__grouped_activities if len(group) > length]
+                y = [group[length] for group in self.__grouped_activities if len(group) > length]
                 x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
                 knn = KNeighborsClassifier(n_neighbors=self.parameters["n_neighbors"])
                 knn.fit(x_train, y_train)

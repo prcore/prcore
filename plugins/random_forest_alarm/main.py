@@ -1,6 +1,6 @@
 import logging
 
-from core.functions.common.timer import processed_messages_clean
+from core.functions.general.timer import processed_messages_clean
 
 from plugins.common.starter import plugin_scheduler, plugin_run
 from plugins.random_forest_alarm import memory
