@@ -91,7 +91,11 @@ class Algorithm:
         pass
 
     def predict(self, prefix: List[dict]) -> dict:
-        # Predict the next activity
+        # Predict the result
+        pass
+
+    def predict_df(self, df: DataFrame) -> dict:
+        # Predict the result using a DataFrame
         pass
 
 

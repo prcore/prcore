@@ -47,4 +47,3 @@ class DatasetResultResponse(BaseModel):
 class SimulateProjectResponse(BaseModel):
     message: str
     project_id: int
-

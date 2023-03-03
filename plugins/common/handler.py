@@ -93,12 +93,9 @@ def handle_training_data(ch: BlockingChannel, data: dict, algo: Type[Algorithm],
 def handle_dataset_prescription_request(ch: BlockingChannel, data: dict, instance: Algorithm) -> None:
     project_id = data["project_id"]
     result_key = data["result_key"]
-    df = read_df_from_path(path.TEMP_PATH, data["ongoing_df_name"])
-    result = {}
-    grouped_df = df.groupby(ColumnDefinition.CASE_ID)
-    for case_id, group in grouped_df:
-        result[case_id] = {"plugin": config.APP_ID}
-
+    ongoing_df_name = data["ongoing_df_name"]
+    df = read_df_from_path(path.TEMP_PATH, ongoing_df_name)
+    result = instance.predict_df(df)
     send_message_by_channel(
         channel=ch,
         receiver_id="core",
