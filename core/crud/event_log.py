@@ -24,6 +24,26 @@ def get_event_logs(db: Session, skip: int = 0, limit: int = 100) -> list[model.E
     return db.query(model.EventLog).offset(skip).limit(limit).all()  # type: ignore
 
 
+def get_all_saved_names(db: Session) -> list[str]:
+    # Get all saved names
+    return [x[0] for x in db.query(model.EventLog.saved_name).all()]
+
+
+def get_all_df_names(db: Session) -> list[str]:
+    # Get all dataframe names
+    return [x[0] for x in db.query(model.EventLog.df_name).all()]
+
+
+def get_all_training_df_names(db: Session) -> list[str]:
+    # Get all training dataframe names
+    return [x[0] for x in db.query(model.EventLog.training_df_name).all()]
+
+
+def get_all_simulation_df_names(db: Session) -> list[str]:
+    # Get all simulation dataframe names
+    return [x[0] for x in db.query(model.EventLog.simulation_df_name).all()]
+
+
 def create_event_log(db: Session, event_log: schema.EventLogCreate) -> model.EventLog:
     # Create an event log
     db_event_log = model.EventLog(**event_log.dict())

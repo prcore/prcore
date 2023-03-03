@@ -12,10 +12,10 @@ from tzlocal import get_localzone
 from core import security
 from core.starters.database import Base, engine, SessionLocal
 from core.starters.rabbitmq import parameters
-from core.functions.general.etc import thread
+from core.functions.general.etc import delay, thread
 from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.message.sender import send_online_inquires
-from core.functions.tool.timer import stop_unread_simulations
+from core.functions.tool.timer import clean_local_storage, stop_unread_simulations
 from core.functions.general.timer import processed_messages_clean, log_rotation
 from core.routers import event, event_log, plugin, project
 from core.starters import memory
@@ -91,9 +91,13 @@ def shutdown_event():
         sleep(0.5)
 
 
+# Clean local storage
+delay(10, clean_local_storage)
+
 # Start a scheduler
 scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
 scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
+scheduler.add_job(clean_local_storage, "cron", hour=2, minute=3)
 scheduler.add_job(send_online_inquires, "interval", minutes=5)
 scheduler.add_job(processed_messages_clean, "interval", [memory.processed_messages], minutes=5)
 scheduler.add_job(stop_unread_simulations, "interval", minutes=5)

@@ -19,6 +19,11 @@ def get_plugin_by_id(db: Session, plugin_id: int) -> model.Plugin | None:
     return db.query(model.Plugin).filter_by(id=plugin_id).first()
 
 
+def get_all_model_names(db: Session) -> list[str]:
+    # Get all model names
+    return [x[0] for x in db.query(model.Plugin.model_name).all()]
+
+
 def create_plugin(db: Session, plugin: schema.PluginCreate, project_id: int) -> model.Plugin:
     # Create a plugin
     db_plugin = model.Plugin(**plugin.dict(), project_id=project_id)
@@ -48,4 +53,3 @@ def delete_plugin(db: Session, db_plugin: model.Plugin) -> None:
     # Delete a plugin
     db.delete(db_plugin)
     db.commit()
-    return
