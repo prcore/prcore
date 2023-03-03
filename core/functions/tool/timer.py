@@ -72,8 +72,8 @@ def stop_unread_simulations() -> bool:
 
     try:
         datetime_now = datetime.now()
-        for project_id in list(memory.simulation_projects.keys()):
-            project_datetime = memory.simulation_projects.get(project_id)
+        for project_id in list(memory.simulation_start_times.keys()):
+            project_datetime = memory.simulation_start_times.get(project_id)
             if not project_datetime:
                 continue
             if (datetime_now - project_datetime).total_seconds() > 5 * 60:

@@ -248,7 +248,7 @@ def simulation_start(request: Request, project_id: int, db: Session = Depends(ge
     plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
     model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
     send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
-    memory.simulation_projects[db_project.id] = datetime.now()
+    memory.simulation_start_times[db_project.id] = datetime.now()
     return {
         "message": "Project simulation started successfully",
         "project_id": project_id
@@ -312,7 +312,7 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
     if project_id in memory.reading_projects:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ALREADY_READING)
     memory.reading_projects.add(project_id)
-    memory.simulation_projects.pop(project_id, None)
+    memory.simulation_start_times.pop(project_id, None)
 
     return EventSourceResponse(event_generator(request, db, project_id))
 

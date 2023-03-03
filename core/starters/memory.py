@@ -15,4 +15,4 @@ processed_messages: dict[str, datetime] = {}
 ongoing_results: dict[str, Any] = {}
 reading_projects: set[int] = set()
 simulation_events: dict[int, Event] = {}
-simulation_projects: dict[int, datetime] = {}
+simulation_start_times: dict[int, datetime] = {}
