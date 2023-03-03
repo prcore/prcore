@@ -47,6 +47,25 @@ def remove_multiple_files(checklist: set[str], dir_path: str, file_type: str) ->
         logger.warning(f"Remove abandoned {file_type} file: {f}")
 
 
+def pop_unread_ongoing_results() -> bool:
+    # Pop unread ongoing results
+    result = False
+
+    try:
+        datetime_now = datetime.now()
+        for result_key in list(memory.ongoing_results.keys()):
+            result_datetime = memory.ongoing_results.get(result_key)
+            if not result_datetime:
+                continue
+            if (datetime_now - result_datetime).total_seconds() > 30 * 60:
+                del memory.ongoing_results[result_key]
+        result = True
+    except Exception as e:
+        logger.warning(f"Pop unread ongoing results error: {e}", exc_info=True)
+
+    return result
+
+
 def stop_unread_simulations() -> bool:
     # Stop unread simulations
     result = False
