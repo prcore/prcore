@@ -38,7 +38,7 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
             handle_training_data(ch, data, algo, basic_info, needed_columns)
         elif message_type == MessageType.STREAMING_PREPARE:
             handle_streaming_prepare(ch, data, algo, basic_info)
-        elif message_type == MessageType.PRESCRIPTION_REQUEST:
+        elif message_type == MessageType.STREAMING_PRESCRIPTION_REQUEST:
             instance = get_instance_from_model_file(algo, basic_info, data["project_id"], data["model_name"])
             handle_prescription_request(ch, data, instance)
         elif message_type == MessageType.STREAMING_STOP:
@@ -109,6 +109,6 @@ def handle_prescription_request(ch: BlockingChannel, data: dict, instance: Algor
     send_message_by_channel(
         channel=ch,
         receiver_id="core",
-        message_type=MessageType.PRESCRIPTION_RESULT,
+        message_type=MessageType.STREAMING_PRESCRIPTION_RESULT,
         data={"project_id": project_id, "plugin_key": config.APP_ID, "event_id": event_id, "data": result}
     )

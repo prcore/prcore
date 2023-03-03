@@ -78,7 +78,7 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
             handle_model_name(data)
         elif message_type == MessageType.STREAMING_READY:
             handle_streaming_ready(data)
-        elif message_type == MessageType.PRESCRIPTION_RESULT:
+        elif message_type == MessageType.STREAMING_PRESCRIPTION_RESULT:
             handle_prescription_result(data)
     except Exception as e:
         logger.error(f"Error while handling message {message_type}: {e}", exc_info=True)

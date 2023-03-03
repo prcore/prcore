@@ -9,7 +9,7 @@ import core.schemas.definition as definition_schema
 from core.confs import config
 from core.confs import path
 from core.enums.definition import ColumnDefinition
-from core.functions.definition.util import get_defined_column_name, get_start_timestamp
+from core.functions.definition.util import get_defined_column_name
 from core.functions.event_log.dataset import get_testing_dataframe
 from core.functions.general.etc import random_str
 

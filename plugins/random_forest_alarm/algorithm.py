@@ -86,7 +86,7 @@ class RandomAlgorithm(Algorithm):
             return False
         return True
 
-    def predict(self, prefix: list[dict]) -> dict:
+    def predict(self, prefix: List[dict]) -> dict:
         # Predict the next activity
         if any(x["ACTIVITY"] not in self.get_data()["mapping"] for x in prefix):
             return get_null_output(self.get_basic_info()["name"], self.get_basic_info()["prescription_type"],
