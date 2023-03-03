@@ -9,11 +9,12 @@ import core.crud.project as project_crud
 import core.models.event_log as event_log_model
 import core.schemas.definition as definition_schema
 import core.schemas.plugin as plugin_schema
+import core.schemas.request.event_log as event_log_request
 from core.enums.definition import Transition
 from core.enums.status import PluginStatus
 from core.functions.event_log.dataset import pre_process_data
 from core.functions.event_log.df import get_dataframe
-from core.functions.event_log.validation import validate_column_definition
+from core.functions.event_log.validation import validate_columns_definition, validate_case_attributes
 from core.functions.message.sender import send_training_data_to_all_plugins
 from core.functions.project.simulation import stop_simulation
 from core.starters.database import SessionLocal
@@ -22,15 +23,18 @@ from core.starters.database import SessionLocal
 logger = logging.getLogger(__name__)
 
 
-def set_definition(db: Session, db_event_log: event_log_model.EventLog, request_body: dict) -> event_log_model.EventLog:
+def set_definition(db: Session, db_event_log: event_log_model.EventLog,
+                   update_body: event_log_request.ColumnsDefinitionRequest) -> event_log_model.EventLog:
     df = get_dataframe(db_event_log)
-    validate_column_definition(request_body, df)
+    validate_columns_definition(update_body.columns_definition, df)
+    validate_case_attributes(update_body.case_attributes, df)
 
     if db_event_log.definition:
         db_definition = definition_crud.update_definition(db, definition_schema.Definition(
             id=db_event_log.definition.id,
             created_at=db_event_log.definition.created_at,
-            columns_definition=request_body,
+            columns_definition=update_body.columns_definition,
+            case_attributes=update_body.case_attributes,
             outcome_definition=None,
             treatment_definition=None,
             fast_mode=True,
@@ -42,7 +46,8 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog, request_
         stop_simulation(db, db_project, redefined=True)
     else:
         db_definition = definition_crud.create_definition(db, definition_schema.DefinitionCreate(
-            columns_definition=request_body
+            columns_definition=update_body.columns_definition,
+            case_attributes=update_body.case_attributes
         ))
 
     return event_log_crud.associate_definition(db, db_event_log, db_definition.id)

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 import core.crud.event_log as event_log_crud
 import core.crud.project as project_crud
+import core.schemas.request.event_log as event_log_request
 import core.schemas.response.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 from core.confs import path
@@ -66,10 +67,9 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
 
 
 @router.put("/{event_log_id}", response_model=event_log_response.UpdateEventLogResponse)
-async def update_event_log(request: Request, event_log_id: int,
+async def update_event_log(request: Request, event_log_id: int, update_body: event_log_request.ColumnsDefinitionRequest,
                            db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Update event log: {event_log_id} - from IP {get_real_ip(request)}")
-    request_body = await request.json()
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:
@@ -79,9 +79,9 @@ async def update_event_log(request: Request, event_log_id: int,
                                                 ProjectStatus.SIMULATING}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
-    db_event_log = set_definition(db, db_event_log, request_body)
+    db_event_log = set_definition(db, db_event_log, update_body)
     df = get_dataframe(db_event_log)
-    df = get_completed_transition_df(df, request_body)
+    df = get_completed_transition_df(df, update_body.columns_definition)
 
     return {
         "message": "Event log updated",

@@ -18,6 +18,7 @@ class Definition(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     columns_definition = Column(JSONB, nullable=False)
+    case_attributes = Column(JSONB, nullable=True)
     outcome_definition = Column(JSONB, nullable=True)
     treatment_definition = Column(JSONB, nullable=True)
     fast_mode = Column(Boolean, default=True)

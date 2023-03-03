@@ -22,6 +22,8 @@ def get_supported_operators(column_definition: ColumnDefinition) -> SupportedOpe
         return SupportedOperators.BOOLEAN
     elif column_definition in DefinitionType.DATETIME:
         return SupportedOperators.DATETIME
+    elif column_definition in DefinitionType.CATEGORICAL:
+        return SupportedOperators.CATEGORICAL
     return None
 
 

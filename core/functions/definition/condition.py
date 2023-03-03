@@ -63,6 +63,8 @@ def check_atomic_condition(group: DataFrame, condition: ProjectDefinition,
         return compare_datetime(group, column_name, operator, threshold)
     elif supported_operators == SupportedOperators.BOOLEAN:
         return compare_boolean(group, column_name, operator)
+    elif supported_operators == SupportedOperators.CATEGORICAL:
+        return compare_categorical(group, column_name, threshold)
 
     return False
 
@@ -138,6 +140,12 @@ def compare_datetime(group: DataFrame, column_name: str, operator: Operator, thr
     elif operator == Operator.LESS_THAN_OR_EQUAL:
         return np.any(group[column_name] >= threshold)
     return False
+
+
+def compare_categorical(group: DataFrame, column_name: str, threshold: Any) -> bool:
+    # Compare categorical
+    threshold = str(threshold).lower()
+    return np.any(group[column_name].str.lower() == threshold)
 
 
 def convert_to_seconds(time_str):

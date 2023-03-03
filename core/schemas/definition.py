@@ -16,6 +16,7 @@ class ProjectDefinition(BaseModel):
 
 class DefinitionBase(BaseModel):
     columns_definition: dict[str, ColumnDefinition | None]
+    case_attributes: list[str] | None = None
     outcome_definition: list[list[ProjectDefinition]] | None = None
     treatment_definition: list[list[ProjectDefinition]] | None = None
     fast_mode: bool = True

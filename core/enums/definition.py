@@ -11,6 +11,7 @@ class ColumnDefinition(str, Enum):
     NUMBER = "NUMBER"
     BOOLEAN = "BOOLEAN"
     DATETIME = "DATETIME"
+    CATEGORICAL = "CATEGORICAL"
     ACTIVITY = "ACTIVITY"
     TIMESTAMP = "TIMESTAMP"
     RESOURCE = "RESOURCE"
@@ -28,6 +29,7 @@ class DefinitionType(str, Enum):
     BOOLEAN = {ColumnDefinition.BOOLEAN}
     DATETIME = {ColumnDefinition.DATETIME, ColumnDefinition.TIMESTAMP,
                 ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP}
+    CATEGORICAL = {ColumnDefinition.CATEGORICAL}
 
 
 class Operator(str, Enum):
@@ -51,6 +53,8 @@ class Operator(str, Enum):
     EARLIER_THAN_OR_EQUAL = "EARLIER_THAN_OR_EQUAL"
     LATER_THAN = "LATER_THAN"
     LATER_THAN_OR_EQUAL = "LATER_THAN_OR_EQUAL"
+    # CATEGORICAL
+    IS = "IS"
 
 
 class SupportedOperators(str, Enum):
@@ -61,10 +65,12 @@ class SupportedOperators(str, Enum):
     NUMBER = {Operator.EQUAL, Operator.NOT_EQUAL, Operator.LESS_THAN, Operator.LESS_THAN_OR_EQUAL,
               Operator.GREATER_THAN, Operator.GREATER_THAN_OR_EQUAL}
     # BOOLEAN
-    BOOLEAN = {Operator.EQUAL, Operator.NOT_EQUAL, Operator.IS_TRUE, Operator.IS_FALSE}
+    BOOLEAN = {Operator.IS_TRUE, Operator.IS_FALSE}
     # DATETIME
     DATETIME = {Operator.EQUAL, Operator.NOT_EQUAL, Operator.EARLIER_THAN, Operator.EARLIER_THAN_OR_EQUAL,
                 Operator.LATER_THAN, Operator.LATER_THAN_OR_EQUAL}
+    # CATEGORICAL
+    CATEGORICAL = {Operator.EQUAL, Operator.NOT_EQUAL, Operator.IS}
 
 
 class Transition(str, Enum):
