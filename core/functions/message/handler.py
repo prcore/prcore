@@ -76,10 +76,12 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
             handle_training_start(data)
         elif message_type == MessageType.MODEL_NAME:
             handle_model_name(data)
+        elif message_type == MessageType.DATASET_PRESCRIPTION_RESULT:
+            handle_dataset_prescription_result(data)
         elif message_type == MessageType.STREAMING_READY:
             handle_streaming_ready(data)
         elif message_type == MessageType.STREAMING_PRESCRIPTION_RESULT:
-            handle_prescription_result(data)
+            handle_streaming_prescription_result(data)
     except Exception as e:
         logger.error(f"Error while handling message {message_type}: {e}", exc_info=True)
     finally:
@@ -165,6 +167,20 @@ def handle_model_name(data: dict) -> None:
         update_project_status(db, project_id)
 
 
+def handle_dataset_prescription_result(data: dict) -> None:
+    project_id = data["project_id"]
+    plugin_key = data["plugin_key"]
+    result_key = data["result_key"]
+    prescriptions = data["data"]
+    if result_key not in memory.ongoing_results:
+        return
+    memory.ongoing_results[result_key]["results"][plugin_key] = prescriptions
+    with SessionLocal() as db:
+        db_project = project_crud.get_project_by_id(db, project_id)
+        if not db_project:
+            return
+
+
 def handle_streaming_ready(data: dict) -> None:
     project_id = data["project_id"]
     plugin_id = data["plugin_id"]
@@ -176,7 +192,7 @@ def handle_streaming_ready(data: dict) -> None:
         update_project_status(db, project_id)
 
 
-def handle_prescription_result(data: dict) -> None:
+def handle_streaming_prescription_result(data: dict) -> None:
     project_id = data["project_id"]
     plugin_key = data["plugin_key"]
     event_id = data["event_id"]

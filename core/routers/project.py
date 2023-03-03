@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from time import sleep
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
@@ -18,14 +17,14 @@ import core.schemas.project as project_schema
 from core.confs import path
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
-from core.functions.event_log.dataset import get_ongoing_dataset_path, get_cases_result_skeleton
-from core.functions.event_log.file import get_dataframe_from_file
+from core.functions.event_log.dataset import get_ongoing_dataset_path
 from core.functions.event_log.job import start_pre_processing
-from core.functions.general.etc import process_daemon, random_str
-from core.functions.general.file import delete_file, get_extension, get_new_path
+from core.functions.general.etc import process_daemon
+from core.functions.general.file import delete_file, get_extension
 from core.functions.general.request import get_real_ip, get_db
-from core.functions.message.sender import send_ongoing_dataset_to_all_plugins, send_streaming_prepare_to_all_plugins
+from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
+from core.functions.project.prescribe import get_ongoing_dataset_result_key, process_ongoing_dataset
 from core.functions.project.simulation import stop_simulation
 from core.functions.project.streaming import event_generator
 from core.functions.project.validation import validate_project_definition, validate_simulation_status
@@ -175,10 +174,11 @@ def update_project_definition(request: Request, project_id: int,
     }
 
 
-@router.post("/{project_id}/result", response_model=project_response.ProjectResultResponse)
-def get_prescription_result(request: Request, project_id: int, file: UploadFile = Form(), seperator: str = Form(","),
-                            db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Get prescription result - from IP {get_real_ip(request)}")
+@router.post("/{project_id}/result", response_model=project_response.DatasetUploadResponse)
+def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
+                           file: UploadFile = Form(), seperator: str = Form(","),
+                           db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Upload ongoing dataset - from IP {get_real_ip(request)}")
 
     if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
@@ -187,46 +187,53 @@ def get_prescription_result(request: Request, project_id: int, file: UploadFile 
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
 
-    temp_path = get_new_path(f"{path.TEMP_PATH}/", suffix=f".{extension}")
-    with open(temp_path, "wb") as f:
-        f.write(file.file.read())
+    result_key = get_ongoing_dataset_result_key(file, extension, seperator, db_project)
+    if not result_key:
+        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
 
-    # Get dataframe from file
-    df = get_dataframe_from_file(temp_path, extension, seperator)
-
-    # Get the result skeleton
-    columns = df.columns.tolist()
-    columns_definition = [db_project.event_log.definition.columns_definition.get(column) for column in columns]
-    cases = get_cases_result_skeleton(df, db_project.event_log.definition)
-    cases_count = len(cases)
-    result = {
-        "message": "Prescription results generated successfully",
-        "cases_count": cases_count,
-        "columns": columns,
-        "columns_definition": columns_definition,
-        "cases": cases
+    background_tasks.add_task(process_ongoing_dataset, result_key)
+    return {
+        "message": "Ongoing dataset uploaded successfully",
+        "project_id": project_id,
+        "result_key": result_key
     }
 
-    # Send the result request to the plugins
-    while (result_key := random_str(8)) in memory.ongoing_results:
-        continue
-    memory.ongoing_results[result_key] = {}
-    plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
-    model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
-    send_ongoing_dataset_to_all_plugins(project_id, plugins, model_names, result_key, temp_path)
 
-    # Wait for the plugins to finish prescribing
-    while len(memory.ongoing_results[result_key]) < len(plugins):
-        sleep(1)
+@router.get("/{project_id}/result/{result_key}", response_model=project_response.DatasetResultResponse)
+def get_ongoing_dataset_result(request: Request, project_id: int, result_key: str, background_tasks: BackgroundTasks,
+                               db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Get ongoing dataset result - from IP {get_real_ip(request)}")
 
-    print("Start to merge the results")
-    for plugin_result in memory.ongoing_results[result_key].values():
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=404, detail=ErrorType.PROJECT_NOT_FOUND)
+
+    if result_key not in memory.ongoing_results or db_project.id != memory.ongoing_results[result_key]["project_id"]:
+        raise HTTPException(status_code=404, detail=ErrorType.RESULT_NOT_FOUND)
+
+    result = memory.ongoing_results[result_key]
+    if len(result["results"]) != len(result["plugins"]):
+        print(result["results"].keys())
+        print(result["plugins"])
+        return {
+            "message": "Ongoing dataset result is still processing",
+            "project_status": db_project.status
+        }
+
+    print("Start to merge the result")
+    for plugin_result in result["results"].values():
         for case_id, case_result in plugin_result.items():
-            result["cases"]: dict[str, dict[str, list]]
             result["cases"][case_id]["prescriptions"].append(case_result)
-    print("Finished merging the results")
+    print("Merge the result successfully")
 
-    return result
+    return {
+        "message": "Ongoing dataset result retrieved successfully",
+        "project_status": db_project.status,
+        "cases_count": result["cases_count"],
+        "columns": result["columns"],
+        "columns_definition": result["columns_definition"],
+        "cases": result["cases"]
+    }
 
 
 @router.put("/{project_id}/simulate/start", response_model=project_response.SimulateProjectResponse)
@@ -325,7 +332,7 @@ def download_ongoing_dataset(request: Request, project_id: int, background_tasks
     temp_path = get_ongoing_dataset_path(db_project.event_log)
 
     if not temp_path:
-        raise HTTPException(status_code=400, detail=ErrorType.DATASET_ERROR)
+        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
 
     background_tasks.add_task(delete_file, temp_path)
     return FileResponse(temp_path, media_type="text/csv", filename="ongoing_dataset.csv")

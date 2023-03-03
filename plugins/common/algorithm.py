@@ -95,14 +95,13 @@ class Algorithm:
         pass
 
 
-def read_training_df(training_df_name: str) -> DataFrame:
+def read_df_from_path(directory: str, df_name: str) -> DataFrame:
     try:
-        return read_pickle(f"{path.EVENT_LOG_TRAINING_DF_PATH}/{training_df_name}")
+        return read_pickle(f"{directory}/{df_name}.pkl")
     except ValueError:
         # If the plugin's Python version is 3.6, then the pickle protocol is not compatible,
         # so we need to read the CSV file
-        training_csv_name = training_df_name.replace(".pkl", ".csv")
-        return read_csv(f"{path.EVENT_LOG_TRAINING_DF_PATH}/{training_csv_name}")
+        return read_csv(f"{directory}/{df_name}.csv")
 
 
 def check_training_df(df: DataFrame, needed_columns: List[str]) -> bool:

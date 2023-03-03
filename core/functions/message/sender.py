@@ -44,13 +44,14 @@ def send_ongoing_dataset_to_all_plugins(project_id: int, plugins: dict[str, int]
                for plugin_key in plugins)
 
 
-def send_ongoing_dataset(plugin_key: str, project_id: int, model_name: str, result_key: str, dataset_name: str) -> bool:
+def send_ongoing_dataset(plugin_key: str, project_id: int, model_name: str, result_key: str,
+                         ongoing_df_name: str) -> bool:
     # Send ongoing dataset to a specific plugin
     return send_message(plugin_key, MessageType.DATASET_PRESCRIPTION_REQUEST, {
         "project_id": project_id,
         "model_name": model_name,
         "result_key": result_key,
-        "dataset_name": dataset_name
+        "ongoing_df_name": ongoing_df_name
     })
 
 

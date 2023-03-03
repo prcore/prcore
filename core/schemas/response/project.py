@@ -2,6 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
+from core.enums.definition import ColumnDefinition
 from core.schemas.project import Project
 
 # Enable logging
@@ -23,17 +24,24 @@ class CreateProjectResponse(BaseModel):
     project: Project
 
 
-class ProjectResultCaseResponse(BaseModel):
+class DatasetUploadResponse(BaseModel):
+    message: str
+    project_id: int
+    result_key: str
+
+
+class DatasetResultCaseResponse(BaseModel):
     prescriptions: list[dict]
     events: list[list]
 
 
-class ProjectResultResponse(BaseModel):
+class DatasetResultResponse(BaseModel):
     message: str
-    cases_count: int
-    columns: list[str]
-    columns_definition: list[str]
-    cases: dict[str, ProjectResultCaseResponse]
+    project_status: str
+    cases_count: int | None = None
+    columns: list[str] | None = None
+    columns_definition: dict[str, ColumnDefinition] | None = None
+    cases: dict[str, DatasetResultCaseResponse] | None = None
 
 
 class SimulateProjectResponse(BaseModel):

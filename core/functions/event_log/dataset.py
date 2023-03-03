@@ -57,15 +57,15 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
 
         # Save the data
         training_df_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DF_PATH}/", suffix=".pkl")
-        training_csv_path = training_df_path.replace(".pkl", ".csv")
-        training_df_name = training_df_path.split("/")[-1]
-        simulation_df_path = get_new_path(base_path=f"{path.EVENT_LOG_SIMULATION_DF_PATH}/", suffix=".pkl")
-        simulation_df_name = simulation_df_path.split("/")[-1]
         processed_df.to_pickle(training_df_path)
+        training_csv_path = training_df_path.replace(".pkl", ".csv")
         processed_df.to_csv(training_csv_path, index=False)
+        simulation_df_path = get_new_path(base_path=f"{path.EVENT_LOG_SIMULATION_DF_PATH}/", suffix=".pkl")
         simulation_df.to_pickle(simulation_df_path)
 
         # Update the database
+        training_df_name = training_df_path.split("/")[-1].split(".")[0]
+        simulation_df_name = simulation_df_path.split("/")[-1]
         event_log_crud.set_datasets_name(db, db_event_log, training_df_name, simulation_df_name)
         result = training_df_name
     except Exception as e:
@@ -405,11 +405,9 @@ def get_ongoing_dataset_path(db_event_log: event_log_model.EventLog) -> str:
     return result
 
 
-def get_cases_result_skeleton(df: DataFrame, definition: definition_schema.Definition) -> dict[str, dict[str, list]]:
+def get_cases_result_skeleton(df: DataFrame, case_id_column: str) -> dict[str, dict[str, list]]:
     # Get cases result skeleton
     result = {}
-    df = get_new_processed_dataframe(df, definition)
-    case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
     grouped_df = df.groupby(case_id_column)
     for case_id, group in grouped_df:
         result[str(case_id)] = {

@@ -1,4 +1,5 @@
 from pathlib import Path
+from shutil import rmtree
 
 # Path variables
 EVENT_LOG_DATAFRAME_PATH = "data/event_logs/dataframe"
@@ -13,6 +14,9 @@ TEMP_PATH = "data/tmp"
 # Allowed extensions
 ALLOWED_EXTENSIONS = ["xes", "csv", "zip"]
 ALLOWED_EXTRACTED_EXTENSIONS = ["xes", "csv"]
+
+# Remove temp files
+rmtree(TEMP_PATH, ignore_errors=True)
 
 # Create directories
 all_paths = [EVENT_LOG_DATAFRAME_PATH, EVENT_LOG_TRAINING_DF_PATH, EVENT_LOG_SIMULATION_DF_PATH, EVENT_LOG_RAW_PATH,
