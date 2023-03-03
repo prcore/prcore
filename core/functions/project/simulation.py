@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -63,8 +64,11 @@ def simulation_disconnected(db: Session, project_id: int) -> bool:
         if db_project.status != ProjectStatus.SIMULATING:
             return True
 
-        end_event = memory.simulation_events.get(project_id)
-        end_event and end_event.set()
+        if project_id in memory.simulation_projects:
+            return True
+
+        memory.simulation_projects[project_id] = datetime.now() - timedelta(minutes=4)
+        result = True
     except Exception as e:
         logger.warning(f"Handling simulation disconnection error: {e}")
 

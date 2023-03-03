@@ -98,10 +98,10 @@ delay(10, clean_local_storage)
 scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
 scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
 scheduler.add_job(clean_local_storage, "cron", hour=2, minute=3)
+scheduler.add_job(stop_unread_simulations, "interval", minutes=1)
 scheduler.add_job(send_online_inquires, "interval", minutes=5)
-scheduler.add_job(pop_unread_ongoing_results, "interval", minutes=10)
+scheduler.add_job(pop_unread_ongoing_results, "interval", minutes=5)
 scheduler.add_job(processed_messages_clean, "interval", [memory.processed_messages], minutes=5)
-scheduler.add_job(stop_unread_simulations, "interval", minutes=5)
 scheduler.start()
 
 # Start a thread to consume messages
