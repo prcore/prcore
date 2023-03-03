@@ -379,8 +379,8 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
     return df
 
 
-def get_test_dataset_path(db_event_log: event_log_model.EventLog) -> str:
-    # Get test dataset path
+def get_ongoing_dataset_path(db_event_log: event_log_model.EventLog) -> str:
+    # Get ongoing dataset path for testing purpose
     result = ""
 
     try:
@@ -400,26 +400,15 @@ def get_test_dataset_path(db_event_log: event_log_model.EventLog) -> str:
         ongoing_cases_df.to_csv(temp_path, index=False)
         result = temp_path
     except Exception as e:
-        logger.warning(f"Get test dataset path failed: {e}")
+        logger.warning(f"Get ongoing dataset path failed: {e}")
 
     return result
-
-
-def get_testing_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
-    # Get testing dataframe
-    df = df.astype(str)
-    timestamp_column = get_start_timestamp(definition.columns_definition)
-    df = get_timestamped_dataframe(df, definition.columns_definition)
-    df = get_transition_recognized_dataframe(df, definition)
-    df.sort_values(by=timestamp_column, inplace=True)
-    df = df.astype(str)
-    return df
 
 
 def get_cases_result_skeleton(df: DataFrame, definition: definition_schema.Definition) -> dict[str, dict[str, list]]:
     # Get cases result skeleton
     result = {}
-    df = get_testing_dataframe(df, definition)
+    df = get_new_processed_dataframe(df, definition)
     case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
     grouped_df = df.groupby(case_id_column)
     for case_id, group in grouped_df:
@@ -428,3 +417,14 @@ def get_cases_result_skeleton(df: DataFrame, definition: definition_schema.Defin
             "events": group.values.tolist()
         }
     return result
+
+
+def get_new_processed_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
+    # Get new processed dataframe
+    df = df.astype(str)
+    timestamp_column = get_start_timestamp(definition.columns_definition)
+    df = get_timestamped_dataframe(df, definition.columns_definition)
+    df = get_transition_recognized_dataframe(df, definition)
+    df.sort_values(by=timestamp_column, inplace=True)
+    df = df.astype(str)
+    return df
