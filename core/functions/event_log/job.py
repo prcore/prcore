@@ -43,7 +43,7 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog,
             abort_transition=update_body.abort_transition
         ))
         db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
-        stop_simulation(db, db_project, redefined=True)
+        db_project and stop_simulation(db, db_project, redefined=True)
     else:
         db_definition = definition_crud.create_definition(db, definition_schema.DefinitionCreate(
             columns_definition=update_body.columns_definition,

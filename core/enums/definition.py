@@ -88,3 +88,5 @@ class Transition(str, Enum):
     SUSPEND = "SUSPEND"
     UNKNOWN = "UNKNOWN"
     WITHDRAW = "WITHDRAW"
+    # Project specific
+    IGNORE = "IGNORE"
