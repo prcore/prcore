@@ -102,6 +102,7 @@ def handle_dataset_prescription_request(ch: BlockingChannel, data: dict, instanc
         message_type=MessageType.DATASET_PRESCRIPTION_RESULT,
         data={"project_id": project_id, "plugin_key": config.APP_ID, "result_key": result_key, "data": result}
     )
+    deactivate_instance(project_id)
 
 
 def handle_streaming_prepare(ch: BlockingChannel, data: dict, algo: Type[Algorithm],

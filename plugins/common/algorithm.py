@@ -1,9 +1,10 @@
 import logging
 import pickle
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pandas import DataFrame, read_pickle, read_csv
+from sklearn.metrics import precision_score, recall_score, f1_score
 
 from core.confs import path
 from core.enums.definition import ColumnDefinition
@@ -99,6 +100,50 @@ class Algorithm:
         pass
 
 
+def get_score(model, x_val, y_val) -> dict:
+    # Get the score of the model
+    y_pred = model.predict(x_val)
+    accuracy = round(model.score(x_val, y_val), 4)
+    precision = round(precision_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+    recall = round(recall_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+    f1 = round(f1_score(y_val, y_pred, average="weighted"), 4)
+    return {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1
+    }
+
+
+def get_model_and_features_by_activities(instance: Algorithm, prefix: List[dict]) -> Union[dict, tuple]:
+    # Predict the result
+    if any(x["ACTIVITY"] not in instance.get_data()["mapping"] for x in prefix):
+        return get_null_output(instance.get_basic_info()["name"], instance.get_basic_info()["prescription_type"],
+                               "The prefix contains an activity that is not in the training set")
+
+    # Get the length of the prefix
+    length = len(prefix)
+    model = instance.get_data()["models"].get(length)
+    if not model:
+        return get_null_output(instance.get_basic_info()["name"], instance.get_basic_info()["prescription_type"],
+                               "The model is not trained for the given prefix length")
+
+    # Get the features of the prefix
+    features = [instance.get_data()["mapping"][x["ACTIVITY"]] for x in prefix]
+    return model, features
+
+
+def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> DataFrame:
+    # Map the activities to the ordinal encoding
+    df[ColumnDefinition.ACTIVITY] = df[ColumnDefinition.ACTIVITY].map(instance.get_data()["mapping"])
+    # Drop the rows with NaN values in the activity column
+    df = df.dropna(subset=[ColumnDefinition.ACTIVITY])
+    # Convert the dataframe to the count encoding dataframe
+    encoded_df = df.groupby([ColumnDefinition.CASE_ID, ColumnDefinition.ACTIVITY]).size().unstack(fill_value=0)
+    encoded_df = encoded_df.reindex(columns=instance.get_data()["activities"], fill_value=0)
+    return encoded_df
+
+
 def read_df_from_path(directory: str, df_name: str) -> DataFrame:
     try:
         return read_pickle(f"{directory}/{df_name}.pkl")
@@ -173,6 +218,19 @@ def get_null_output(plugin_name: str, plugin_type: str, detail: str) -> dict:
         "model": {
             "name": plugin_name,
             "detail": detail
+        }
+    }
+
+
+def get_prescription_output(instance: Algorithm, output: Any, model_key: Union[int, str], model_name: str) -> dict:
+    return {
+        "date": datetime.now().isoformat(),
+        "type": instance.get_basic_info()["prescription_type"],
+        "output": output,
+        "plugin": {
+            "name": instance.get_basic_info()["name"],
+            "model": model_name,
+            **instance.get_data()["scores"][model_key]
         }
     }
 

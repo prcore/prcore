@@ -113,3 +113,17 @@ def process_ongoing_dataset(result_key: str) -> bool:
         logger.error(f"Process ongoing dataset error: {e}", exc_info=True)
 
     return result
+
+
+def delete_result_from_memory(result_key: str) -> bool:
+    # Delete the result from memory
+    result = False
+
+    try:
+        if result_key in memory.ongoing_results:
+            del memory.ongoing_results[result_key]
+            result = True
+    except Exception as e:
+        logger.error(f"Delete result from memory error: {e}", exc_info=True)
+
+    return result

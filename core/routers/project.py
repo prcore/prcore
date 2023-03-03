@@ -24,7 +24,8 @@ from core.functions.general.file import delete_file, get_extension
 from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
-from core.functions.project.prescribe import get_ongoing_dataset_result_key, process_ongoing_dataset
+from core.functions.project.prescribe import (delete_result_from_memory, get_ongoing_dataset_result_key,
+                                              process_ongoing_dataset)
 from core.functions.project.simulation import stop_simulation
 from core.functions.project.streaming import event_generator
 from core.functions.project.validation import validate_project_definition, validate_simulation_status
@@ -186,6 +187,8 @@ def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: 
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    elif db_project.status not in {ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
     result_key = get_ongoing_dataset_result_key(file, extension, seperator, db_project)
     if not result_key:
@@ -217,7 +220,8 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
         print(result["plugins"])
         return {
             "message": "Ongoing dataset result is still processing",
-            "project_status": db_project.status
+            "project_status": db_project.status,
+            "finished_plugins": list(result["results"].keys()),
         }
 
     print("Start to merge the result")
@@ -226,9 +230,11 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
             result["cases"][case_id]["prescriptions"].append(case_result)
     print("Merge the result successfully")
 
+    background_tasks.add_task(delete_result_from_memory, result_key)
     return {
         "message": "Ongoing dataset result retrieved successfully",
         "project_status": db_project.status,
+        "finished_plugins": list(result["results"].keys()),
         "cases_count": result["cases_count"],
         "columns": result["columns"],
         "columns_definition": result["columns_definition"],

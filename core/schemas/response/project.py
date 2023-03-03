@@ -38,6 +38,7 @@ class DatasetResultCaseResponse(BaseModel):
 class DatasetResultResponse(BaseModel):
     message: str
     project_status: str
+    finished_plugins: list[str]
     cases_count: int | None = None
     columns: list[str] | None = None
     columns_definition: dict[str, ColumnDefinition] | None = None
