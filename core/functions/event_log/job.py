@@ -37,17 +37,21 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog,
             case_attributes=update_body.case_attributes,
             outcome_definition=None,
             treatment_definition=None,
-            fast_mode=True,
-            start_transition=Transition.START,
-            complete_transition=Transition.COMPLETE,
-            abort_transition=Transition.ATE_ABORT
+            fast_mode=update_body.fast_mode,
+            start_transition=update_body.start_transition,
+            complete_transition=update_body.complete_transition,
+            abort_transition=update_body.abort_transition
         ))
         db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
         stop_simulation(db, db_project, redefined=True)
     else:
         db_definition = definition_crud.create_definition(db, definition_schema.DefinitionCreate(
             columns_definition=update_body.columns_definition,
-            case_attributes=update_body.case_attributes
+            case_attributes=update_body.case_attributes,
+            fast_mode=update_body.fast_mode,
+            start_transition=update_body.start_transition,
+            complete_transition=update_body.complete_transition,
+            abort_transition=update_body.abort_transition
         ))
 
     return event_log_crud.associate_definition(db, db_event_log, db_definition.id)
