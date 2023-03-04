@@ -49,9 +49,6 @@ def check_atomic_condition(group: DataFrame, condition: ProjectDefinition,
     threshold = condition.value
     supported_operators = get_supported_operators(column_definition)
 
-    if supported_operators is None:
-        raise ValueError("Cannot find supported operators")
-
     if operator not in supported_operators:
         raise ValueError(f"Operator '{operator}' not supported for column '{condition.column}'")
 

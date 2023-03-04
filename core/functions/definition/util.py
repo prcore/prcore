@@ -12,7 +12,7 @@ def is_supported_operator(operator: Operator, column_definition: ColumnDefinitio
     return operator in supported_operators if supported_operators is not None else False
 
 
-def get_supported_operators(column_definition: ColumnDefinition) -> SupportedOperators | None:
+def get_supported_operators(column_definition: ColumnDefinition) -> SupportedOperators:
     # Get supported operators
     if column_definition in DefinitionType.TEXT:
         return SupportedOperators.TEXT
@@ -24,7 +24,7 @@ def get_supported_operators(column_definition: ColumnDefinition) -> SupportedOpe
         return SupportedOperators.DATETIME
     elif column_definition in DefinitionType.CATEGORICAL:
         return SupportedOperators.CATEGORICAL
-    return None
+    return SupportedOperators.TEXT
 
 
 def get_defined_column_name(definition: dict[str, ColumnDefinition], wanted: ColumnDefinition) -> str:

@@ -369,12 +369,15 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
     # Get renamed dataframe
     columns_need_to_rename = {}
     for column in df.columns.tolist():
-        if (definition := columns_definition.get(column, column)) in DefinitionType.SPECIAL:
+        definition = columns_definition.get(column)
+        if not definition:
+            definition = ColumnDefinition.TEXT
+        if definition in DefinitionType.SPECIAL:
             columns_need_to_rename[column] = definition
         elif definition == ColumnDefinition.CATEGORICAL:
             columns_need_to_rename[column] = f"CATEGORICAL_{column}"
         elif column in case_attributes:
-            columns_need_to_rename[column] = f"CASE_ATTRIBUTE_{column}"
+            columns_need_to_rename[column] = f"CASE_ATTRIBUTE_{definition}_{column}"
     df = df.rename(columns=columns_need_to_rename)
     return df
 

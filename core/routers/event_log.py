@@ -83,8 +83,8 @@ def upload_event_log(request: Request, file: UploadFile = Form(), separator: str
 
 
 @router.put("/{event_log_id}", response_model=event_log_response.UpdateEventLogResponse)
-async def update_event_log(request: Request, event_log_id: int, update_body: event_log_request.ColumnsDefinitionRequest,
-                           db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+def update_event_log(request: Request, event_log_id: int, update_body: event_log_request.ColumnsDefinitionRequest,
+                     db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Update event log: {event_log_id} - from IP {get_real_ip(request)}")
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 

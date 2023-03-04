@@ -16,14 +16,24 @@ def validate_columns_definition(columns_definition: dict[str, ColumnDefinition |
 
     if not any(d == ColumnDefinition.CASE_ID for d in columns_definition.values()):
         raise HTTPException(status_code=400, detail="No case ID column found")
+    if list(columns_definition.values()).count(ColumnDefinition.CASE_ID) > 1:
+        raise HTTPException(status_code=400, detail="Multiple case ID columns found")
 
     if not any(d == ColumnDefinition.ACTIVITY for d in columns_definition.values()):
         raise HTTPException(status_code=400, detail="No activity column found")
+    if list(columns_definition.values()).count(ColumnDefinition.ACTIVITY) > 1:
+        raise HTTPException(status_code=400, detail="Multiple activity columns found")
 
     if (not (has_timestamp := any(d == ColumnDefinition.TIMESTAMP for d in columns_definition.values()))
             and not any(d == ColumnDefinition.START_TIMESTAMP for d in columns_definition.values())
             and not any(d == ColumnDefinition.END_TIMESTAMP for d in columns_definition.values())):
         raise HTTPException(status_code=400, detail="No timestamp column found")
+    if list(columns_definition.values()).count(ColumnDefinition.TIMESTAMP) > 1:
+        raise HTTPException(status_code=400, detail="Multiple timestamp columns found")
+    if list(columns_definition.values()).count(ColumnDefinition.START_TIMESTAMP) > 1:
+        raise HTTPException(status_code=400, detail="Multiple start timestamp columns found")
+    if list(columns_definition.values()).count(ColumnDefinition.END_TIMESTAMP) > 1:
+        raise HTTPException(status_code=400, detail="Multiple end timestamp columns found")
 
     if not has_timestamp and not all(d in columns_definition.values()
                                      for d in [ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP]):
