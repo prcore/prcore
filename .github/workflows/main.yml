@@ -14,5 +14,9 @@ jobs:
         uses: isbang/compose-action@v1.4.1
       - name: Print docker status
         run: docker-compose ps
+      - name: Sleep for 15s
+        run: sleep 15
+      - name: Check doker log
+        run: docker-compose logs plugin-random-forest-alarm
       - name: Test service status
         run: bash ./scripts/test.sh
