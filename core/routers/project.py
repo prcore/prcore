@@ -23,13 +23,13 @@ from core.functions.event_log.job import start_pre_processing
 from core.functions.general.etc import process_daemon
 from core.functions.general.file import delete_file, get_extension
 from core.functions.general.request import get_real_ip, get_db
-from core.functions.message.sender import send_streaming_prepare_to_all_plugins
+from core.functions.message.sender import send_streaming_prepare_to_all_plugins, send_streaming_stop_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.prescribe import (delete_result_from_memory, get_ongoing_dataset_result_key,
                                               process_ongoing_dataset, test_watching)
 from core.functions.project.simulation import stop_simulation
 from core.functions.project.streaming import event_generator
-from core.functions.project.validation import validate_project_definition, validate_simulation_status
+from core.functions.project.validation import validate_project_definition, validate_streaming_status
 from core.starters import memory
 from core.security.token import validate_token
 
@@ -251,14 +251,14 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
     }
 
 
-@router.put("/{project_id}/simulate/start", response_model=project_response.SimulateProjectResponse)
+@router.put("/{project_id}/simulate/start", response_model=project_response.StreamProjectResponse)
 def simulation_start(request: Request, project_id: int, db: Session = Depends(get_db),
                      _: bool = Depends(validate_token)):
     logger.warning(f"Start simulation - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    validate_simulation_status(db_project, "start")
+    validate_streaming_status(db_project, "start", "simulation")
 
     # Start the simulation
     db_project = project_crud.update_status(db, db_project, ProjectStatus.SIMULATING)
@@ -272,14 +272,14 @@ def simulation_start(request: Request, project_id: int, db: Session = Depends(ge
     }
 
 
-@router.put("/{project_id}/simulate/stop", response_model=project_response.SimulateProjectResponse)
+@router.put("/{project_id}/simulate/stop", response_model=project_response.StreamProjectResponse)
 def simulation_stop(request: Request, project_id: int, db: Session = Depends(get_db),
                     _: bool = Depends(validate_token)):
     logger.warning(f"Stop simulation - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    validate_simulation_status(db_project, "stop")
+    validate_streaming_status(db_project, "stop", "simulation")
 
     # Stop the simulation
     stop_simulation(db, db_project)
@@ -290,14 +290,14 @@ def simulation_stop(request: Request, project_id: int, db: Session = Depends(get
     }
 
 
-@router.put("/{project_id}/simulate/clear", response_model=project_response.SimulateProjectResponse)
+@router.put("/{project_id}/simulate/clear", response_model=project_response.StreamProjectResponse)
 def simulation_clear(request: Request, project_id: int, db: Session = Depends(get_db),
                      _: bool = Depends(validate_token)):
     logger.warning(f"Clear simulation - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    validate_simulation_status(db_project, "clear")
+    validate_streaming_status(db_project, "clear", "simulation")
 
     # Stop the simulation
     if db_project.status == ProjectStatus.SIMULATING:
@@ -313,10 +313,49 @@ def simulation_clear(request: Request, project_id: int, db: Session = Depends(ge
     }
 
 
-@router.get("/{project_id}/streaming/result")
+@router.put("/{project_id}/stream/start", response_model=project_response.StreamProjectResponse)
+def streaming_start(request: Request, project_id: int, db: Session = Depends(get_db),
+                    _: bool = Depends(validate_token)):
+    logger.warning(f"Start streaming - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    validate_streaming_status(db_project, "start", "streaming")
+
+    # Start the streaming
+    db_project = project_crud.update_status(db, db_project, ProjectStatus.STREAMING)
+    plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
+    model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
+    send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
+    return {
+        "message": "Project streaming started successfully",
+        "project_id": project_id
+    }
+
+
+@router.put("/{project_id}/stream/stop", response_model=project_response.StreamProjectResponse)
+def streaming_stop(request: Request, project_id: int, db: Session = Depends(get_db),
+                   _: bool = Depends(validate_token)):
+    logger.warning(f"Stop streaming - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    validate_streaming_status(db_project, "stop", "streaming")
+
+    # Stop the streaming
+    project_crud.update_status(db, db_project, ProjectStatus.TRAINED)
+    send_streaming_stop_to_all_plugins(db_project.id, [plugin.key for plugin in db_project.plugins])
+
+    return {
+        "message": "Project streaming stopped successfully",
+        "project_id": project_id
+    }
+
+
+@router.get("/{project_id}/stream/result")
 async def streaming_result(request: Request, project_id: int, db: Session = Depends(get_db),
                            _: bool = Depends(validate_token)):
-    logger.warning(f"Streaming result - from IP {get_real_ip(request)}")
+    logger.warning(f"Stream result - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)

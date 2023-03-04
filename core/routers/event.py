@@ -10,6 +10,8 @@ import core.schemas.case as case_schema
 import core.schemas.event as event_schema
 import core.schemas.response.event as event_response
 from core.enums.definition import ColumnDefinition
+from core.enums.error import ErrorType
+from core.enums.status import ProjectStatus
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event.job import prepare_prefix_and_send
 from core.functions.general.request import get_real_ip, get_db
@@ -29,10 +31,14 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
     logger.warning(f"Receive event - from IP {get_real_ip(request)}")
     request_body = await request.json()
 
-    # Get columns definition from the database
+    # Get project from the database
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail="No valid project provided")
+    if db_project.status not in {ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
+
+    # Get columns definition from the database
     db_definition = db_project.event_log.definition
     columns_definition = db_definition.columns_definition
     case_attributes = db_definition.case_attributes

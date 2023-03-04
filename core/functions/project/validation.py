@@ -40,19 +40,24 @@ def validate_project_definition(project_definition: list[list[ProjectDefinition]
                 )
 
 
-def validate_simulation_status(db_project: project_model.Project, operation: str) -> bool:
-    # Check if the simulation is finished
+def validate_streaming_status(db_project: project_model.Project, operation: str, _type: str) -> bool:
+    # Check if the streaming or simulation status is valid
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
     if db_project.status == ProjectStatus.ACTIVATING:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
 
     if operation == "start":
+        if db_project.status == ProjectStatus.STREAMING:
+            raise HTTPException(status_code=400, detail=ErrorType.STREAMING_STARTED)
         if db_project.status == ProjectStatus.SIMULATING:
             raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_STARTED)
         if db_project.status != ProjectStatus.TRAINED:
             raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_TRAINED)
-    elif operation == "stop" and db_project.status != ProjectStatus.SIMULATING:
-        raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_NOT_STARTED)
+    elif operation == "stop":
+        if _type == "simulation" and db_project.status != ProjectStatus.SIMULATING:
+            raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_NOT_STARTED)
+        if _type == "streaming" and db_project.status != ProjectStatus.STREAMING:
+            raise HTTPException(status_code=400, detail=ErrorType.STREAMING_NOT_STARTED)
 
     return True

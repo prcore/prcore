@@ -21,3 +21,5 @@ class ErrorType(str, Enum):
 
     SIMULATION_STARTED = "Simulation already started"
     SIMULATION_NOT_STARTED = "Simulation not started"
+    STREAMING_STARTED = "Streaming already started"
+    STREAMING_NOT_STARTED = "Streaming not started"

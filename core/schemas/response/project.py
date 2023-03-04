@@ -48,6 +48,6 @@ class DatasetResultResponse(BaseModel):
     cases: dict[str, DatasetResultCaseResponse] | None = None
 
 
-class SimulateProjectResponse(BaseModel):
+class StreamProjectResponse(BaseModel):
     message: str
     project_id: int
