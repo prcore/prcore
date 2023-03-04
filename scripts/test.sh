@@ -8,6 +8,7 @@ for service in $(docker-compose config --services); do
   state=$(docker-compose ps -q "$service" | xargs docker inspect -f '{{.State.Status}}')
   if [ "$state" != "running" ]; then
     echo "Service $service is not running"
+    docker-compose logs "$service"
     exit 1
   fi
 done
