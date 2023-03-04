@@ -47,40 +47,21 @@ def remove_multiple_files(checklist: set[str], dir_path: str, file_type: str) ->
         logger.warning(f"Remove abandoned {file_type} file: {f}")
 
 
-def pop_unread_ongoing_results() -> bool:
-    # Pop unread ongoing results
+def pop_unused_data(data: dict) -> bool:
+    # Pop unused data
     result = False
 
     try:
         datetime_now = datetime.now()
-        for result_key in list(memory.ongoing_results.keys()):
-            result_datetime = memory.ongoing_results.get(result_key)
-            if not result_datetime:
+        for data_id in list(data.keys()):
+            data_unit = data.get(data_id)
+            if not data_unit:
                 continue
-            if (datetime_now - result_datetime).total_seconds() > 30 * 60:
-                del memory.ongoing_results[result_key]
+            if (datetime_now - data_unit["date"]).total_seconds() > 30 * 60:
+                del data[data_id]
         result = True
     except Exception as e:
-        logger.warning(f"Pop unread ongoing results error: {e}", exc_info=True)
-
-    return result
-
-
-def pop_unused_log_tests() -> bool:
-    # Pop unused log tests
-    result = False
-
-    try:
-        datetime_now = datetime.now()
-        for event_log_id in list(memory.log_tests.keys()):
-            test = memory.log_tests.get(event_log_id)
-            if not test:
-                continue
-            if (datetime_now - test["date"]).total_seconds() > 30 * 60:
-                del memory.log_tests[event_log_id]
-        result = True
-    except Exception as e:
-        logger.warning(f"Pop unused log tests error: {e}", exc_info=True)
+        logger.warning(f"Pop unused data error: {e}", exc_info=True)
 
     return result
 

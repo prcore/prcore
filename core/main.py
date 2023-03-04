@@ -15,8 +15,7 @@ from core.starters.rabbitmq import parameters
 from core.functions.general.etc import delay, thread
 from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.message.sender import send_online_inquires
-from core.functions.tool.timer import (clean_local_storage, pop_unread_ongoing_results, pop_unused_log_tests,
-                                       stop_unread_simulations)
+from core.functions.tool.timer import clean_local_storage, pop_unused_data, stop_unread_simulations
 from core.functions.general.timer import processed_messages_clean, log_rotation
 from core.routers import event, event_log, plugin, project
 from core.starters import memory
@@ -101,8 +100,8 @@ scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
 scheduler.add_job(clean_local_storage, "cron", hour=2, minute=3)
 scheduler.add_job(stop_unread_simulations, "interval", minutes=1)
 scheduler.add_job(send_online_inquires, "interval", minutes=5)
-scheduler.add_job(pop_unread_ongoing_results, "interval", minutes=5)
-scheduler.add_job(pop_unused_log_tests, "interval", minutes=5)
+scheduler.add_job(pop_unused_data, "interval", [memory.ongoing_results], minutes=5)
+scheduler.add_job(pop_unused_data, "interval", [memory.log_tests], minutes=5)
 scheduler.add_job(processed_messages_clean, "interval", [memory.processed_messages], minutes=5)
 scheduler.start()
 
