@@ -1,32 +1,15 @@
 # PrCore
 
-PrCore is a backend application used for prescriptive process monitoring.
+[![Docker Compose Test](https://github.com/prcore/prcore/actions/workflows/main.yml/badge.svg)](https://github.com/prcore/prcore/actions/workflows/main.yml)
 
-## Installation
+PrCore is a backend application used for prescriptive process monitoring. 
+It takes historical event log files and provides ongoing case prescriptions based on the received event streaming data. 
+It is flexible and can be applied to event logs in various domains. 
+Its prescribing and predicting algorithms can be easily modified, replaced, or added due to its plugin mechanism. 
+The system is designed to be scalable and can be deployed in a distributed environment. 
+Try it out!
 
-Pre-requisites:
+![](https://download.chaos.run/prcore/flow.png)
 
-- [Docker](https://www.docker.com/)
-- [Docker Compose](https://docs.docker.com/compose/)
-
-Steps:
-
-1. Clone the repository
-2. Create a `.env` file from the `example.env` file
-3. Run `install.sh`
-
-Example:
-
-```bash
-git clone https://github.com/prcore/prcore.git
-cd prcore
-cp example.env .env
-vim .env  # Edit the .env file
-cd scripts
-bash install.sh
-```
-
-## Documentation
-
-The documentation is available at [https://prcore-docs.chaos.run](https://prcore-docs.chaos.run) 
-and [https://prcore.gitlab.io](https://prcore.gitlab.io)
+- Documentation: [https://prcore-docs.chaos.run](https://prcore-docs.chaos.run)
+- Demo API: [https://prcore.chaos.run](https://prcore.chaos.run)
