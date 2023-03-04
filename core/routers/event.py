@@ -35,11 +35,15 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
         raise HTTPException(status_code=400, detail="No valid project provided")
     db_definition = db_project.event_log.definition
     columns_definition = db_definition.columns_definition
+    case_attributes = db_definition.case_attributes
 
     # Check if request body has all the columns previously defined
     for column in columns_definition:
         if column not in request_body:
-            raise HTTPException(status_code=400, detail=f"Missing column {column.name}")
+            raise HTTPException(status_code=400, detail=f"Missing pre-defined column {column.name}")
+    for column in case_attributes:
+        if column not in request_body:
+            raise HTTPException(status_code=400, detail=f"Missing case attribute {column.name}")
 
     # Check if there is already a case with the same case ID
     case_id = str(request_body[get_defined_column_name(columns_definition, ColumnDefinition.CASE_ID)])
@@ -72,6 +76,7 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
         model_names={plugin.key: plugin.model_name for plugin in db_project.plugins},
         event_id=db_event.id,
         columns_definition=columns_definition,
+        case_attributes=case_attributes,
         data=[db_event.attributes for db_event in db_case.events]
     )
     return {
