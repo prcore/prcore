@@ -91,7 +91,7 @@ async def update_event_log(request: Request, event_log_id: int, update_body: eve
     if not db_event_log:
         raise HTTPException(status_code=404, detail=ErrorType.EVENT_LOG_NOT_FOUND)
     db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
-    print(db_project)
+
     if db_project and db_project.status not in {ProjectStatus.WAITING, ProjectStatus.TRAINED, ProjectStatus.STREAMING,
                                                 ProjectStatus.SIMULATING}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)

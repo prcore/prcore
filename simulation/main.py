@@ -55,7 +55,7 @@ def run_simulation(simulation_df_name: str, end_event: Event, project_id: int,
             headers=REQUEST_HEADERS,
             json=row.to_dict()
         )
-        print(response.json()["message"])
+        logger.warning(response.json()["message"])
         sleep(config.SIMULATION_INTERVAL)
     end_event.set()
-    print("Simulation finished")
+    logger.warning("Simulation finished")

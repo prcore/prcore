@@ -230,11 +230,11 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
             "finished_plugins": list(result["results"].keys()),
         }
 
-    print("Start to merge the result")
+    logger.warning("Start to merge the result")
     for plugin_result in result["results"].values():
         for case_id, case_result in plugin_result.items():
             result["cases"][case_id]["prescriptions"].append(case_result)
-    print("Merge the result successfully")
+    logger.warning("Merge the result successfully")
 
     background_tasks.add_task(delete_result_from_memory, result_key)
     return {
@@ -329,7 +329,11 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
     memory.reading_projects.add(project_id)
     memory.simulation_start_times.pop(project_id, None)
 
-    return EventSourceResponse(event_generator(request, db, project_id))
+    return EventSourceResponse(
+        content=event_generator(request, db, project_id),
+        headers={"Content-Type": "text/event-stream"},
+        ping=5
+    )
 
 
 @router.get("/{project_id}/dataset/ongoing")

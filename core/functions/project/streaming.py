@@ -18,16 +18,24 @@ logger = logging.getLogger(__name__)
 
 async def event_generator(request: Request, db: Session, project_id: int):
     try:
+        yield {
+            "event": "notification",
+            "data": "CONNECTED"
+        }
         while True:
             if await request.is_disconnected():
                 break
             project = project_crud.get_project_by_id(db, project_id)
             if project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+                yield {
+                    "event": "notification",
+                    "data": "FINISHED"
+                }
                 break
             data = get_data(db, project_id)
             if data:
                 yield {
-                    "event": "NEW_RESULT",
+                    "event": "message",
                     "id": data[0]["id"],
                     "retry": 15000,
                     "data": json.dumps(data)
