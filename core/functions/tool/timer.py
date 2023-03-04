@@ -66,6 +66,25 @@ def pop_unread_ongoing_results() -> bool:
     return result
 
 
+def pop_unused_log_tests() -> bool:
+    # Pop unused log tests
+    result = False
+
+    try:
+        datetime_now = datetime.now()
+        for event_log_id in list(memory.log_tests.keys()):
+            test = memory.log_tests.get(event_log_id)
+            if not test:
+                continue
+            if (datetime_now - test["date"]).total_seconds() > 30 * 60:
+                del memory.log_tests[event_log_id]
+        result = True
+    except Exception as e:
+        logger.warning(f"Pop unused log tests error: {e}", exc_info=True)
+
+    return result
+
+
 def stop_unread_simulations() -> bool:
     # Stop unread simulations
     result = False

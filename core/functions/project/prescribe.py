@@ -1,26 +1,30 @@
 import logging
 from datetime import datetime
+from time import sleep
+from typing import BinaryIO
 
-from fastapi import UploadFile
-
+import core.crud.project as project_crud
 import core.models.project as project_model
 import core.schemas.definition as definition_schema
 from core.confs import path
 from core.enums.definition import ColumnDefinition
+from core.enums.status import ProjectStatus
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event_log.dataset import (get_cases_result_skeleton, get_new_processed_dataframe,
                                               get_renamed_dataframe)
 from core.functions.event_log.file import get_dataframe_from_file
+from core.functions.general.decorator import threaded
 from core.functions.general.etc import random_str
 from core.functions.general.file import delete_file, get_new_path
 from core.functions.message.sender import send_ongoing_dataset_to_all_plugins
 from core.starters import memory
+from core.starters.database import SessionLocal
 
 # Enable logging
 logger = logging.getLogger(__name__)
 
 
-def get_ongoing_dataset_result_key(file: UploadFile, extension: str, seperator: str,
+def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: str,
                                    db_project: project_model.Project) -> str:
     # Get the result key of the ongoing dataset
     result = ""
@@ -28,7 +32,7 @@ def get_ongoing_dataset_result_key(file: UploadFile, extension: str, seperator: 
     try:
         temp_path = get_new_path(f"{path.TEMP_PATH}/", suffix=f".{extension}")
         with open(temp_path, "wb") as f:
-            f.write(file.file.read())
+            f.write(file.read())
 
         # Get dataframe from file
         try:
@@ -127,3 +131,23 @@ def delete_result_from_memory(result_key: str) -> bool:
         logger.error(f"Delete result from memory error: {e}", exc_info=True)
 
     return result
+
+
+@threaded()
+def test_watching(project_id: int, result_key: str) -> bool:
+    # Watch the project status, and start to prescribe if the project is ready
+    while True:
+        with SessionLocal() as db:
+            db_project = project_crud.get_project_by_id(db, project_id)
+            if not db_project:
+                return False
+            if db_project.status in {ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
+                if result_key not in memory.ongoing_results:
+                    return False
+                memory.ongoing_results[result_key]["plugins"] = {plugin.key: plugin.id
+                                                                 for plugin in db_project.plugins}
+                memory.ongoing_results[result_key]["model_names"] = {plugin.id: plugin.model_name
+                                                                     for plugin in db_project.plugins}
+                break
+            sleep(5)
+    return process_ongoing_dataset(result_key)

@@ -22,6 +22,7 @@ class ProjectResponse(BaseModel):
 class CreateProjectResponse(BaseModel):
     message: str
     project: Project
+    result_key: str | None = None
 
 
 class DatasetUploadResponse(BaseModel):
@@ -38,6 +39,7 @@ class DatasetResultCaseResponse(BaseModel):
 class DatasetResultResponse(BaseModel):
     message: str
     project_status: str
+    expected_plugins: list[str]
     finished_plugins: list[str]
     cases_count: int | None = None
     columns: list[str] | None = None

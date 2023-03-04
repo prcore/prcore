@@ -25,7 +25,7 @@ from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.prescribe import (delete_result_from_memory, get_ongoing_dataset_result_key,
-                                              process_ongoing_dataset)
+                                              process_ongoing_dataset, test_watching)
 from core.functions.project.simulation import stop_simulation
 from core.functions.project.streaming import event_generator
 from core.functions.project.validation import validate_project_definition, validate_simulation_status
@@ -72,11 +72,26 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         event_log_id=db_event_log.id
     )
 
+    # Check if the project is created with a test file
+    if (test := memory.log_tests.get(db_event_log.id)) is not None:
+        _file = test["file"]
+        separator = test["separator"]
+        extension = test["extension"]
+        result_key = get_ongoing_dataset_result_key(_file, extension, separator, db_project)
+        memory.log_tests.pop(db_event_log.id)
+    else:
+        result_key = None
+
     # Start the pre-processing
     process_daemon(start_pre_processing, (db_project.id, db_event_log.id, get_active_plugins()))
+
+    # Start the test file watching
+    result_key and test_watching(db_project.id, result_key)
+
     return {
         "message": "Project created successfully",
-        "project": db_project
+        "project": db_project,
+        "result_key": result_key
     }
 
 
@@ -182,7 +197,7 @@ def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: 
     elif db_project.status not in {ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
-    result_key = get_ongoing_dataset_result_key(file, extension, seperator, db_project)
+    result_key = get_ongoing_dataset_result_key(file.file, extension, seperator, db_project)
     if not result_key:
         raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
 
@@ -207,12 +222,11 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
         raise HTTPException(status_code=404, detail=ErrorType.RESULT_NOT_FOUND)
 
     result = memory.ongoing_results[result_key]
-    if len(result["results"]) != len(result["plugins"]):
-        print(result["results"].keys())
-        print(result["plugins"])
+    if not len(result["plugins"]) or len(result["results"]) != len(result["plugins"]):
         return {
             "message": "Ongoing dataset result is still processing",
             "project_status": db_project.status,
+            "expected_plugins": list(result["plugins"].keys()),
             "finished_plugins": list(result["results"].keys()),
         }
 
@@ -226,6 +240,7 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
     return {
         "message": "Ongoing dataset result retrieved successfully",
         "project_status": db_project.status,
+        "expected_plugins": list(result["plugins"].keys()),
         "finished_plugins": list(result["results"].keys()),
         "cases_count": result["cases_count"],
         "columns": result["columns"],

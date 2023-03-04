@@ -1,4 +1,6 @@
 import logging
+from copy import deepcopy
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
@@ -9,9 +11,9 @@ import core.schemas.request.event_log as event_log_request
 import core.schemas.response.event_log as event_log_response
 import core.schemas.event_log as event_log_schema
 from core.confs import path
+from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
 from core.functions.definition.util import get_available_options
-from core.enums.error import ErrorType
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.dataset import get_completed_transition_df
 from core.functions.event_log.df import get_dataframe, save_dataframe
@@ -21,6 +23,7 @@ from core.functions.general.etc import get_current_time_label
 from core.functions.general.request import get_real_ip, get_db
 from core.functions.general.file import get_extension, get_new_path
 from core.security.token import validate_token
+from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -30,11 +33,15 @@ router = APIRouter(prefix="/event_log")
 
 
 @router.post("", response_model=event_log_response.UploadEventLogResponse)
-def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str = Form(","),
+def upload_event_log(request: Request, file: UploadFile = Form(), separator: str = Form(","),
+                     test: UploadFile = Form(None),
                      db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Upload event log: {file} - from IP {get_real_ip(request)}")
 
     if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
+
+    if test and test.file and get_extension(test.filename) not in path.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
 
     # Save the file
@@ -48,7 +55,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
         f.write(file.file.read())
 
     # Get dataframe from file
-    df = get_dataframe_from_file(raw_path, extension, seperator)
+    df = get_dataframe_from_file(raw_path, extension, separator)
 
     db_event_log = event_log_crud.create_event_log(db, event_log_schema.EventLogCreate(
         file_name=file.filename,
@@ -56,6 +63,15 @@ def upload_event_log(request: Request, file: UploadFile = Form(), seperator: str
     ))
     save_dataframe(db, db_event_log, df)
     brief = get_brief_with_inferred_definition(df)
+
+    # Save test file to memory
+    if test and test.file:
+        memory.log_tests[db_event_log.id] = {
+            "date": datetime.now(),
+            "file": deepcopy(test.file),
+            "extension": get_extension(test.filename),
+            "separator": separator
+        }
 
     return {
         "message": "Event log uploaded",

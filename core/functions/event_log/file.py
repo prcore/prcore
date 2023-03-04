@@ -12,13 +12,13 @@ from core.functions.general.file import get_extension, get_new_path, delete_file
 logger = logging.getLogger(__name__)
 
 
-def get_dataframe_from_file(file_path: str, extension: str, seperator: str) -> DataFrame:
+def get_dataframe_from_file(file_path: str, extension: str, separator: str) -> DataFrame:
     if extension == "xes":
         df = get_dataframe_from_xes(file_path)
     elif extension == "csv":
-        df = get_dataframe_from_csv(file_path, seperator)
+        df = get_dataframe_from_csv(file_path, separator)
     else:
-        df = get_dataframe_from_zip(file_path, seperator)
+        df = get_dataframe_from_zip(file_path, separator)
     return df
 
 
@@ -30,15 +30,15 @@ def get_dataframe_from_xes(file_path: str) -> DataFrame:
     return df
 
 
-def get_dataframe_from_csv(file_path: str, seperator: str) -> DataFrame:
+def get_dataframe_from_csv(file_path: str, separator: str) -> DataFrame:
     # Get dataframe from csv file
-    df = read_csv(file_path, sep=seperator, dtype=str)
+    df = read_csv(file_path, sep=separator, dtype=str)
     df_obj = df.select_dtypes(["object"])
     df[df_obj.columns] = df_obj.apply(lambda x: x.str.strip())
     return df
 
 
-def get_dataframe_from_zip(file_path: str, seperator: str) -> DataFrame | None:
+def get_dataframe_from_zip(file_path: str, separator: str) -> DataFrame | None:
     # Get dataframe from zip file
     result = None
     temp_path = ""
@@ -64,7 +64,7 @@ def get_dataframe_from_zip(file_path: str, seperator: str) -> DataFrame | None:
             if extension == "xes":
                 result = get_dataframe_from_xes(temp_path)
             elif extension == "csv":
-                result = get_dataframe_from_csv(temp_path, seperator)
+                result = get_dataframe_from_csv(temp_path, separator)
     except Exception as e:
         logger.warning(f"Get dataframe from zip error: {e}", exc_info=True)
         delete_file(file_path)
