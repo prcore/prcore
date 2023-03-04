@@ -365,17 +365,12 @@ def label_for_treatment(data: str | int | float | bool) -> bool | None:
 
 def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
     # Get renamed dataframe
-    needed_definitions = {ColumnDefinition.CASE_ID,
-                          ColumnDefinition.ACTIVITY,
-                          ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
-                          ColumnDefinition.RESOURCE, ColumnDefinition.DURATION, ColumnDefinition.COST,
-                          ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}
     columns_need_to_rename = {}
     for column in df.columns.tolist():
-        if (definition := columns_definition.get(column, column)) in needed_definitions:
+        if (definition := columns_definition.get(column, column)) in DefinitionType.SPECIAL:
             columns_need_to_rename[column] = definition
     df = df.rename(columns=columns_need_to_rename)
-    df.drop(columns=[c for c in df.columns if c not in needed_definitions], axis=1, inplace=True)
+    df.drop(columns=[c for c in df.columns if c not in DefinitionType.SPECIAL], axis=1, inplace=True)
     return df
 
 

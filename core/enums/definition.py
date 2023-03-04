@@ -30,6 +30,11 @@ class DefinitionType(str, Enum):
     DATETIME = {ColumnDefinition.DATETIME, ColumnDefinition.TIMESTAMP,
                 ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP}
     CATEGORICAL = {ColumnDefinition.CATEGORICAL}
+    SPECIAL = {ColumnDefinition.CASE_ID,
+               ColumnDefinition.ACTIVITY,
+               ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
+               ColumnDefinition.RESOURCE, ColumnDefinition.DURATION, ColumnDefinition.COST,
+               ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}
 
 
 class Operator(str, Enum):
