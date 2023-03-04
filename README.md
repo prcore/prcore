@@ -1,6 +1,6 @@
 # PrCore
 
-[![Docker Compose Test](https://github.com/prcore/prcore/actions/workflows/main.yml/badge.svg)](https://github.com/prcore/prcore/actions/workflows/main.yml) [![](https://img.shields.io/pingpong/status/sp_c60bb412baf14b219102581cecc9631f?style=flat)](https://prcore.pingpong.host/en/)
+[![Docker Compose Test](https://github.com/prcore/prcore/actions/workflows/main.yml/badge.svg)](https://github.com/prcore/prcore/actions/workflows/main.yml) `[![](https://img.shields.io/pingpong/status/sp_c60bb412baf14b219102581cecc9631f?style=flat)](https://prcore.pingpong.host/en/)`
 
 PrCore is a backend application used for prescriptive process monitoring. 
 It takes historical event log files and provides ongoing case prescriptions based on the received event streaming data. 
@@ -9,7 +9,7 @@ Its prescribing and predicting algorithms can be easily modified, replaced, or a
 The system is designed to be scalable and can be deployed in a distributed environment. 
 Try it out!
 
-![](https://download.chaos.run/prcore/flow.png?45321)
+![](https://download.chaos.run/prcore/flow.png?45329)
 
 - Documentation: [https://prcore-docs.chaos.run](https://prcore-docs.chaos.run)
 - Demo API: [https://prcore.chaos.run](https://prcore.chaos.run)
