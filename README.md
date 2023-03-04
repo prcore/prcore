@@ -9,7 +9,7 @@ Its prescribing and predicting algorithms can be easily modified, replaced, or a
 The system is designed to be scalable and can be deployed in a distributed environment. 
 Try it out!
 
-![](https://download.chaos.run/prcore/flow.png)
+![](https://download.chaos.run/prcore/flow.png?452)
 
 - Documentation: [https://prcore-docs.chaos.run](https://prcore-docs.chaos.run)
 - Demo API: [https://prcore.chaos.run](https://prcore.chaos.run)
