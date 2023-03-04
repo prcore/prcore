@@ -12,5 +12,7 @@ jobs:
         run: cd scripts && bash ./mkdir.sh && cd .. && cp example.env .env
       - name: Docker Compose Action
         uses: isbang/compose-action@v1.4.1
+      - name: Print docker status
+        run: docker-compose ps
       - name: Test service status
-        run: ./scripts/test.sh
+        run: bash ./scripts/test.sh
