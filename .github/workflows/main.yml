@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up data folder and env file
-        run: cd scripts && bash ./mkdir.sh && cd .. && cp .env.example .env
+        run: cd scripts && bash ./mkdir.sh && cd .. && cp example.env .env
       - name: Docker Compose Action
         uses: isbang/compose-action@v1.4.1
       - name: Test service status
