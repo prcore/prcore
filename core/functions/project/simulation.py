@@ -68,6 +68,7 @@ def simulation_disconnected(db: Session, project_id: int) -> bool:
             return True
 
         memory.simulation_start_times[project_id] = datetime.now() - timedelta(minutes=4)
+        logger.warning(f"Simulation result reading connection of project {project_id} is closed")
         result = True
     except Exception as e:
         logger.warning(f"Handling simulation disconnection error: {e}")

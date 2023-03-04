@@ -10,7 +10,6 @@ import core.models.event_log as event_log_model
 import core.schemas.definition as definition_schema
 import core.schemas.plugin as plugin_schema
 import core.schemas.request.event_log as event_log_request
-from core.enums.definition import Transition
 from core.enums.status import PluginStatus
 from core.functions.event_log.dataset import pre_process_data
 from core.functions.event_log.df import get_dataframe
