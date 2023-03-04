@@ -43,11 +43,15 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
         # Get the result skeleton
         columns = df.columns.tolist()
         columns_definition = db_project.event_log.definition.columns_definition
+        case_attributes = db_project.event_log.definition.case_attributes
 
         # Check the columns definition
         for column in columns_definition:
             if columns_definition.get(column) and column not in columns:
                 raise ValueError(f"Column is defined but not in the new dataset: {column}")
+        for column in case_attributes:
+            if column not in columns:
+                raise ValueError(f"Case attribute is defined but not in the new dataset: {column}")
 
         # Get a preprocessed dataframe and cases
         definition = definition_schema.Definition.from_orm(db_project.event_log.definition)
@@ -71,6 +75,7 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
             "cases_count": cases_count,
             "columns": columns,
             "columns_definition": columns_definition,
+            "case_attributes": case_attributes,
             "cases": cases
         }
 
@@ -98,9 +103,10 @@ def process_ongoing_dataset(result_key: str) -> bool:
         plugins = data["plugins"]
         model_names = data["model_names"]
         columns_definition = data["columns_definition"]
+        case_attributes = data["case_attributes"]
 
         # Get renamed df and save it to the temp path
-        df = get_renamed_dataframe(df, columns_definition)
+        df = get_renamed_dataframe(df, columns_definition, case_attributes)
         temp_path = get_new_path(f"{path.TEMP_PATH}/", suffix=".pkl")
         df.to_pickle(temp_path)
         temp_csv_path = temp_path.replace(".pkl", ".csv")

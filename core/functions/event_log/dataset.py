@@ -82,7 +82,8 @@ def get_processed_dataframe(df: DataFrame, definition: definition_schema.Definit
     numbered_df = get_numbered_dataframe(transition_removed_df, definition.columns_definition)
     bool_df = get_bool_dataframe(numbered_df, definition.columns_definition)
     outcome_and_treatment_dataframe = get_outcome_and_treatment_dataframe(bool_df, definition)
-    renamed_df = get_renamed_dataframe(outcome_and_treatment_dataframe, definition.columns_definition)
+    renamed_df = get_renamed_dataframe(outcome_and_treatment_dataframe, definition.columns_definition,
+                                       definition.case_attributes)
     return renamed_df
 
 
@@ -363,14 +364,18 @@ def label_for_treatment(data: str | int | float | bool) -> bool | None:
     return None
 
 
-def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
+def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefinition],
+                          case_attributes: list[str]) -> DataFrame:
     # Get renamed dataframe
     columns_need_to_rename = {}
     for column in df.columns.tolist():
         if (definition := columns_definition.get(column, column)) in DefinitionType.SPECIAL:
             columns_need_to_rename[column] = definition
+        elif definition == ColumnDefinition.CATEGORICAL:
+            columns_need_to_rename[column] = f"CATEGORICAL_{column}"
+        elif column in case_attributes:
+            columns_need_to_rename[column] = f"CASE_ATTRIBUTE_{column}"
     df = df.rename(columns=columns_need_to_rename)
-    df.drop(columns=[c for c in df.columns if c not in DefinitionType.SPECIAL], axis=1, inplace=True)
     return df
 
 

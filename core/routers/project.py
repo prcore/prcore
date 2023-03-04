@@ -246,6 +246,7 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
         "cases_count": result["cases_count"],
         "columns": result["columns"],
         "columns_definition": result["columns_definition"],
+        "case_attributes": result["case_attributes"],
         "cases": result["cases"]
     }
 
@@ -386,6 +387,8 @@ def download_ongoing_dataset(request: Request, project_id: int, background_tasks
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    elif db_project.status not in ProjectStatusGroup.PROCESSED:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_PREPROCESSED)
 
     temp_path = get_ongoing_dataset_path(db_project.event_log)
 
@@ -405,6 +408,8 @@ def download_simulation_dataset(request: Request, project_id: int, background_ta
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    elif db_project.status not in ProjectStatusGroup.PROCESSED:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_PREPROCESSED)
 
     temp_path = get_simulation_dataset_path(db_project.event_log)
 

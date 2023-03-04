@@ -44,6 +44,7 @@ class DatasetResultResponse(BaseModel):
     cases_count: int | None = None
     columns: list[str] | None = None
     columns_definition: dict[str, ColumnDefinition] | None = None
+    case_attributes: list[str] | None = None
     cases: dict[str, DatasetResultCaseResponse] | None = None
 
 
