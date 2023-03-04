@@ -49,9 +49,10 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
         for column in columns_definition:
             if columns_definition.get(column) and column not in columns:
                 raise ValueError(f"Column is defined but not in the new dataset: {column}")
-        for column in case_attributes:
-            if column not in columns:
-                raise ValueError(f"Case attribute is defined but not in the new dataset: {column}")
+        if case_attributes:
+            for column in case_attributes:
+                if column not in columns:
+                    raise ValueError(f"Case attribute is defined but not in the new dataset: {column}")
 
         # Get a preprocessed dataframe and cases
         definition = definition_schema.Definition.from_orm(db_project.event_log.definition)

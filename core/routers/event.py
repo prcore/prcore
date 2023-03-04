@@ -41,9 +41,10 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
     for column in columns_definition:
         if column not in request_body:
             raise HTTPException(status_code=400, detail=f"Missing pre-defined column {column.name}")
-    for column in case_attributes:
-        if column not in request_body:
-            raise HTTPException(status_code=400, detail=f"Missing case attribute {column.name}")
+    if case_attributes:
+        for column in case_attributes:
+            if column not in request_body:
+                raise HTTPException(status_code=400, detail=f"Missing case attribute {column.name}")
 
     # Check if there is already a case with the same case ID
     case_id = str(request_body[get_defined_column_name(columns_definition, ColumnDefinition.CASE_ID)])
