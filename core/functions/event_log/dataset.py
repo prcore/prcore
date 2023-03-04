@@ -376,7 +376,7 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
             columns_need_to_rename[column] = definition
         elif definition == ColumnDefinition.CATEGORICAL:
             columns_need_to_rename[column] = f"CATEGORICAL_{column}"
-        elif column in case_attributes:
+        elif case_attributes and column in case_attributes:
             columns_need_to_rename[column] = f"CASE_ATTRIBUTE_{definition}_{column}"
     df = df.rename(columns=columns_need_to_rename)
     return df

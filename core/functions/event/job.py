@@ -28,7 +28,7 @@ def prepare_prefix_and_send(project_id: int, model_names: dict[str, str], event_
                     element[definition] = element.pop(column)
                 elif definition == ColumnDefinition.CATEGORICAL:
                     element[f"CATEGORICAL_{column}"] = element.pop(column)
-                elif column in case_attributes:
+                elif case_attributes and column in case_attributes:
                     element[f"CASE_ATTRIBUTE_{definition}_{column}"] = element.pop(column)
 
         # Get timestamp column
