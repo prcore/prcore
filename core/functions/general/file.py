@@ -1,12 +1,28 @@
 import logging
 from os import remove
 from os.path import exists
-from shutil import move
+from shutil import copy, move
 
 from core.functions.general.etc import random_str
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def copy_file(src: str, dst: str) -> bool:
+    # Copy a file
+    result = False
+
+    try:
+        if not(src and exists(src)):
+            return False
+
+        copy(src, dst)
+        result = True
+    except Exception as e:
+        logger.warning(f"Copy file error: {e}", exc_info=True)
+
+    return result
 
 
 def delete_file(path: str) -> bool:

@@ -15,7 +15,7 @@ from core.enums.definition import ColumnDefinition, DefinitionType, Transition
 from core.functions.definition.condition import check_or_conditions
 from core.functions.definition.util import get_defined_column_name, get_start_timestamp
 from core.functions.event_log.df import get_dataframe
-from core.functions.general.file import get_new_path
+from core.functions.general.file import copy_file, get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -379,6 +379,36 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
     return df
 
 
+def get_original_dataset_path(db_event_log: event_log_model.EventLog) -> str:
+    # Get original dataset path for testing purpose
+    result = ""
+
+    try:
+        saved_name = db_event_log.saved_name
+        temp_path = get_new_path(path.TEMP_PATH, suffix=f".{saved_name.split('.')[-1]}")
+        copy_result = copy_file(f"{path.EVENT_LOG_RAW_PATH}/{saved_name}", temp_path)
+        result = temp_path if copy_result else ""
+    except Exception as e:
+        logger.error(f"Error occurred when getting original dataset path: {e}")
+
+    return result
+
+
+def get_processed_dataset_path(db_event_log: event_log_model.EventLog) -> str:
+    # Get processed dataset path for testing purpose
+    result = ""
+
+    try:
+        temp_path = get_new_path(path.TEMP_PATH, suffix=".csv")
+        training_df = pd.read_pickle(f"{path.EVENT_LOG_TRAINING_DF_PATH}/{db_event_log.training_df_name}.pkl")
+        training_df.to_csv(temp_path, index=False)
+        result = temp_path
+    except Exception as e:
+        logger.error(f"Error occurred when getting processed dataset path: {e}")
+
+    return result
+
+
 def get_ongoing_dataset_path(db_event_log: event_log_model.EventLog) -> str:
     # Get ongoing dataset path for testing purpose
     result = ""
@@ -401,6 +431,21 @@ def get_ongoing_dataset_path(db_event_log: event_log_model.EventLog) -> str:
         result = temp_path
     except Exception as e:
         logger.warning(f"Get ongoing dataset path failed: {e}")
+
+    return result
+
+
+def get_simulation_dataset_path(db_event_log: event_log_model.EventLog) -> str:
+    # Get simulation dataset path for testing purpose
+    result = ""
+
+    try:
+        temp_path = get_new_path(path.TEMP_PATH, suffix=".csv")
+        simulation_df = pd.read_pickle(f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{db_event_log.simulation_df_name}")
+        simulation_df.to_csv(temp_path, index=False)
+        result = temp_path
+    except Exception as e:
+        logger.error(f"Error occurred when getting simulation dataset path: {e}")
 
     return result
 

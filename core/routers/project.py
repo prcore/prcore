@@ -16,8 +16,9 @@ import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
 from core.confs import path
 from core.enums.error import ErrorType
-from core.enums.status import ProjectStatus
-from core.functions.event_log.dataset import get_ongoing_dataset_path
+from core.enums.status import ProjectStatus, ProjectStatusGroup
+from core.functions.event_log.dataset import (get_ongoing_dataset_path, get_original_dataset_path,
+                                              get_processed_dataset_path, get_simulation_dataset_path)
 from core.functions.event_log.job import start_pre_processing
 from core.functions.general.etc import process_daemon
 from core.functions.general.file import delete_file, get_extension
@@ -336,6 +337,46 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
     )
 
 
+@router.get("/{project_id}/dataset/original")
+def download_original_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
+                              db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Download original dataset - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
+    temp_path = get_original_dataset_path(db_project.event_log)
+
+    if not temp_path:
+        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
+
+    background_tasks.add_task(delete_file, temp_path)
+    return FileResponse(temp_path, filename=temp_path.split("/")[-1])
+
+
+@router.get("/{project_id}/dataset/processed")
+def download_processed_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
+                               db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Download processed dataset - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    elif db_project.status not in ProjectStatusGroup.PROCESSED:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_PREPROCESSED)
+
+    temp_path = get_processed_dataset_path(db_project.event_log)
+
+    if not temp_path:
+        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
+
+    background_tasks.add_task(delete_file, temp_path)
+    return FileResponse(temp_path, filename="processed_dataset.csv")
+
+
 @router.get("/{project_id}/dataset/ongoing")
 def download_ongoing_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
                              db: Session = Depends(get_db), _: bool = Depends(validate_token)):
@@ -352,4 +393,23 @@ def download_ongoing_dataset(request: Request, project_id: int, background_tasks
         raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
 
     background_tasks.add_task(delete_file, temp_path)
-    return FileResponse(temp_path, media_type="text/csv", filename="ongoing_dataset.csv")
+    return FileResponse(temp_path, filename="ongoing_dataset.csv")
+
+
+@router.get("/{project_id}/dataset/simulation")
+def download_simulation_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
+                                db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Download simulation dataset - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
+    temp_path = get_simulation_dataset_path(db_project.event_log)
+
+    if not temp_path:
+        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
+
+    background_tasks.add_task(delete_file, temp_path)
+    return FileResponse(temp_path, filename="simulation_dataset.csv")

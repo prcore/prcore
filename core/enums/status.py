@@ -22,6 +22,12 @@ class PluginStatus(str, Enum):
     STREAMING = "STREAMING"
 
 
+class ProjectStatusGroup(list[ProjectStatus], Enum):
+    """Enum for project status group."""
+    PROCESSED = {ProjectStatus.TRAINING, ProjectStatus.TRAINED, ProjectStatus.ACTIVATING, ProjectStatus.STREAMING,
+                 ProjectStatus.SIMULATING}
+
+
 class PluginStatusGroup(list[PluginStatus], Enum):
     """Enum for plugin status group."""
     WAITING = [PluginStatus.WAITING, PluginStatus.PREPROCESSING, PluginStatus.TRAINING, PluginStatus.TRAINED,
