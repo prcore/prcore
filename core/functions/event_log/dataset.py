@@ -372,14 +372,9 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
         definition = columns_definition.get(column)
 
         if not definition:
-            if column == ColumnDefinition.DURATION:
-                definition = ColumnDefinition.DURATION
-            elif column == ColumnDefinition.OUTCOME:
-                definition = ColumnDefinition.OUTCOME
-            elif column == ColumnDefinition.TREATMENT:
-                definition = ColumnDefinition.TREATMENT
-            elif column == ColumnDefinition.COMPLETE_INDICATOR:
-                definition = ColumnDefinition.COMPLETE_INDICATOR
+            if column in {ColumnDefinition.DURATION, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
+                          ColumnDefinition.COMPLETE_INDICATOR}:
+                definition = ColumnDefinition(column)
             else:
                 definition = ColumnDefinition.TEXT
 
