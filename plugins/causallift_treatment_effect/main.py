@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 for _ in logging.root.manager.loggerDict:
     if _.startswith("pika"):
         logging.getLogger(_).setLevel(logging.CRITICAL)
-
+    if _.startswith("causallift"):
+        logging.getLogger(_).setLevel(logging.CRITICAL)
 
 if __name__ == "__main__":
     plugin_scheduler()

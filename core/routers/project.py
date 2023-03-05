@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
@@ -253,7 +254,7 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
 @router.put("/{project_id}/stream/start/{streaming_type}", response_model=project_response.StreamProjectResponse)
 def streaming_start(request: Request, project_id: int, streaming_type: str = "streaming",
                     db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Start stream - {streaming_type} - from IP {get_real_ip(request)}")
+    logger.warning(f"Stream start - {streaming_type} - from IP {get_real_ip(request)}")
 
     # Extract the wanted project status
     try:
@@ -279,7 +280,7 @@ def streaming_start(request: Request, project_id: int, streaming_type: str = "st
 @router.put("/{project_id}/stream/stop", response_model=project_response.StreamProjectResponse)
 def streaming_stop(request: Request, project_id: int, db: Session = Depends(get_db),
                    _: bool = Depends(validate_token)):
-    logger.warning(f"Stop streaming - from IP {get_real_ip(request)}")
+    logger.warning(f"Stream stop - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
@@ -328,12 +329,22 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
 
     # Check if the project is streaming
     streaming_project = memory.streaming_projects.get(project_id)
-    if not streaming_project or streaming_project["finished"].is_set():
+    enabled = streaming_project and not streaming_project["finished"].is_set()
+    if db_project.status in {ProjectStatus.STREAMING, ProjectStatus.SIMULATING} and not enabled:
+        timeout = 15
+        while not enabled and timeout > 0:
+            await asyncio.sleep(1)
+            streaming_project = memory.streaming_projects.get(project_id)
+            enabled = streaming_project and not streaming_project["finished"].is_set()
+            timeout -= 1
+    if not enabled:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
 
     # Check if the project is already being read
     if streaming_project["reading"]:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ALREADY_READING)
+    else:
+        streaming_project["reading"] = True
 
     return EventSourceResponse(
         content=event_generator(request, db, project_id),
