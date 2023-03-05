@@ -35,8 +35,7 @@ async def event_generator(request: Request, db: Session, project_id: int):
         while True:
             if await request.is_disconnected():
                 break
-            project = project_crud.get_project_by_id(db, project_id)
-            if project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+            if memory.streaming_projects[project_id]["finished"].is_set():
                 yield {
                     "event": "notification",
                     "id": i,

@@ -302,7 +302,7 @@ def stream_clear(request: Request, project_id: int, db: Session = Depends(get_db
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    validate_streaming_status(db_project, "stop")
+    validate_streaming_status(db_project, "clear")
 
     # Stop the simulation
     disable_streaming(db, db_project)
