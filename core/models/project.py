@@ -22,6 +22,4 @@ class Project(Base):
     event_log_id = Column(Integer, ForeignKey("event_log.id"))
 
     event_log = relationship("EventLog")
-    cases = relationship("Case")
-    events = relationship("Event")
     plugins = relationship("Plugin", back_populates="project")

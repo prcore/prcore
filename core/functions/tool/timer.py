@@ -6,9 +6,8 @@ import core.crud.event_log as event_log_crud
 import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
 from core.confs import path
-from core.enums.status import ProjectStatus
 from core.starters import memory
-from core.functions.project.simulation import stop_simulation
+from core.functions.project.streaming import disable_streaming
 from core.starters.database import SessionLocal
 
 # Enable logging
@@ -72,18 +71,26 @@ def stop_unread_simulations() -> bool:
 
     try:
         datetime_now = datetime.now()
-        for project_id in list(memory.simulation_start_times.keys()):
-            project_datetime = memory.simulation_start_times.get(project_id)
-            if not project_datetime:
+
+        for project_id in list(memory.streaming_projects.keys()):
+            streaming_project = memory.streaming_projects.get(project_id)
+            if (not streaming_project
+                    or streaming_project["type"] != "simulation"
+                    or streaming_project["finished"].is_set()
+                    or streaming_project["reading"]):
                 continue
-            if (datetime_now - project_datetime).total_seconds() > 5 * 60:
-                with SessionLocal() as db:
-                    db_project = project_crud.get_project_by_id(db, project_id)
-                    if not db_project:
-                        continue
-                    if db_project.status != ProjectStatus.SIMULATING:
-                        continue
-                    stop_simulation(db, db_project)
+            if streaming_project["read_time"]:
+                if (datetime_now - streaming_project["read_time"]).total_seconds() < 60:
+                    continue
+            elif (datetime_now - streaming_project["start_time"]).total_seconds() < 5 * 60:
+                continue
+            with SessionLocal() as db:
+                db_project = project_crud.get_project_by_id(db, project_id)
+                if not db_project:
+                    continue
+                disable_streaming(db, db_project)
+
+        result = True
     except Exception as e:
         logger.warning(f"Stop unread simulations error: {e}", exc_info=True)
 

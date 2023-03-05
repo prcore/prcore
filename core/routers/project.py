@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
@@ -23,12 +22,11 @@ from core.functions.event_log.job import start_pre_processing
 from core.functions.general.etc import process_daemon
 from core.functions.general.file import delete_file, get_extension
 from core.functions.general.request import get_real_ip, get_db
-from core.functions.message.sender import send_streaming_prepare_to_all_plugins, send_streaming_stop_to_all_plugins
+from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.prescribe import (delete_result_from_memory, get_ongoing_dataset_result_key,
                                               process_ongoing_dataset, test_watching)
-from core.functions.project.simulation import stop_simulation
-from core.functions.project.streaming import event_generator
+from core.functions.project.streaming import event_generator, disable_streaming
 from core.functions.project.validation import validate_project_definition, validate_streaming_status
 from core.starters import memory
 from core.security.token import validate_token
@@ -163,7 +161,7 @@ def update_project_definition(request: Request, project_id: int,
     treatment = update_body.treatment
     positive_outcome and validate_project_definition(positive_outcome, columns_definition)
     treatment and validate_project_definition(treatment, columns_definition)
-    stop_simulation(db, db_project, True)
+    disable_streaming(db, db_project, True)
 
     # Update the project
     definition_crud.set_outcome_treatment_definition(
@@ -251,79 +249,24 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
     }
 
 
-@router.put("/{project_id}/simulate/start", response_model=project_response.StreamProjectResponse)
-def simulation_start(request: Request, project_id: int, db: Session = Depends(get_db),
-                     _: bool = Depends(validate_token)):
-    logger.warning(f"Start simulation - from IP {get_real_ip(request)}")
-
-    # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
-    validate_streaming_status(db_project, "start", "simulation")
-
-    # Start the simulation
-    db_project = project_crud.update_status(db, db_project, ProjectStatus.SIMULATING)
-    plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
-    model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
-    send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
-    memory.simulation_start_times[db_project.id] = datetime.now()
-    return {
-        "message": "Project simulation started successfully",
-        "project_id": project_id
-    }
-
-
-@router.put("/{project_id}/simulate/stop", response_model=project_response.StreamProjectResponse)
-def simulation_stop(request: Request, project_id: int, db: Session = Depends(get_db),
-                    _: bool = Depends(validate_token)):
-    logger.warning(f"Stop simulation - from IP {get_real_ip(request)}")
-
-    # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
-    validate_streaming_status(db_project, "stop", "simulation")
-
-    # Stop the simulation
-    stop_simulation(db, db_project)
-
-    return {
-        "message": "Project simulation stopped successfully",
-        "project_id": project_id
-    }
-
-
-@router.put("/{project_id}/simulate/clear", response_model=project_response.StreamProjectResponse)
-def simulation_clear(request: Request, project_id: int, db: Session = Depends(get_db),
-                     _: bool = Depends(validate_token)):
-    logger.warning(f"Clear simulation - from IP {get_real_ip(request)}")
-
-    # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
-    validate_streaming_status(db_project, "clear", "simulation")
-
-    # Stop the simulation
-    if db_project.status == ProjectStatus.SIMULATING:
-        stop_simulation(db, db_project)
-
-    # Remove all the cases and events belonging to the project
-    event_crud.delete_all_events_by_project_id(db, db_project.id)
-    case_crud.delete_all_cases_by_project_id(db, db_project.id)
-
-    return {
-        "message": "Project simulation cleared successfully",
-        "project_id": project_id
-    }
-
-
 @router.put("/{project_id}/stream/start", response_model=project_response.StreamProjectResponse)
-def streaming_start(request: Request, project_id: int, db: Session = Depends(get_db),
-                    _: bool = Depends(validate_token)):
-    logger.warning(f"Start streaming - from IP {get_real_ip(request)}")
+@router.put("/{project_id}/stream/start/{streaming_type}", response_model=project_response.StreamProjectResponse)
+def streaming_start(request: Request, project_id: int, streaming_type: str = "streaming",
+                    db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Start stream - {streaming_type} - from IP {get_real_ip(request)}")
+
+    # Extract the wanted project status
+    try:
+        project_status = ProjectStatus(streaming_type.upper())
+    except ValueError:
+        raise HTTPException(status_code=400, detail=ErrorType.INVALID_STREAMING_TYPE)
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    validate_streaming_status(db_project, "start", "streaming")
+    validate_streaming_status(db_project, "start")
 
     # Start the streaming
-    db_project = project_crud.update_status(db, db_project, ProjectStatus.STREAMING)
+    db_project = project_crud.update_status(db, db_project, project_status)
     plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
     model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
     send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
@@ -340,14 +283,35 @@ def streaming_stop(request: Request, project_id: int, db: Session = Depends(get_
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    validate_streaming_status(db_project, "stop", "streaming")
+    validate_streaming_status(db_project, "stop")
 
     # Stop the streaming
-    project_crud.update_status(db, db_project, ProjectStatus.TRAINED)
-    send_streaming_stop_to_all_plugins(db_project.id, [plugin.key for plugin in db_project.plugins])
+    disable_streaming(db, db_project)
 
     return {
         "message": "Project streaming stopped successfully",
+        "project_id": project_id
+    }
+
+
+@router.put("/{project_id}/stream/clear", response_model=project_response.StreamProjectResponse)
+def stream_clear(request: Request, project_id: int, db: Session = Depends(get_db),
+                 _: bool = Depends(validate_token)):
+    logger.warning(f"Clear stream data - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    validate_streaming_status(db_project, "stop")
+
+    # Stop the simulation
+    disable_streaming(db, db_project)
+
+    # Remove all the cases and events belonging to the project
+    event_crud.delete_all_events_by_project_id(db, db_project.id)
+    case_crud.delete_all_cases_by_project_id(db, db_project.id)
+
+    return {
+        "message": "Project stream data is cleared successfully",
         "project_id": project_id
     }
 
@@ -361,19 +325,20 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    if db_project.status not in {ProjectStatus.SIMULATING, ProjectStatus.STREAMING}:
+
+    # Check if the project is streaming
+    streaming_project = memory.streaming_projects.get(project_id)
+    if not streaming_project or streaming_project["finished"].is_set():
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
 
     # Check if the project is already being read
-    if project_id in memory.reading_projects:
+    if streaming_project["reading"]:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ALREADY_READING)
-    memory.reading_projects.add(project_id)
-    memory.simulation_start_times.pop(project_id, None)
 
     return EventSourceResponse(
         content=event_generator(request, db, project_id),
         headers={"Content-Type": "text/event-stream"},
-        ping=5
+        ping=15
     )
 
 

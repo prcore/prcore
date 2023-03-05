@@ -23,29 +23,32 @@ def validate_project_definition(project_definition: list[list[ProjectDefinition]
         if not sub_list or not isinstance(sub_list, list) or len(sub_list) < 1:
             raise HTTPException(status_code=400, detail="Invalid definition")
 
-        for project_definition in sub_list:
-            column_definition = columns_definition.get(project_definition.column)
-
-            if project_definition.column == ColumnDefinition.DURATION:
-                column_definition = ColumnDefinition.DURATION
-
-            if column_definition is None:
-                raise HTTPException(status_code=400, detail=f"Column '{project_definition.column}' is not defined")
-
-            if is_supported_operator(project_definition.operator, column_definition) is False:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(f"Operator '{project_definition.operator}' not supported "
-                            f"for column '{project_definition.column}'")
-                )
+        for unit_project_definition in sub_list:
+            validate_unit_project_definition(unit_project_definition, columns_definition)
 
 
-def validate_streaming_status(db_project: project_model.Project, operation: str, _type: str) -> bool:
+def validate_unit_project_definition(project_definition: ProjectDefinition,
+                                     columns_definition: dict[str, ColumnDefinition]) -> None:
+    column_definition = columns_definition.get(project_definition.column)
+
+    if project_definition.column == ColumnDefinition.DURATION:
+        column_definition = ColumnDefinition.DURATION
+
+    if column_definition is None:
+        raise HTTPException(status_code=400, detail=f"Column '{project_definition.column}' is not defined")
+
+    if is_supported_operator(project_definition.operator, column_definition) is False:
+        raise HTTPException(
+            status_code=400,
+            detail=(f"Operator '{project_definition.operator}' not supported "
+                    f"for column '{project_definition.column}'")
+        )
+
+
+def validate_streaming_status(db_project: project_model.Project, operation: str) -> bool:
     # Check if the streaming or simulation status is valid
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    if db_project.status == ProjectStatus.ACTIVATING:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ACTIVATING)
 
     if operation == "start":
         if db_project.status == ProjectStatus.STREAMING:
@@ -55,9 +58,7 @@ def validate_streaming_status(db_project: project_model.Project, operation: str,
         if db_project.status != ProjectStatus.TRAINED:
             raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_TRAINED)
     elif operation == "stop":
-        if _type == "simulation" and db_project.status != ProjectStatus.SIMULATING:
-            raise HTTPException(status_code=400, detail=ErrorType.SIMULATION_NOT_STARTED)
-        if _type == "streaming" and db_project.status != ProjectStatus.STREAMING:
+        if db_project.status not in [ProjectStatus.STREAMING, ProjectStatus.SIMULATING]:
             raise HTTPException(status_code=400, detail=ErrorType.STREAMING_NOT_STARTED)
 
     return True

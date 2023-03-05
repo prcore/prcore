@@ -15,7 +15,7 @@ from core.functions.event_log.dataset import pre_process_data
 from core.functions.event_log.df import get_dataframe
 from core.functions.event_log.validation import validate_columns_definition, validate_case_attributes
 from core.functions.message.sender import send_training_data_to_all_plugins
-from core.functions.project.simulation import stop_simulation
+from core.functions.project.streaming import disable_streaming
 from core.starters.database import SessionLocal
 
 # Enable logging
@@ -42,7 +42,7 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog,
             abort_transition=update_body.abort_transition
         ))
         db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
-        db_project and stop_simulation(db, db_project, redefined=True)
+        db_project and disable_streaming(db, db_project, redefined=True)
     else:
         db_definition = definition_crud.create_definition(db, definition_schema.DefinitionCreate(
             columns_definition=update_body.columns_definition,

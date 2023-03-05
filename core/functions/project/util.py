@@ -10,8 +10,6 @@ def get_project_status(plugin_statuses: list[PluginStatus | str]) -> ProjectStat
     # Get the status of the project based on the statuses of the plugins
     if all(plugin_status in PluginStatusGroup.STREAMING for plugin_status in plugin_statuses):
         return ProjectStatus.STREAMING
-    elif all(plugin_status in PluginStatusGroup.ACTIVATING for plugin_status in plugin_statuses):
-        return ProjectStatus.ACTIVATING
     elif all(plugin_status in PluginStatusGroup.TRAINED for plugin_status in plugin_statuses):
         return ProjectStatus.TRAINED
     elif all(plugin_status in PluginStatusGroup.TRAINING for plugin_status in plugin_statuses):

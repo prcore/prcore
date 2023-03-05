@@ -14,12 +14,11 @@ import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
 from core.starters.database import SessionLocal
 from core.enums.message import MessageType
-from core.enums.status import PluginStatus, ProjectStatus
+from core.enums.status import PluginStatus
 from core.functions.message.sender import send_online_inquires
 from core.functions.message.util import get_connection, get_data_from_body
-from core.functions.plugin.collector import is_plugin_active, get_active_plugins
-from core.functions.project.simulation import proceed_simulation
-from core.functions.project.simulation import check_simulation
+from core.functions.plugin.collector import is_plugin_active
+from core.functions.project.streaming import enable_streaming, check_simulation
 from core.functions.project.util import get_project_status
 from core.starters import memory
 
@@ -116,21 +115,6 @@ def handle_data_report(data: dict) -> None:
                 project_crud.set_project_error(db, project.id, "No plugin is applicable")
 
 
-def update_project_status(db: Session, project_id: int) -> None:
-    project = project_crud.get_project_by_id(db, project_id)
-    if project.status == ProjectStatus.SIMULATING:
-        if get_active_plugins() and all([plugin.status == PluginStatus.STREAMING for plugin in project.plugins]):
-            proceed_simulation(
-                simulation_df_name=project.event_log.simulation_df_name,
-                project_id=project.id,
-                definition=project.event_log.definition
-            )
-        return
-    if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
-            and project_status):
-        project_crud.update_status(db, project, project_status)
-
-
 def handle_error_report(data: dict) -> None:
     project_id = data["project_id"]
     plugin_id = data["plugin_id"]
@@ -189,7 +173,7 @@ def handle_streaming_ready(data: dict) -> None:
         if not plugin:
             return
         plugin_crud.update_status(db, plugin, PluginStatus.STREAMING)
-        update_project_status(db, project_id)
+        enable_streaming(db, project_id)
 
 
 def handle_streaming_prescription_result(data: dict) -> None:
@@ -210,3 +194,10 @@ def handle_streaming_prescription_result(data: dict) -> None:
             event_crud.mark_as_prescribed(db, event)
         # Check if the simulation is finished
         check_simulation(db, db_project)
+
+
+def update_project_status(db: Session, project_id: int) -> None:
+    project = project_crud.get_project_by_id(db, project_id)
+    if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
+            and project_status):
+        project_crud.update_status(db, project, project_status)

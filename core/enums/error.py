@@ -6,6 +6,8 @@ class ErrorType(str, Enum):
     EVENT_LOG_NOT_FOUND = "Event log not found"
     EVENT_LOG_DEFINITION_NOT_FOUND = "Event log definition not found"
 
+    INVALID_STREAMING_TYPE = "Invalid streaming type"
+
     PROCESS_DATASET_ERROR = "There was an error processing the dataset"
 
     PROJECT_NOT_FOUND = "Project not found"
@@ -20,6 +22,5 @@ class ErrorType(str, Enum):
     RESULT_NOT_FOUND = "Result not found"
 
     SIMULATION_STARTED = "Simulation already started"
-    SIMULATION_NOT_STARTED = "Simulation not started"
     STREAMING_STARTED = "Streaming already started"
     STREAMING_NOT_STARTED = "Streaming not started"

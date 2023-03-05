@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from multiprocessing import Event
+from multiprocessing.synchronize import Event as ProcessEventType
 from typing import Any, BinaryIO
 
 from pandas import DataFrame
@@ -14,6 +14,4 @@ dataframes: dict[int, DataFrame] = {}
 log_tests: dict[int, dict[str, datetime | BinaryIO | str]] = {}
 ongoing_results: dict[str, Any] = {}
 processed_messages: dict[str, datetime] = {}
-reading_projects: set[int] = set()
-simulation_events: dict[int, Event] = {}
-simulation_start_times: dict[int, datetime] = {}
+streaming_projects: dict[int, dict[str, str | bool | datetime | ProcessEventType | None]] = {}

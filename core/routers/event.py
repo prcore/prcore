@@ -11,12 +11,13 @@ import core.schemas.event as event_schema
 import core.schemas.response.event as event_response
 from core.enums.definition import ColumnDefinition
 from core.enums.error import ErrorType
-from core.enums.status import ProjectStatus
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event.job import prepare_prefix_and_send
+from core.functions.event.validation import validate_columns
 from core.functions.general.request import get_real_ip, get_db
-from core.functions.project.simulation import check_simulation
+from core.functions.project.streaming import check_simulation
 from core.security.token import validate_token
+from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -34,8 +35,11 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
     # Get project from the database
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
-        raise HTTPException(status_code=400, detail="No valid project provided")
-    if db_project.status not in {ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
+    # Check if the project is streaming
+    streaming_project = memory.streaming_projects.get(db_project.id)
+    if not streaming_project or streaming_project["finished"].is_set():
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_STREAMING)
 
     # Get columns definition from the database
@@ -44,13 +48,7 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
     case_attributes = db_definition.case_attributes
 
     # Check if request body has all the columns previously defined
-    for column in columns_definition:
-        if column not in request_body:
-            raise HTTPException(status_code=400, detail=f"Missing pre-defined column {column.name}")
-    if case_attributes:
-        for column in case_attributes:
-            if column not in request_body:
-                raise HTTPException(status_code=400, detail=f"Missing case attribute {column.name}")
+    validate_columns(request_body, columns_definition, case_attributes)
 
     # Check if there is already a case with the same case ID
     case_id = str(request_body[get_defined_column_name(columns_definition, ColumnDefinition.CASE_ID)])

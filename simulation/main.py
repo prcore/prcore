@@ -1,6 +1,7 @@
 import logging
+from multiprocessing.synchronize import Event as ProcessEventType
+
 import requests
-from multiprocessing import Event
 from time import sleep
 
 from pandas import DataFrame, read_pickle
@@ -42,13 +43,13 @@ def preprocess_df(df: DataFrame, definition: definition_schema.Definition) -> Da
     return df
 
 
-def run_simulation(simulation_df_name: str, end_event: Event, project_id: int,
+def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_id: int,
                    definition: definition_schema.Definition):
     df = load_simulation_df(simulation_df_name)
     df = preprocess_df(df, definition)
     post_url = f"{BASE_URL}/event/{project_id}"
     for index, row in df.iterrows():
-        if end_event.is_set():
+        if finished.is_set():
             break
         response = requests.post(
             url=post_url,
@@ -57,5 +58,5 @@ def run_simulation(simulation_df_name: str, end_event: Event, project_id: int,
         )
         logger.warning(response.json()["message"])
         sleep(config.SIMULATION_INTERVAL)
-    end_event.set()
+    finished.set()
     logger.warning("Simulation finished")

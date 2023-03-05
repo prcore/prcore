@@ -7,7 +7,6 @@ class ProjectStatus(str, Enum):
     PREPROCESSING = "PREPROCESSING"
     TRAINING = "TRAINING"
     TRAINED = "TRAINED"
-    ACTIVATING = "ACTIVATING"
     STREAMING = "STREAMING"
     SIMULATING = "SIMULATING"
 
@@ -18,23 +17,19 @@ class PluginStatus(str, Enum):
     PREPROCESSING = "PREPROCESSING"
     TRAINING = "TRAINING"
     TRAINED = "TRAINED"
-    ACTIVATING = "ACTIVATING"
     STREAMING = "STREAMING"
 
 
 class ProjectStatusGroup(list[ProjectStatus], Enum):
     """Enum for project status group."""
-    PROCESSED = {ProjectStatus.TRAINING, ProjectStatus.TRAINED, ProjectStatus.ACTIVATING, ProjectStatus.STREAMING,
-                 ProjectStatus.SIMULATING}
+    PROCESSED = [ProjectStatus.TRAINING, ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING]
 
 
 class PluginStatusGroup(list[PluginStatus], Enum):
     """Enum for plugin status group."""
     WAITING = [PluginStatus.WAITING, PluginStatus.PREPROCESSING, PluginStatus.TRAINING, PluginStatus.TRAINED,
-               PluginStatus.ACTIVATING, PluginStatus.STREAMING]
-    PREPROCESSING = [PluginStatus.PREPROCESSING, PluginStatus.TRAINING, PluginStatus.TRAINED, PluginStatus.ACTIVATING,
-                     PluginStatus.STREAMING]
-    TRAINING = [PluginStatus.TRAINING, PluginStatus.TRAINED, PluginStatus.ACTIVATING, PluginStatus.STREAMING]
-    TRAINED = [PluginStatus.TRAINED, PluginStatus.ACTIVATING, PluginStatus.STREAMING]
-    ACTIVATING = [PluginStatus.ACTIVATING, PluginStatus.STREAMING]
+               PluginStatus.STREAMING]
+    PREPROCESSING = [PluginStatus.PREPROCESSING, PluginStatus.TRAINING, PluginStatus.TRAINED, PluginStatus.STREAMING]
+    TRAINING = [PluginStatus.TRAINING, PluginStatus.TRAINED, PluginStatus.STREAMING]
+    TRAINED = [PluginStatus.TRAINED, PluginStatus.STREAMING]
     STREAMING = [PluginStatus.STREAMING]
