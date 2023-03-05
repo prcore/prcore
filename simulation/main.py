@@ -37,9 +37,9 @@ def preprocess_df(df: DataFrame, definition: definition_schema.Definition) -> Da
     case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
     df[case_id_column] = df[case_id_column].apply(lambda x: f"{case_prefix}-{x}")
     # Add new column indicating the case is completed or not
-    df["COMPLETE_INDICATOR"] = False
+    df[ColumnDefinition.COMPLETE_INDICATOR] = False
     grouped = df.groupby(case_id_column)
-    df.loc[grouped.tail(1).index, "COMPLETE_INDICATOR"] = True
+    df.loc[grouped.tail(1).index, ColumnDefinition.COMPLETE_INDICATOR] = True
     return df
 
 

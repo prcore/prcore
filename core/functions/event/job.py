@@ -5,7 +5,6 @@ from pandas import to_datetime
 from core.enums.definition import ColumnDefinition, DefinitionType
 from core.functions.definition.util import get_start_timestamp
 from core.functions.message.sender import send_prescription_request_to_all_plugins
-from core.functions.plugin.collector import get_active_plugins
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -30,6 +29,8 @@ def prepare_prefix_and_send(project_id: int, model_names: dict[str, str], event_
                     element[f"CATEGORICAL_{column}"] = element.pop(column)
                 elif case_attributes and column in case_attributes:
                     element[f"CASE_ATTRIBUTE_{definition}_{column}"] = element.pop(column)
+                else:
+                    element[f"EVENT_ATTRIBUTE_{definition}_{column}"] = element.pop(column)
 
         # Get timestamp column
         timestamp_column = columns_definition[get_start_timestamp(columns_definition)]

@@ -34,7 +34,8 @@ class DefinitionType(str, Enum):
                ColumnDefinition.ACTIVITY,
                ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
                ColumnDefinition.RESOURCE, ColumnDefinition.DURATION, ColumnDefinition.COST,
-               ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}
+               ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
+               ColumnDefinition.COMPLETE_INDICATOR}
 
 
 class Operator(str, Enum):
