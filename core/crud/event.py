@@ -67,14 +67,6 @@ def mark_as_sent_by_event_ids(db: Session, event_ids: list[int]) -> None:
     db.commit()
 
 
-def delete_event(db: Session, event_id: int) -> None:
-    # Delete an event
-    db_event = get_event_by_id(db, event_id=event_id)
-    if db_event:
-        db.delete(db_event)
-        db.commit()
-
-
 def delete_all_events_by_project_id(db: Session, project_id: int) -> None:
     # Delete events by project id
     db.query(model.Event).filter_by(project_id=project_id).delete(synchronize_session="fetch")

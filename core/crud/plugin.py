@@ -53,3 +53,9 @@ def delete_plugin(db: Session, db_plugin: model.Plugin) -> None:
     # Delete a plugin
     db.delete(db_plugin)
     db.commit()
+
+
+def delete_all_plugins_by_project_id(db: Session, project_id: int) -> None:
+    # Delete plugins by project id
+    db.query(model.Plugin).filter_by(project_id=project_id).delete(synchronize_session="fetch")
+    db.commit()

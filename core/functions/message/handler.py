@@ -111,6 +111,8 @@ def handle_data_report(data: dict) -> None:
         else:
             plugin_crud.delete_plugin(db, plugin)
             project = project_crud.get_project_by_id(db, project_id)
+            if not project:
+                return
             if not project.plugins:
                 project_crud.set_project_error(db, project.id, "No plugin is applicable")
 
@@ -198,6 +200,8 @@ def handle_streaming_prescription_result(data: dict) -> None:
 
 def update_project_status(db: Session, project_id: int) -> None:
     project = project_crud.get_project_by_id(db, project_id)
+    if not project:
+        return
     if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
             and project_status):
         project_crud.update_status(db, project, project_status)

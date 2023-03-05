@@ -81,3 +81,12 @@ def set_datasets_name(db: Session, event_log: model.EventLog, training_df_name: 
         db.commit()
         db.refresh(db_event_log)
     return db_event_log
+
+
+def delete_event_log_by_id(db: Session, event_log_id: int) -> None:
+    # Delete an event log by id
+    db_event_log = get_event_log(db, event_log_id=event_log_id)
+    if not db_event_log:
+        return
+    db.delete(db_event_log)
+    db.commit()

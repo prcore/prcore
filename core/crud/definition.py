@@ -50,3 +50,12 @@ def set_outcome_treatment_definition(db: Session, db_definition: model.Definitio
     db.commit()
     db.refresh(db_definition)
     return db_definition
+
+
+def delete_definition_by_id(db: Session, definition_id: int) -> None:
+    # Delete a definition by id
+    db_definition = db.query(model.Definition).filter_by(id=definition_id).first()
+    if not db_definition:
+        return
+    db.delete(db_definition)
+    db.commit()

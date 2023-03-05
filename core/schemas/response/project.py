@@ -25,6 +25,11 @@ class CreateProjectResponse(BaseModel):
     result_key: str | None = None
 
 
+class DeleteProjectResponse(BaseModel):
+    message: str
+    project_id: int
+
+
 class DatasetUploadResponse(BaseModel):
     message: str
     project_id: int

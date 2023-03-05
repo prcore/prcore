@@ -60,3 +60,9 @@ def set_project_error(db: Session, project_id: int, error: str) -> model.Project
         db.commit()
         db.refresh(db_project)
     return db_project
+
+
+def delete_project(db: Session, db_project: model.Project) -> None:
+    # Delete a project
+    db.delete(db_project)
+    db.commit()

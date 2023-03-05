@@ -10,6 +10,7 @@ import core.crud.case as case_crud
 import core.crud.definition as definition_crud
 import core.crud.event as event_crud
 import core.crud.event_log as event_log_crud
+import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
 import core.schemas.request.project as project_request
 import core.schemas.response.project as project_response
@@ -179,6 +180,35 @@ def update_project_definition(request: Request, project_id: int,
     return {
         "message": "Project definition updated successfully",
         "project": db_project
+    }
+
+
+@router.delete("/{project_id}", response_model=project_response.DeleteProjectResponse)
+def delete_project(request: Request, project_id: int,
+                   db: Session = Depends(get_db), _: bool = Depends(validate_token)):
+    logger.warning(f"Delete project - from IP {get_real_ip(request)}")
+
+    # Get the data from the database, and validate it
+    db_project = project_crud.get_project_by_id(db, project_id)
+    if not db_project:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+
+    # Stop streaming
+    disable_streaming(db, db_project)
+
+    # Delete all the project's data
+    plugin_crud.delete_all_plugins_by_project_id(db, project_id)
+    event_crud.delete_all_events_by_project_id(db, project_id)
+    case_crud.delete_all_cases_by_project_id(db, project_id)
+    event_log_id = db_project.event_log.id
+    definition_id = db_project.event_log.definition.id
+    project_crud.delete_project(db, db_project)
+    event_log_crud.delete_event_log_by_id(db, event_log_id)
+    definition_crud.delete_definition_by_id(db, definition_id)
+
+    return {
+        "message": "Project deleted successfully",
+        "project_id": project_id
     }
 
 
