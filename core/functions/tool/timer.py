@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 
+import core.crud.definition as definition_crud
 import core.crud.event_log as event_log_crud
 import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
@@ -20,6 +21,19 @@ def clean_local_storage() -> bool:
 
     try:
         with SessionLocal() as db:
+            event_logs = event_log_crud.get_all_event_logs_without_associated_project(db)
+            for event_log in event_logs:
+                if event_log.definition:
+                    definition_id = event_log.definition.id
+                else:
+                    definition_id = None
+                event_log_crud.delete_event_log_by_id(db, event_log.id)
+                logger.warning(f"Remove abandoned event log from database: {event_log.id}")
+                if definition_id:
+                    definition_crud.delete_definition_by_id(db, definition_id)
+                    logger.warning(f"Remove abandoned definition from database: {definition_id}")
+
+        with SessionLocal() as db:
             saved_names = set(event_log_crud.get_all_saved_names(db))
             remove_multiple_files(saved_names, path.EVENT_LOG_RAW_PATH, "raw event log")
             df_names = set(event_log_crud.get_all_df_names(db))
@@ -30,6 +44,7 @@ def clean_local_storage() -> bool:
             remove_multiple_files(simulation_df_names, path.EVENT_LOG_SIMULATION_DF_PATH, "simulation dataframe")
             model_names = set(plugin_crud.get_all_model_names(db))
             remove_multiple_files(model_names, path.PLUGIN_MODEL_PATH, "model")
+
         result = True
     except Exception as e:
         logger.warning(f"Clean local storage error: {e}", exc_info=True)

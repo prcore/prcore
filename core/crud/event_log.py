@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 import core.models.event_log as model
 import core.schemas.event_log as schema
+import core.models.project as project_model
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -22,6 +23,12 @@ def get_event_log_by_id(db: Session, event_log_id: int) -> model.EventLog | None
 def get_event_logs(db: Session, skip: int = 0, limit: int = 100) -> list[model.EventLog]:
     # Get all event logs
     return db.query(model.EventLog).offset(skip).limit(limit).all()  # type: ignore
+
+
+def get_all_event_logs_without_associated_project(db: Session) -> list[model.EventLog]:
+    # Get all event logs without associated project
+    subquery = db.query(project_model.Project.event_log_id).distinct().subquery()
+    return db.query(model.EventLog).filter(~model.EventLog.id.in_(subquery.select())).all()  # type: ignore
 
 
 def get_all_saved_names(db: Session) -> list[str]:
