@@ -21,8 +21,13 @@ def prepare_prefix_and_send(project_id: int, model_names: dict[str, str], event_
         for element in data:
             for column in list(element):
                 definition = columns_definition.get(column)
+
                 if not definition:
-                    definition = ColumnDefinition.TEXT
+                    if column == ColumnDefinition.COMPLETE_INDICATOR:
+                        definition = ColumnDefinition.COMPLETE_INDICATOR
+                    else:
+                        definition = ColumnDefinition.TEXT
+
                 if definition in DefinitionType.SPECIAL:
                     element[definition] = element.pop(column)
                 elif definition == ColumnDefinition.CATEGORICAL:

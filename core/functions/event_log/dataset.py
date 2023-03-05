@@ -370,8 +370,19 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
     columns_need_to_rename = {}
     for column in df.columns.tolist():
         definition = columns_definition.get(column)
+
         if not definition:
-            definition = ColumnDefinition.TEXT
+            if column == ColumnDefinition.DURATION:
+                definition = ColumnDefinition.DURATION
+            elif column == ColumnDefinition.OUTCOME:
+                definition = ColumnDefinition.OUTCOME
+            elif column == ColumnDefinition.TREATMENT:
+                definition = ColumnDefinition.TREATMENT
+            elif column == ColumnDefinition.COMPLETE_INDICATOR:
+                definition = ColumnDefinition.COMPLETE_INDICATOR
+            else:
+                definition = ColumnDefinition.TEXT
+
         if definition in DefinitionType.SPECIAL:
             columns_need_to_rename[column] = definition
         elif definition == ColumnDefinition.CATEGORICAL:
