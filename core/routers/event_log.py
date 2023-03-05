@@ -96,8 +96,12 @@ def update_event_log(request: Request, event_log_id: int, update_body: event_log
                                                 ProjectStatus.SIMULATING}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
-    db_event_log = set_definition(db, db_event_log, update_body)
     df = get_dataframe(db_event_log)
+
+    if not update_body.fast_mode and df.shape[0] > 500000:
+        raise HTTPException(status_code=400, detail=ErrorType.FAST_MODE_ENFORCED)
+
+    db_event_log = set_definition(db, db_event_log, update_body)
     df = get_completed_transition_df(df, update_body.columns_definition)
 
     return {

@@ -6,6 +6,8 @@ class ErrorType(str, Enum):
     EVENT_LOG_NOT_FOUND = "Event log not found"
     EVENT_LOG_DEFINITION_NOT_FOUND = "Event log definition not found"
 
+    FAST_MODE_ENFORCED = "Fast mode enforced"
+
     INVALID_STREAMING_TYPE = "Invalid streaming type"
 
     PROCESS_DATASET_ERROR = "There was an error processing the dataset"
