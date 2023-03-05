@@ -3,6 +3,9 @@ import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy_future import paginate
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
@@ -12,6 +15,7 @@ import core.crud.event as event_crud
 import core.crud.event_log as event_log_crud
 import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
+import core.models.project as project_model
 import core.schemas.request.project as project_request
 import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
@@ -96,14 +100,11 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     }
 
 
-@router.get("/all", response_model=project_response.AllProjectsResponse)
-def read_projects(request: Request, skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
+@router.get("/all", response_model=Page[project_schema.Project])
+def read_projects(request: Request, db: Session = Depends(get_db),
                   _: bool = Depends(validate_token)):
     logger.warning(f"Read projects - from IP {get_real_ip(request)}")
-    return {
-        "message": "Projects retrieved successfully",
-        "projects": project_crud.get_projects(db, skip=skip, limit=limit)
-    }
+    return paginate(db, select(project_model.Project).order_by(project_model.Project.created_at))
 
 
 @router.get("/{project_id}", response_model=project_response.ProjectResponse)

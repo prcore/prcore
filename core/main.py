@@ -4,6 +4,7 @@ from time import sleep
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_pagination import add_pagination
 from pydantic import ValidationError
 from sqlalchemy.orm import close_all_sessions
 from sqlalchemy.exc import OperationalError
@@ -50,6 +51,7 @@ app.include_router(event_log.router)
 app.include_router(plugin.router)
 app.include_router(project.router)
 app.include_router(security.router)
+add_pagination(app)
 
 
 @app.middleware("http")
