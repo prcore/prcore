@@ -66,7 +66,7 @@ def start_pre_processing(project_id: int, event_log_id: int, active_plugins: dic
         db_event_log = event_log_crud.get_event_log_by_id(db, event_log_id)
         training_df_name = pre_process_data(db, db_event_log)
         if not training_df_name:
-            project_crud.set_project_error(db, project_id, "Failed to pre-process the data")
+            project_crud.set_project_error(db, db_project, "Failed to pre-process the data")
             return False
 
         plugin_keys = list(active_plugins.keys())

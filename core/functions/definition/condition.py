@@ -116,7 +116,7 @@ def compare_boolean(group: DataFrame, column_name: str, operator: Operator) -> b
 def compare_datetime(group: DataFrame, column_name: str, operator: Operator, threshold: Any) -> bool:
     # Compare datetime
     threshold = pd.to_datetime(threshold, errors="coerce")
-    if np.isnan(threshold):
+    if pd.isnull(threshold):
         raise ValueError("Invalid threshold")
 
     # If the column is timestamp, and not in the group, then it is the start timestamp
