@@ -57,6 +57,10 @@ def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_
             json=row.to_dict()
         )
         logger.warning(response.json()["message"])
-        sleep(config.SIMULATION_INTERVAL)
+        for _ in range(config.SIMULATION_INTERVAL * 10):
+            sleep(0.1)
+            if finished.is_set():
+                logger.warning("Simulation finished")
+                return
     finished.set()
     logger.warning("Simulation finished")
