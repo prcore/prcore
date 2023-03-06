@@ -18,6 +18,7 @@ from core.functions.plugin.collector import get_active_plugins
 from core.models import project as project_model
 from core.schemas import definition as definition_schema
 from core.starters import memory
+from core.starters.database import engine
 from simulation import run_simulation
 
 # Enable logging
@@ -163,5 +164,6 @@ def check_simulation(db: Session, db_project: project_model.Project) -> None:
 def proceed_simulation(simulation_df_name: str, project_id: int, definition: definition_schema.Definition) -> bool:
     # Proceed simulation
     finished = get_finished_event(project_id, "simulation")
+    engine.dispose()
     process_daemon(run_simulation, (simulation_df_name, finished, project_id, definition))
     return True

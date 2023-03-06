@@ -5,7 +5,6 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Re
 from fastapi.responses import FileResponse
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy_future import paginate
-from psycopg import ProgrammingError
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
@@ -36,7 +35,7 @@ from core.functions.project.prescribe import (delete_result_from_memory, get_ong
 from core.functions.project.streaming import event_generator, disable_streaming
 from core.functions.project.validation import validate_project_definition, validate_streaming_status
 from core.starters import memory
-from core.starters.database import retry_crud
+from core.starters.database import engine
 from core.security.token import validate_token
 
 # Enable logging
@@ -91,6 +90,7 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         result_key = None
 
     # Start the pre-processing
+    engine.dispose()
     process_daemon(start_pre_processing, (db_project.id, get_active_plugins()))
 
     # Start the test file watching
@@ -116,10 +116,7 @@ async def read_project(request: Request, project_id: int, db: Session = Depends(
     logger.warning(f"Read project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
-    try:
-        db_project = project_crud.get_project_by_id(db, project_id)
-    except ProgrammingError:
-        db_project = retry_crud(project_crud.get_project_by_id, 3, project_id)
+    db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
 
@@ -183,6 +180,7 @@ def update_project_definition(request: Request, project_id: int,
 
     # Start the pre-processing
     project_crud.update_status(db, db_project, ProjectStatus.PREPROCESSING)
+    engine.dispose()
     process_daemon(start_pre_processing, (db_project.id, get_active_plugins(), True))
 
     return {
@@ -252,10 +250,7 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
                                db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Get ongoing dataset result of project {project_id} - from IP {get_real_ip(request)}")
 
-    try:
-        db_project = project_crud.get_project_by_id(db, project_id)
-    except ProgrammingError:
-        db_project = retry_crud(project_crud.get_project_by_id, 3, project_id)
+    db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=404, detail=ErrorType.PROJECT_NOT_FOUND)
 
