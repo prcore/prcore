@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 from urllib.parse import quote
 
 from sqlalchemy import create_engine
@@ -26,3 +27,15 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+
+def retry_crud(func: callable, max_retires: int, *args, **kwargs):
+    for i in range(max_retires):
+        try:
+            with SessionLocal() as db:
+                return func(db, *args, **kwargs)
+        except Exception as e:
+            logger.warning(f"Retrying crud {func.__name__} in 1 second... ({i + 1}/{max_retires})")
+            sleep(1)
+            if i == max_retires - 1:
+                raise e

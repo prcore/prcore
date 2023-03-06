@@ -68,20 +68,17 @@ def associate_definition(db: Session, db_event_log: model.EventLog, definition_i
     return db_event_log
 
 
-def set_df_name(db: Session, event_log: model.EventLog, df_name: str) -> model.EventLog:
+def set_df_name(db: Session, db_event_log: model.EventLog, df_name: str) -> model.EventLog:
     # Set dataframe name of an event log
-    db_event_log = get_event_log(db, event_log_id=event_log.id)
-    if db_event_log:
-        db_event_log.df_name = df_name
-        db.commit()
-        db.refresh(db_event_log)
+    db_event_log.df_name = df_name
+    db.commit()
+    db.refresh(db_event_log)
     return db_event_log
 
 
-def set_datasets_name(db: Session, event_log: model.EventLog, training_df_name: str,
-                      simulation_df_name: str) -> model.EventLog:
+def set_datasets_name(db: Session, event_log_id: int, training_df_name: str, simulation_df_name: str) -> model.EventLog:
     # Set datasets name of an event log
-    db_event_log = get_event_log(db, event_log_id=event_log.id)
+    db_event_log = get_event_log(db, event_log_id=event_log_id)
     if db_event_log:
         db_event_log.training_df_name = training_df_name
         db_event_log.simulation_df_name = simulation_df_name

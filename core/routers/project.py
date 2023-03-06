@@ -5,7 +5,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Re
 from fastapi.responses import FileResponse
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy_future import paginate
-from sqlalchemy import select
+from psycopg import ProgrammingError
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
@@ -35,6 +36,7 @@ from core.functions.project.prescribe import (delete_result_from_memory, get_ong
 from core.functions.project.streaming import event_generator, disable_streaming
 from core.functions.project.validation import validate_project_definition, validate_streaming_status
 from core.starters import memory
+from core.starters.database import retry_crud
 from core.security.token import validate_token
 
 # Enable logging
@@ -47,7 +49,8 @@ router = APIRouter(prefix="/project")
 @router.post("", response_model=project_response.CreateProjectResponse)
 def create_project(request: Request, create_body: project_request.CreateProjectRequest,
                    db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Create project - from IP {get_real_ip(request)}")
+    logger.warning(f"Create project for event log {create_body and create_body.event_log_id} - "
+                   f"from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_event_log = event_log_crud.get_event_log(db, create_body.event_log_id)
@@ -88,7 +91,7 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         result_key = None
 
     # Start the pre-processing
-    process_daemon(start_pre_processing, (db_project.id, db_event_log.id, get_active_plugins()))
+    process_daemon(start_pre_processing, (db_project.id, get_active_plugins()))
 
     # Start the test file watching
     result_key and test_watching(db_project.id, result_key)
@@ -104,15 +107,19 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
 def read_projects(request: Request, db: Session = Depends(get_db),
                   _: bool = Depends(validate_token)):
     logger.warning(f"Read projects - from IP {get_real_ip(request)}")
-    return paginate(db, select(project_model.Project).order_by(project_model.Project.created_at))
+    return paginate(db, select(project_model.Project).order_by(desc(project_model.Project.created_at)))  # type: ignore
 
 
 @router.get("/{project_id}", response_model=project_response.ProjectResponse)
-def read_project(request: Request, project_id: int, db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Read project - from IP {get_real_ip(request)}")
+async def read_project(request: Request, project_id: int, db: Session = Depends(get_db),
+                       _: bool = Depends(validate_token)):
+    logger.warning(f"Read project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
+    try:
+        db_project = project_crud.get_project_by_id(db, project_id)
+    except ProgrammingError:
+        db_project = retry_crud(project_crud.get_project_by_id, 3, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
 
@@ -125,7 +132,7 @@ def read_project(request: Request, project_id: int, db: Session = Depends(get_db
 @router.put("/{project_id}", response_model=project_response.ProjectResponse)
 def update_project(request: Request, project_id: int, update_body: project_request.BasicUpdateProjectRequest,
                    db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Update project - from IP {get_real_ip(request)}")
+    logger.warning(f"Update project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
@@ -145,7 +152,7 @@ def update_project(request: Request, project_id: int, update_body: project_reque
 def update_project_definition(request: Request, project_id: int,
                               update_body: project_request.UpdateProjectRequest,
                               db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Update project definition - from IP {get_real_ip(request)}")
+    logger.warning(f"Update project definition for {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
@@ -176,7 +183,7 @@ def update_project_definition(request: Request, project_id: int,
 
     # Start the pre-processing
     project_crud.update_status(db, db_project, ProjectStatus.PREPROCESSING)
-    process_daemon(start_pre_processing, (db_project.id, db_event_log.id, get_active_plugins(), True))
+    process_daemon(start_pre_processing, (db_project.id, get_active_plugins(), True))
 
     return {
         "message": "Project definition updated successfully",
@@ -187,7 +194,7 @@ def update_project_definition(request: Request, project_id: int,
 @router.delete("/{project_id}", response_model=project_response.DeleteProjectResponse)
 def delete_project(request: Request, project_id: int,
                    db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Delete project - from IP {get_real_ip(request)}")
+    logger.warning(f"Delete project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
@@ -217,7 +224,7 @@ def delete_project(request: Request, project_id: int,
 def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
                            file: UploadFile = Form(), seperator: str = Form(","),
                            db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Upload ongoing dataset - from IP {get_real_ip(request)}")
+    logger.warning(f"Upload ongoing dataset to project {project_id} - from IP {get_real_ip(request)}")
 
     if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
@@ -243,9 +250,12 @@ def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: 
 @router.get("/{project_id}/result/{result_key}", response_model=project_response.DatasetResultResponse)
 def get_ongoing_dataset_result(request: Request, project_id: int, result_key: str, background_tasks: BackgroundTasks,
                                db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Get ongoing dataset result - from IP {get_real_ip(request)}")
+    logger.warning(f"Get ongoing dataset result of project {project_id} - from IP {get_real_ip(request)}")
 
-    db_project = project_crud.get_project_by_id(db, project_id)
+    try:
+        db_project = project_crud.get_project_by_id(db, project_id)
+    except ProgrammingError:
+        db_project = retry_crud(project_crud.get_project_by_id, 3, project_id)
     if not db_project:
         raise HTTPException(status_code=404, detail=ErrorType.PROJECT_NOT_FOUND)
 
@@ -285,7 +295,8 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
 @router.put("/{project_id}/stream/start/{streaming_type}", response_model=project_response.StreamProjectResponse)
 def streaming_start(request: Request, project_id: int, streaming_type: str = "streaming",
                     db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Stream start - {streaming_type} - from IP {get_real_ip(request)}")
+    logger.warning(f"Enable streaming mode <{streaming_type}> for project {project_id} - "
+                   f"from IP {get_real_ip(request)}")
 
     # Extract the wanted project status
     try:
@@ -311,7 +322,7 @@ def streaming_start(request: Request, project_id: int, streaming_type: str = "st
 @router.put("/{project_id}/stream/stop", response_model=project_response.StreamProjectResponse)
 def streaming_stop(request: Request, project_id: int, db: Session = Depends(get_db),
                    _: bool = Depends(validate_token)):
-    logger.warning(f"Stream stop - from IP {get_real_ip(request)}")
+    logger.warning(f"Disable streaming mode for project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
@@ -329,7 +340,7 @@ def streaming_stop(request: Request, project_id: int, db: Session = Depends(get_
 @router.put("/{project_id}/stream/clear", response_model=project_response.StreamProjectResponse)
 def stream_clear(request: Request, project_id: int, db: Session = Depends(get_db),
                  _: bool = Depends(validate_token)):
-    logger.warning(f"Clear stream data - from IP {get_real_ip(request)}")
+    logger.warning(f"Clear stream data of project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
@@ -351,7 +362,7 @@ def stream_clear(request: Request, project_id: int, db: Session = Depends(get_db
 @router.get("/{project_id}/stream/result")
 async def streaming_result(request: Request, project_id: int, db: Session = Depends(get_db),
                            _: bool = Depends(validate_token)):
-    logger.warning(f"Stream result - from IP {get_real_ip(request)}")
+    logger.warning(f"Read streaming result of project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
@@ -384,83 +395,33 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
     )
 
 
-@router.get("/{project_id}/dataset/original")
-def download_original_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
-                              db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Download original dataset - from IP {get_real_ip(request)}")
+@router.get("/{project_id}/dataset/{dataset_type}")
+def download_project_dataset(request: Request, project_id: int, dataset_type: str,
+                             background_tasks: BackgroundTasks, db: Session = Depends(get_db),
+                             _: bool = Depends(validate_token)):
+    logger.warning(f"Download dataset <{dataset_type}> of project {project_id} - from IP {get_real_ip(request)}")
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    elif (dataset_type in {"processed", "ongoing", "simulation"}
+          and db_project.status not in ProjectStatusGroup.PROCESSED):
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_PREPROCESSED)
 
-    temp_path = get_original_dataset_path(db_project.event_log)
+    if dataset_type == "original":
+        temp_path = get_original_dataset_path(db_project.event_log)
+    elif dataset_type == "processed":
+        temp_path = get_processed_dataset_path(db_project.event_log)
+    elif dataset_type == "ongoing":
+        temp_path = get_ongoing_dataset_path(db_project.event_log)
+    elif dataset_type == "simulation":
+        temp_path = get_simulation_dataset_path(db_project.event_log)
+    else:
+        raise HTTPException(status_code=400, detail=ErrorType.INVALID_DATASET_TYPE)
 
     if not temp_path:
         raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
 
     background_tasks.add_task(delete_file, temp_path)
     return FileResponse(temp_path, filename=temp_path.split("/")[-1])
-
-
-@router.get("/{project_id}/dataset/processed")
-def download_processed_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
-                               db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Download processed dataset - from IP {get_real_ip(request)}")
-
-    # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    elif db_project.status not in ProjectStatusGroup.PROCESSED:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_PREPROCESSED)
-
-    temp_path = get_processed_dataset_path(db_project.event_log)
-
-    if not temp_path:
-        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
-
-    background_tasks.add_task(delete_file, temp_path)
-    return FileResponse(temp_path, filename="processed_dataset.csv")
-
-
-@router.get("/{project_id}/dataset/ongoing")
-def download_ongoing_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
-                             db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Download ongoing dataset - from IP {get_real_ip(request)}")
-
-    # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    elif db_project.status not in ProjectStatusGroup.PROCESSED:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_PREPROCESSED)
-
-    temp_path = get_ongoing_dataset_path(db_project.event_log)
-
-    if not temp_path:
-        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
-
-    background_tasks.add_task(delete_file, temp_path)
-    return FileResponse(temp_path, filename="ongoing_dataset.csv")
-
-
-@router.get("/{project_id}/dataset/simulation")
-def download_simulation_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
-                                db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Download simulation dataset - from IP {get_real_ip(request)}")
-
-    # Get the data from the database, and validate it
-    db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    elif db_project.status not in ProjectStatusGroup.PROCESSED:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_PREPROCESSED)
-
-    temp_path = get_simulation_dataset_path(db_project.event_log)
-
-    if not temp_path:
-        raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
-
-    background_tasks.add_task(delete_file, temp_path)
-    return FileResponse(temp_path, filename="simulation_dataset.csv")

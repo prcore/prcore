@@ -64,7 +64,8 @@ async def db_session_middleware(request: Request, call_next):
         logger.warning(e, exc_info=True)
         response = Response(e.json(), status_code=400)
     except Exception as e:
-        logger.warning(e, exc_info=True)
+        request.state.db.rollback()
+        logger.warning(f"Error caught when handling a request: {e}", exc_info=True)
     finally:
         request.state.db.close()
     return response

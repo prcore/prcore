@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from sklearn.model_selection import GroupShuffleSplit
-from sqlalchemy.orm import Session
 
 import core.crud.event_log as event_log_crud
 import core.models.event_log as event_log_model
@@ -14,8 +13,9 @@ from core.confs import path
 from core.enums.definition import ColumnDefinition, DefinitionType, Transition
 from core.functions.definition.condition import check_or_conditions
 from core.functions.definition.util import get_defined_column_name, get_start_timestamp
-from core.functions.event_log.df import get_dataframe
+from core.functions.event_log.df import get_dataframe_by_id_or_name
 from core.functions.general.file import copy_file, get_new_path
+from core.starters.database import SessionLocal
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -34,15 +34,14 @@ def get_completed_transition_df(df: DataFrame, columns_definition: dict[str, Col
     return df[df[transition_column] == Transition.COMPLETE]
 
 
-def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str:
+def pre_process_data(event_log_id: int, df_name: str, definition: definition_schema.Definition) -> str:
     # Pre-process the data
     result = ""
 
     try:
         # Split dataframe
-        df = get_dataframe(db_event_log)
-        case_id_column_name = get_defined_column_name(db_event_log.definition.columns_definition,
-                                                      ColumnDefinition.CASE_ID)
+        df = get_dataframe_by_id_or_name(event_log_id, df_name)
+        case_id_column_name = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
         splitter = GroupShuffleSplit(test_size=0.2, n_splits=1, random_state=42)
         split = splitter.split(df, groups=df[case_id_column_name])
         train_indices, simulation_indices = next(split)
@@ -50,10 +49,7 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
         simulation_df = df.iloc[simulation_indices]
 
         # Get processed dataframe for training
-        processed_df = get_processed_dataframe(
-            df=training_df,
-            definition=definition_schema.Definition.from_orm(db_event_log.definition),
-        )
+        processed_df = get_processed_dataframe(training_df, definition)
 
         # Save the data
         training_df_path = get_new_path(base_path=f"{path.EVENT_LOG_TRAINING_DF_PATH}/", suffix=".pkl")
@@ -66,7 +62,8 @@ def pre_process_data(db: Session, db_event_log: event_log_model.EventLog) -> str
         # Update the database
         training_df_name = training_df_path.split("/")[-1].split(".")[0]
         simulation_df_name = simulation_df_path.split("/")[-1]
-        event_log_crud.set_datasets_name(db, db_event_log, training_df_name, simulation_df_name)
+        with SessionLocal() as db:
+            event_log_crud.set_datasets_name(db, event_log_id, training_df_name, simulation_df_name)
         result = training_df_name
     except Exception as e:
         logger.warning(f"Pre-processing failed: {e}", exc_info=True)

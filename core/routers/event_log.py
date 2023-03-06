@@ -36,7 +36,7 @@ router = APIRouter(prefix="/event_log")
 def upload_event_log(request: Request, file: UploadFile = Form(), separator: str = Form(","),
                      test: UploadFile = Form(None),
                      db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Upload event log: {file} - from IP {get_real_ip(request)}")
+    logger.warning(f"Upload event log <{file and file.filename}> - from IP {get_real_ip(request)}")
 
     if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
@@ -85,7 +85,7 @@ def upload_event_log(request: Request, file: UploadFile = Form(), separator: str
 @router.put("/{event_log_id}", response_model=event_log_response.UpdateEventLogResponse)
 def update_event_log(request: Request, event_log_id: int, update_body: event_log_request.ColumnsDefinitionRequest,
                      db: Session = Depends(get_db), _: bool = Depends(validate_token)):
-    logger.warning(f"Update event log: {event_log_id} - from IP {get_real_ip(request)}")
+    logger.warning(f"Update event log {event_log_id} - from IP {get_real_ip(request)}")
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:
@@ -127,7 +127,7 @@ def read_event_logs(request: Request, skip: int = 0, limit: int = 100, db: Sessi
 @router.get("/{event_log_id}/definition", response_model=event_log_response.EventLogDefinitionResponse)
 def read_event_log_definition(request: Request, event_log_id: int, db: Session = Depends(get_db),
                               _: bool = Depends(validate_token)):
-    logger.warning(f"Read event log definition: {event_log_id} - from IP {get_real_ip(request)}")
+    logger.warning(f"Read event log definition for {event_log_id} - from IP {get_real_ip(request)}")
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:
@@ -151,7 +151,7 @@ def read_event_log_definition(request: Request, event_log_id: int, db: Session =
 @router.get("/{event_log_id}", response_model=event_log_response.EventLogResponse)
 def read_event_log(request: Request, event_log_id: int, db: Session = Depends(get_db),
                    _: bool = Depends(validate_token)):
-    logger.warning(f"Read event log: {event_log_id} - from IP {get_real_ip(request)}")
+    logger.warning(f"Read event log {event_log_id} - from IP {get_real_ip(request)}")
     db_event_log = event_log_crud.get_event_log(db, event_log_id)
 
     if not db_event_log:

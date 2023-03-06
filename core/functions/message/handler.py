@@ -110,11 +110,11 @@ def handle_data_report(data: dict) -> None:
             update_project_status(db, project_id)
         else:
             plugin_crud.delete_plugin(db, plugin)
-            project = project_crud.get_project_by_id(db, project_id)
-            if not project:
+            db_project = project_crud.get_project_by_id(db, project_id)
+            if not db_project:
                 return
-            if not project.plugins:
-                project_crud.set_project_error(db, project.id, "No plugin is applicable")
+            if not db_project.plugins:
+                project_crud.set_project_error(db, db_project, "No plugin is applicable")
 
 
 def handle_error_report(data: dict) -> None:

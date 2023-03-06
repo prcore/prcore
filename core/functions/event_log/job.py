@@ -56,15 +56,20 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog,
     return event_log_crud.associate_definition(db, db_event_log, db_definition.id)
 
 
-def start_pre_processing(project_id: int, event_log_id: int, active_plugins: dict, redefined: bool = False) -> bool:
+def start_pre_processing(project_id: int, active_plugins: dict, redefined: bool = False) -> bool:
     # Start pre-processing the data
     with SessionLocal() as db:
         db_project = project_crud.get_project_by_id(db, project_id)
         if not db_project:
             return False
+        definition = definition_schema.Definition.from_orm(db_project.event_log.definition)
+        training_df_name = pre_process_data(db_project.event_log.id, db_project.event_log.df_name, definition)
 
-        db_event_log = event_log_crud.get_event_log_by_id(db, event_log_id)
-        training_df_name = pre_process_data(db, db_event_log)
+    with SessionLocal() as db:
+        db_project = project_crud.get_project_by_id(db, project_id)
+        if not db_project:
+            return False
+
         if not training_df_name:
             project_crud.set_project_error(db, db_project, "Failed to pre-process the data")
             return False
@@ -92,6 +97,7 @@ def start_pre_processing(project_id: int, event_log_id: int, active_plugins: dic
                 )
                 plugins[plugin_key] = plugin.id
 
-        treatment_definition = db_event_log.definition.treatment_definition
+        treatment_definition = definition.dict()["treatment_definition"]
         send_training_data_to_all_plugins(project_id, training_df_name, treatment_definition, plugins)
+
     return True

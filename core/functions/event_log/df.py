@@ -16,10 +16,15 @@ logger = logging.getLogger(__name__)
 
 def get_dataframe(db_event_log: EventLog) -> DataFrame | None:
     # Get dataframe from memory or pickle file
-    df = get_dataframe_from_memory(event_log_id=db_event_log.id)
-    if df is None and db_event_log.df_name:
-        df = get_dataframe_from_pickle(filename=db_event_log.df_name)
-        save_dataframe_to_memory(event_log_id=db_event_log.id, df=df)
+    return get_dataframe_by_id_or_name(event_log_id=db_event_log.id, df_name=db_event_log.df_name)
+
+
+def get_dataframe_by_id_or_name(event_log_id: int, df_name: str) -> DataFrame | None:
+    # Get dataframe from memory or pickle file
+    df = get_dataframe_from_memory(event_log_id=event_log_id)
+    if df is None and df_name:
+        df = get_dataframe_from_pickle(filename=df_name)
+        save_dataframe_to_memory(event_log_id=event_log_id, df=df)
     return df
 
 

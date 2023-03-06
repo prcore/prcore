@@ -29,7 +29,7 @@ router = APIRouter(prefix="/event")
 @router.post("/{project_id}", response_model=event_response.PostEventResponse)
 async def receive_event(request: Request, project_id: int, db: Session = Depends(get_db),
                         _: bool = Depends(validate_token)):
-    logger.warning(f"Receive event - from IP {get_real_ip(request)}")
+    logger.warning(f"Receive event for project {project_id} - from IP {get_real_ip(request)}")
     request_body = await request.json()
 
     # Get project from the database

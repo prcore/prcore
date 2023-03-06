@@ -9,6 +9,7 @@ class ErrorType(str, Enum):
     FAST_MODE_ENFORCED = "Fast mode enforced"
 
     INVALID_STREAMING_TYPE = "Invalid streaming type"
+    INVALID_DATASET_TYPE = "Invalid dataset type"
 
     PROCESS_DATASET_ERROR = "There was an error processing the dataset"
 
