@@ -124,6 +124,12 @@ def compare_datetime(group: DataFrame, column_name: str, operator: Operator, thr
     if column_name == ColumnDefinition.TIMESTAMP and column_name not in group.columns:
         column_name = ColumnDefinition.START_TIMESTAMP
 
+    first_timestamp = group[column_name].iloc[0]
+    if first_timestamp.tzinfo is not None and threshold.tzinfo is None:
+        threshold = threshold.replace(tzinfo=first_timestamp.tzinfo)
+    elif first_timestamp.tzinfo is None and threshold.tzinfo is not None:
+        group[column_name] = group[column_name].dt.tz_localize(threshold.tzinfo)
+
     if operator == Operator.EQUAL:
         return np.any(group[column_name] == threshold)
     elif operator == Operator.NOT_EQUAL:
