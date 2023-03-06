@@ -42,6 +42,7 @@ async def event_generator(request: Request, db: Session, project_id: int):
                     "id": i,
                     "data": "FINISHED"
                 }
+                logger.warning(f"Streaming of project {project_id} is finished, reading connection is closed")
                 break
             data = get_data(db, project_id)
             if data:
@@ -56,14 +57,15 @@ async def event_generator(request: Request, db: Session, project_id: int):
             await asyncio.sleep(1)
     except asyncio.CancelledError:
         logger.warning(f"Steam result reading connection of project {project_id} is closed")
-        memory.streaming_projects[project_id]["read_time"] = datetime.now()
-        memory.streaming_projects[project_id]["reading"] = False
     except Exception as e:
         logger.error(f"Error in the SSE stream: {e}", exc_info=True)
         yield {
             "event": "error",
             "data": f"Error in the SSE stream: {e}"
         }
+    finally:
+        memory.streaming_projects[project_id]["read_time"] = datetime.now()
+        memory.streaming_projects[project_id]["reading"] = False
 
 
 def get_data(db: Session, project_id: int) -> list[dict]:
