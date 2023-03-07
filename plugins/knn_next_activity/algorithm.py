@@ -10,7 +10,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from core.enums.definition import ColumnDefinition
 from core.functions.training.util import get_ordinal_encoded_df
 from plugins.common.algorithm import (Algorithm, get_model_and_features_by_activities, get_prescription_output,
-                                      get_encoded_df_from_df_by_activity, get_score)
+                                      get_encoded_df_from_df_by_activity, get_score, get_null_output)
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class KNNAlgorithm(Algorithm):
         self.__lengths = []
         self.__count_encoding_df = None
 
-    def preprocess(self) -> bool:
+    def preprocess(self) -> str:
         # Pre-process the data
         try:
             encoded_df, mapping = get_ordinal_encoded_df(self.get_df(), ColumnDefinition.ACTIVITY)
@@ -39,8 +39,8 @@ class KNNAlgorithm(Algorithm):
             self.set_data_value("activities", np.unique(activities).tolist())
         except Exception as e:
             logger.warning(f"Pre-processing failed: {e}", exc_info=True)
-            return False
-        return True
+            return str(e)
+        return ""
 
     def set_count_encoding_df(self, df: DataFrame, activities: np.ndarray) -> None:
         # Extract the last activity for each case
@@ -58,7 +58,7 @@ class KNNAlgorithm(Algorithm):
         # Set the count encoding df
         self.__count_encoding_df = encoded_df
 
-    def train(self) -> bool:
+    def train(self) -> str:
         # Train the model
         try:
             min_length = min(self.__lengths)
@@ -93,34 +93,42 @@ class KNNAlgorithm(Algorithm):
             self.set_data_value("scores", scores)
         except Exception as e:
             logger.warning(f"Training failed: {e}", exc_info=True)
-            return False
-        return True
+            return str(e)
+        return ""
 
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result
-        model_and_features = get_model_and_features_by_activities(self, prefix)
-        if isinstance(model_and_features, dict):
-            return model_and_features
-        model, features = model_and_features
+        try:
+            model_and_features = get_model_and_features_by_activities(self, prefix)
+            if isinstance(model_and_features, dict):
+                return model_and_features
+            model, features = model_and_features
 
-        # Predict the next activity
-        prediction = model.predict([features])[0]
-        output = list(self.get_data()["mapping"].keys())[list(self.get_data()["mapping"].values()).index(prediction)]
-        length = len(features)
-        return get_prescription_output(self, output, length, f"ordinal-encoding-length-{length}")
+            # Predict the next activity
+            prediction = model.predict([features])[0]
+            output = list(self.get_data()["mapping"].keys())[list(self.get_data()["mapping"].values()).index(prediction)]
+            length = len(features)
+            return get_prescription_output(self, output, length, f"ordinal-encoding-length-{length}")
+        except Exception as e:
+            logger.warning(f"Prediction failed: {e}", exc_info=True)
+            return get_null_output(self.get_basic_info()["name"], self.get_basic_info()["prescription_type"],
+                                   f"Prediction failed： {e}")
 
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result by using the given dataframe
         result = {}
-        encoded_df = get_encoded_df_from_df_by_activity(self, df)
-        model = self.get_data()["models"]["count_encoding"]
-        predictions = model.predict(encoded_df[self.get_data()["activities_code"]].values)
-        # Get the result
-        for case_id, p in zip(encoded_df.index, predictions):
-            result[case_id] = get_prescription_output(
-                instance=self,
-                output=list(self.get_data()["mapping"].keys())[list(self.get_data()["mapping"].values()).index(p)],
-                model_key="count_encoding",
-                model_name="count-encoding"
-            )
+        try:
+            encoded_df = get_encoded_df_from_df_by_activity(self, df)
+            model = self.get_data()["models"]["count_encoding"]
+            predictions = model.predict(encoded_df[self.get_data()["activities_code"]].values)
+            # Get the result
+            for case_id, p in zip(encoded_df.index, predictions):
+                result[case_id] = get_prescription_output(
+                    instance=self,
+                    output=list(self.get_data()["mapping"].keys())[list(self.get_data()["mapping"].values()).index(p)],
+                    model_key="count_encoding",
+                    model_name="count-encoding"
+                )
+        except Exception as e:
+            logger.warning(f"Predict df failed: {e}", exc_info=True)
         return result

@@ -5,7 +5,8 @@ from pandas import DataFrame
 
 from core.functions.general.decorator import threaded
 from plugins.common import memory
-from plugins.common.algorithm import Algorithm, start_training
+from plugins.common.algorithm import Algorithm
+from plugins.common.sender import send_error_report, send_training_start, send_model_name
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -75,3 +76,23 @@ def deactivate_instance(project_id: int) -> None:
     # Deactivate instance
     if project_id in memory.instances:
         del memory.instances[project_id]
+
+
+def start_training(instance: Algorithm) -> None:
+    preprocess_error = instance.preprocess()
+    if preprocess_error:
+        send_error_report(instance.get_project_id(), instance.get_plugin_id(),
+                          f"Pre-process failed: {preprocess_error}")
+        return
+
+    send_training_start(instance)
+    train_error = instance.train()
+    if train_error:
+        send_error_report(instance.get_project_id(), instance.get_plugin_id(), f"Train failed: {train_error}")
+        return
+
+    model_name = instance.save_model()
+    if not model_name:
+        send_error_report(instance.get_project_id(), instance.get_plugin_id(), "Save model failed")
+        return
+    send_model_name(instance, model_name)

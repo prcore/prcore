@@ -8,9 +8,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 
 from core.confs import path
 from core.enums.definition import ColumnDefinition
-from core.enums.message import MessageType
 from core.functions.general.file import get_new_path
-from core.functions.message.util import send_message
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -83,36 +81,95 @@ class Algorithm:
             return False
         return True
 
-    def preprocess(self) -> bool:
+    def preprocess(self) -> str:  # noqa
         # Pre-process the data
-        pass
+        try:
+            pass  # noqa
+        except Exception as e:
+            return str(e)
+        return ""
 
-    def train(self) -> bool:
+    def train(self) -> str:
         # Train the model
-        pass
+        try:
+            if self.get_data():
+                pass  # noqa
+        except Exception as e:
+            return str(e)
+        return ""
 
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result
-        pass
+        try:
+            if prefix:
+                return {}
+        except Exception as e:
+            logger.warning(f"Prediction failed: {e}", exc_info=True)
+            return get_null_output(self.get_basic_info()["name"], self.get_basic_info()["prescription_type"],
+                                   f"Prediction failed： {e}")
 
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result using a DataFrame
-        pass
+        result = {}
+        try:
+            if df:
+                return {}
+        except Exception as e:
+            logger.warning(f"Predict df failed: {e}", exc_info=True)
+        return result
 
 
-def get_score(model, x_val, y_val) -> dict:
-    # Get the score of the model
-    y_pred = model.predict(x_val)
-    accuracy = round(model.score(x_val, y_val), 4)
-    precision = round(precision_score(y_val, y_pred, average="weighted", zero_division=1), 4)
-    recall = round(recall_score(y_val, y_pred, average="weighted", zero_division=1), 4)
-    f1 = round(f1_score(y_val, y_pred, average="weighted"), 4)
-    return {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1
-    }
+def read_df_from_path(directory: str, df_name: str) -> DataFrame:
+    try:
+        return read_pickle(f"{directory}/{df_name}.pkl")
+    except ValueError:
+        # If the plugin's Python version is 3.6, then the pickle protocol is not compatible,
+        # so we need to read the CSV file
+        return read_csv(f"{directory}/{df_name}.csv")
+
+
+def check_training_df(df: DataFrame, needed_columns: List[str]) -> Union[str, bool]:
+    # Basic check
+    if (ColumnDefinition.CASE_ID not in df.columns
+            or not get_timestamp_columns(df)
+            or ColumnDefinition.ACTIVITY not in df.columns):
+        return False
+
+    # Check if all needed columns are in the df
+    for column in needed_columns:
+        if column in {ColumnDefinition.CASE_ID,
+                      ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
+                      ColumnDefinition.ACTIVITY}:
+            continue
+        if column not in df.columns:
+            return False
+
+    # Check if the df has only two classes for outcome and treatment
+    for column in {ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}:
+        if column in needed_columns and column in df.columns and df[column].unique().size != 2:
+            return f"The {column} column must have two classes, please adjust your {column.lower()} definition"
+
+    return True
+
+
+def get_timestamp_columns(df: DataFrame) -> List[str]:
+    if ColumnDefinition.TIMESTAMP in df.columns:
+        return [ColumnDefinition.TIMESTAMP]
+    elif ColumnDefinition.START_TIMESTAMP in df.columns and ColumnDefinition.END_TIMESTAMP in df.columns:
+        return [ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP]
+    else:
+        return []
+
+
+def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> DataFrame:
+    # Map the activities to the ordinal encoding
+    df[ColumnDefinition.ACTIVITY] = df[ColumnDefinition.ACTIVITY].map(instance.get_data()["mapping"])
+    # Drop the rows with NaN values in the activity column
+    df = df.dropna(subset=[ColumnDefinition.ACTIVITY])
+    # Convert the dataframe to the count encoding dataframe
+    encoded_df = df.groupby([ColumnDefinition.CASE_ID, ColumnDefinition.ACTIVITY]).size().unstack(fill_value=0)
+    encoded_df = encoded_df.reindex(columns=instance.get_data()["activities"], fill_value=0)
+    return encoded_df
 
 
 def get_model_and_features_by_activities(instance: Algorithm, prefix: List[dict]) -> Union[dict, tuple]:
@@ -133,81 +190,19 @@ def get_model_and_features_by_activities(instance: Algorithm, prefix: List[dict]
     return model, features
 
 
-def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> DataFrame:
-    # Map the activities to the ordinal encoding
-    df[ColumnDefinition.ACTIVITY] = df[ColumnDefinition.ACTIVITY].map(instance.get_data()["mapping"])
-    # Drop the rows with NaN values in the activity column
-    df = df.dropna(subset=[ColumnDefinition.ACTIVITY])
-    # Convert the dataframe to the count encoding dataframe
-    encoded_df = df.groupby([ColumnDefinition.CASE_ID, ColumnDefinition.ACTIVITY]).size().unstack(fill_value=0)
-    encoded_df = encoded_df.reindex(columns=instance.get_data()["activities"], fill_value=0)
-    return encoded_df
-
-
-def read_df_from_path(directory: str, df_name: str) -> DataFrame:
-    try:
-        return read_pickle(f"{directory}/{df_name}.pkl")
-    except ValueError:
-        # If the plugin's Python version is 3.6, then the pickle protocol is not compatible,
-        # so we need to read the CSV file
-        return read_csv(f"{directory}/{df_name}.csv")
-
-
-def check_training_df(df: DataFrame, needed_columns: List[str]) -> bool:
-    if ColumnDefinition.CASE_ID not in df.columns:
-        return False
-    if not get_timestamp_columns(df):
-        return False
-    if ColumnDefinition.ACTIVITY not in df.columns:
-        return False
-    for column in needed_columns:
-        if column in {ColumnDefinition.CASE_ID,
-                      ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
-                      ColumnDefinition.ACTIVITY}:
-            continue
-        if column not in df.columns:
-            return False
-    return True
-
-
-def get_timestamp_columns(df: DataFrame) -> List[str]:
-    if ColumnDefinition.TIMESTAMP in df.columns:
-        return [ColumnDefinition.TIMESTAMP]
-    elif ColumnDefinition.START_TIMESTAMP in df.columns and ColumnDefinition.END_TIMESTAMP in df.columns:
-        return [ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP]
-    else:
-        return []
-
-
-def start_training(instance: Any) -> None:
-    preprocess_result = instance.preprocess()
-    if not preprocess_result:
-        send_message("core", MessageType.ERROR_REPORT, get_error_data(instance, "Pre-process failed"))
-    else:
-        send_message(
-            receiver_id="core",
-            message_type=MessageType.TRAINING_START,
-            data={
-                "project_id": instance.get_project_id(),
-                "plugin_id": instance.get_plugin_id()
-            }
-        )
-    train_result = instance.train()
-    if not train_result:
-        send_message("core", MessageType.ERROR_REPORT, get_error_data(instance, "Train failed"))
-    model_name = instance.save_model()
-    if not model_name:
-        send_message("core", MessageType.ERROR_REPORT, get_error_data(instance, "Save model failed"))
-    else:
-        send_message(
-            receiver_id="core",
-            message_type=MessageType.MODEL_NAME,
-            data={
-                "project_id": instance.get_project_id(),
-                "plugin_id": instance.get_plugin_id(),
-                "model_name": model_name
-            }
-        )
+def get_score(model, x_val, y_val) -> dict:
+    # Get the score of the model
+    y_pred = model.predict(x_val)
+    accuracy = round(model.score(x_val, y_val), 4)
+    precision = round(precision_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+    recall = round(recall_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+    f1 = round(f1_score(y_val, y_pred, average="weighted"), 4)
+    return {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1
+    }
 
 
 def get_null_output(plugin_name: str, plugin_type: str, detail: str) -> dict:
@@ -232,12 +227,4 @@ def get_prescription_output(instance: Algorithm, output: Any, model_key: Union[i
             "model": model_name,
             **instance.get_data()["scores"][model_key]
         }
-    }
-
-
-def get_error_data(instance: Any, detail: str) -> dict:
-    return {
-        "project_id": instance.get_project_id(),
-        "plugin_id": instance.get_plugin_id(),
-        "detail": detail
     }
