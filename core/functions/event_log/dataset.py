@@ -87,7 +87,7 @@ def get_processed_dataframe(df: DataFrame, definition: definition_schema.Definit
 def get_timestamped_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefinition]) -> DataFrame:
     # Get timestamped dataframe, convert to Timestamp of pandas
     for k, v in columns_definition.items():
-        if v in {ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP}:
+        if v in DefinitionType.DATETIME:
             df = df.copy()
             df.loc[:, k] = pd.to_datetime(df[k], errors="coerce")
     return df
