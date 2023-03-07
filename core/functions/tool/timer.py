@@ -2,6 +2,8 @@ import logging
 import os
 from datetime import datetime
 
+from sqlalchemy.exc import OperationalError
+
 import core.crud.definition as definition_crud
 import core.crud.event_log as event_log_crud
 import core.crud.plugin as plugin_crud
@@ -46,6 +48,8 @@ def clean_local_storage() -> bool:
             remove_multiple_files(model_names, path.PLUGIN_MODEL_PATH, "model")
 
         result = True
+    except OperationalError:
+        logger.warning("Database is not ready, skip cleaning local storage")
     except Exception as e:
         logger.warning(f"Clean local storage error: {e}", exc_info=True)
 
