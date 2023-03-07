@@ -93,7 +93,7 @@ def update_event_log(request: Request, event_log_id: int, update_body: event_log
     db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
 
     if db_project and db_project.status not in {ProjectStatus.WAITING, ProjectStatus.TRAINED, ProjectStatus.STREAMING,
-                                                ProjectStatus.SIMULATING}:
+                                                ProjectStatus.SIMULATING, ProjectStatus.ERROR}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
     df = get_dataframe(db_event_log)

@@ -157,7 +157,7 @@ def update_project_definition(request: Request, project_id: int,
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
     elif db_project.status not in {ProjectStatus.WAITING, ProjectStatus.TRAINED, ProjectStatus.STREAMING,
-                                   ProjectStatus.SIMULATING}:
+                                   ProjectStatus.SIMULATING, ProjectStatus.ERROR}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
     db_event_log = event_log_crud.get_event_log(db, db_project.event_log_id)
     if not db_event_log:
