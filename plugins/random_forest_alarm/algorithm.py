@@ -82,7 +82,11 @@ class RandomAlgorithm(Algorithm):
                 y = [group[length - 1] for group in self.__grouped_outcomes if len(group) >= length]
                 x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
                 rf = RandomForestClassifier()
-                rf.fit(x_train, y_train)
+                try:
+                    rf.fit(x_train, y_train)
+                except ValueError as e:
+                    logger.warning(f"Training failed: {e}")
+                    continue
                 models[length] = rf
                 scores[length] = get_score(rf, x_val, y_val)
 

@@ -85,6 +85,8 @@ class CausalLiftAlgorithm(Algorithm):
                 activities_df = pd.DataFrame(np.stack(training_df["Activities"], axis=0),
                                              columns=[f"Activity_{i}" for i in range(length)])
                 training_df = pd.concat([activities_df, training_df[["Outcome", "Treatment"]]], axis=1)
+                if training_df["Treatment"].nunique() != 2:
+                    continue
                 training_dfs[length] = training_df
 
             # Get the training data for count encoding df

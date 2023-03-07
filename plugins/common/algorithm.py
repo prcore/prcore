@@ -146,7 +146,7 @@ def check_training_df(df: DataFrame, needed_columns: List[str]) -> Union[str, bo
 
     # Check if the df has only two classes for outcome and treatment
     for column in {ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}:
-        if column in needed_columns and column in df.columns and df[column].unique().size != 2:
+        if column in needed_columns and column in df.columns and df[column].nunique() != 2:
             return f"The {column} column must have two classes, please adjust your {column.lower()} definition"
 
     return True
