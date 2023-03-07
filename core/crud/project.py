@@ -54,7 +54,8 @@ def update_name_and_description(db: Session, db_project: model.Project, name: st
 
 def set_project_error(db: Session, db_project: model.Project, error: str) -> model.Project:
     # Set error of a project
-    db_project.status = error
+    db_project.status = ProjectStatus.ERROR
+    db_project.error = error
     db.commit()
     db.refresh(db_project)
     return db_project

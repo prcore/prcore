@@ -23,6 +23,7 @@ class Project(ProjectBase):
     id: int
     created_at: datetime
     updated_at: datetime | None = None
+    error: str | None = None
     event_log: EventLog | None = None
     plugins: list[Plugin] | None = None
 

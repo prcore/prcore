@@ -14,7 +14,7 @@ import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
 from core.starters.database import SessionLocal
 from core.enums.message import MessageType
-from core.enums.status import PluginStatus
+from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.message.sender import send_online_inquires
 from core.functions.message.util import get_connection, get_data_from_body
 from core.functions.plugin.collector import is_plugin_active
@@ -125,7 +125,7 @@ def handle_error_report(data: dict) -> None:
         plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
         if not plugin:
             return
-        plugin_crud.update_status(db, plugin, detail)
+        plugin_crud.set_plugin_error(db, plugin, detail)
         update_project_status(db, project_id)
 
 
@@ -192,7 +192,8 @@ def handle_streaming_prescription_result(data: dict) -> None:
             return
         event = event_crud.add_prescription(db, event, plugin_key, result)
         # Check if all plugins have finished
-        if all([event.prescriptions.get(plugin.key) for plugin in db_project.plugins if is_plugin_active(plugin.key)]):
+        if all([event.prescriptions.get(plugin.key) for plugin in db_project.plugins
+                if is_plugin_active(plugin.key) and plugin.status == PluginStatus.STREAMING]):
             event_crud.mark_as_prescribed(db, event)
         # Check if the simulation is finished
         check_simulation(db, db_project)
@@ -202,6 +203,8 @@ def update_project_status(db: Session, project_id: int) -> None:
     project = project_crud.get_project_by_id(db, project_id)
     if not project:
         return
-    if ((project_status := get_project_status([plugin.status for plugin in project.plugins])) != project.status
-            and project_status):
+    project_status = get_project_status([plugin.status for plugin in project.plugins])
+    if project_status == ProjectStatus.ERROR:
+        project_crud.set_project_error(db, project, "Plugins encountered errors")
+    elif project_status and project_status != project.status:
         project_crud.update_status(db, project, project_status)

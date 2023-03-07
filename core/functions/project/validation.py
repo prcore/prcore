@@ -45,11 +45,17 @@ def validate_unit_project_definition(project_definition: ProjectDefinition,
         )
 
 
-def validate_streaming_status(db_project: project_model.Project, operation: str) -> bool:
-    # Check if the streaming or simulation status is valid
+def validate_project_status(db_project: project_model.Project) -> None:
+    # Check if the project has a normal status
     if not db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    elif db_project.status == ProjectStatus.ERROR:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_ERROR)
 
+
+def validate_streaming_status(db_project: project_model.Project, operation: str) -> None:
+    # Check if the streaming or simulation status is valid
+    validate_project_status(db_project)
     if operation == "start":
         if db_project.status == ProjectStatus.STREAMING:
             raise HTTPException(status_code=400, detail=ErrorType.STREAMING_STARTED)
@@ -60,5 +66,3 @@ def validate_streaming_status(db_project: project_model.Project, operation: str)
     elif operation == "stop":
         if db_project.status not in [ProjectStatus.STREAMING, ProjectStatus.SIMULATING]:
             raise HTTPException(status_code=400, detail=ErrorType.STREAMING_NOT_STARTED)
-
-    return True

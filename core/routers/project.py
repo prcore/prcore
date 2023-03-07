@@ -21,7 +21,7 @@ import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
 from core.confs import path
 from core.enums.error import ErrorType
-from core.enums.status import ProjectStatus, ProjectStatusGroup
+from core.enums.status import ProjectStatus, ProjectStatusGroup, PluginStatus
 from core.functions.event_log.dataset import (get_ongoing_dataset_path, get_original_dataset_path,
                                               get_processed_dataset_path, get_simulation_dataset_path)
 from core.functions.event_log.job import start_pre_processing
@@ -31,9 +31,10 @@ from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.plugin.collector import get_active_plugins
 from core.functions.project.prescribe import (delete_result_from_memory, get_ongoing_dataset_result_key,
-                                              process_ongoing_dataset, test_watching)
+                                              process_ongoing_dataset, run_project_watcher_for_ongoing_dataset)
 from core.functions.project.streaming import event_generator, disable_streaming
-from core.functions.project.validation import validate_project_definition, validate_streaming_status
+from core.functions.project.validation import (validate_project_definition, validate_project_status,
+                                               validate_streaming_status)
 from core.starters import memory
 from core.starters.database import engine
 from core.security.token import validate_token
@@ -94,7 +95,7 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     process_daemon(start_pre_processing, (db_project.id, get_active_plugins()))
 
     # Start the test file watching
-    result_key and test_watching(db_project.id, result_key)
+    result_key and run_project_watcher_for_ongoing_dataset(db_project.id, result_key)
 
     return {
         "message": "Project created successfully",
@@ -228,9 +229,8 @@ def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: 
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
 
     db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
-    elif db_project.status not in {ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
+    validate_project_status(db_project)
+    if db_project.status not in {ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
     result_key = get_ongoing_dataset_result_key(file.file, extension, seperator, db_project)
@@ -251,8 +251,7 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
     logger.warning(f"Get ongoing dataset result of project {project_id} - from IP {get_real_ip(request)}")
 
     db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=404, detail=ErrorType.PROJECT_NOT_FOUND)
+    validate_project_status(db_project)
 
     if result_key not in memory.ongoing_results or db_project.id != memory.ongoing_results[result_key]["project_id"]:
         raise HTTPException(status_code=404, detail=ErrorType.RESULT_NOT_FOUND)
@@ -305,7 +304,8 @@ def streaming_start(request: Request, project_id: int, streaming_type: str = "st
 
     # Start the streaming
     db_project = project_crud.update_status(db, db_project, project_status)
-    plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
+    plugins = {plugin.key: plugin.id for plugin in db_project.plugins
+               if plugin.status in {PluginStatus.TRAINED, PluginStatus.STREAMING}}
     model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
     send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
     return {
@@ -339,7 +339,7 @@ def stream_clear(request: Request, project_id: int, db: Session = Depends(get_db
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    validate_streaming_status(db_project, "clear")
+    validate_project_status(db_project)
 
     # Stop the simulation
     disable_streaming(db, db_project)
@@ -361,8 +361,7 @@ async def streaming_result(request: Request, project_id: int, db: Session = Depe
 
     # Get the data from the database, and validate it
     db_project = project_crud.get_project_by_id(db, project_id)
-    if not db_project:
-        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_FOUND)
+    validate_project_status(db_project)
 
     # Check if the project is streaming
     streaming_project = memory.streaming_projects.get(project_id)

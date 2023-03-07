@@ -24,6 +24,7 @@ class Plugin(Base):
     description = Column(String, nullable=True)
     parameters = Column(JSONB, nullable=False, default={})
     status = Column(String, nullable=True)
+    error = Column(String, nullable=True)
     model_name = Column(String, nullable=True)
 
     project = relationship("Project", back_populates="plugins")

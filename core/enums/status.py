@@ -9,6 +9,7 @@ class ProjectStatus(str, Enum):
     TRAINED = "TRAINED"
     STREAMING = "STREAMING"
     SIMULATING = "SIMULATING"
+    ERROR = "ERROR"
 
 
 class PluginStatus(str, Enum):
@@ -18,6 +19,7 @@ class PluginStatus(str, Enum):
     TRAINING = "TRAINING"
     TRAINED = "TRAINED"
     STREAMING = "STREAMING"
+    ERROR = "ERROR"
 
 
 class ProjectStatusGroup(list[ProjectStatus], Enum):

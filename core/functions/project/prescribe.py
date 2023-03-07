@@ -8,7 +8,7 @@ import core.models.project as project_model
 import core.schemas.definition as definition_schema
 from core.confs import path
 from core.enums.definition import ColumnDefinition
-from core.enums.status import ProjectStatus
+from core.enums.status import ProjectStatus, PluginStatus
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event_log.dataset import (get_cases_result_skeleton, get_new_processed_dataframe,
                                               get_renamed_dataframe)
@@ -141,7 +141,7 @@ def delete_result_from_memory(result_key: str) -> bool:
 
 
 @threaded()
-def test_watching(project_id: int, result_key: str) -> bool:
+def run_project_watcher_for_ongoing_dataset(project_id: int, result_key: str) -> bool:
     # Watch the project status, and start to prescribe if the project is ready
     while True:
         with SessionLocal() as db:
@@ -151,10 +151,10 @@ def test_watching(project_id: int, result_key: str) -> bool:
             if db_project.status in {ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
                 if result_key not in memory.ongoing_results:
                     return False
-                memory.ongoing_results[result_key]["plugins"] = {plugin.key: plugin.id
-                                                                 for plugin in db_project.plugins}
-                memory.ongoing_results[result_key]["model_names"] = {plugin.id: plugin.model_name
-                                                                     for plugin in db_project.plugins}
+                ongoing_result = memory.ongoing_results[result_key]
+                ongoing_result["plugins"] = {plugin.key: plugin.id for plugin in db_project.plugins
+                                             if plugin.status in {PluginStatus.TRAINED, PluginStatus.STREAMING}}
+                ongoing_result["model_names"] = {plugin.id: plugin.model_name for plugin in db_project.plugins}
                 break
             sleep(5)
     return process_ongoing_dataset(result_key)

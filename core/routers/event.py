@@ -11,6 +11,7 @@ import core.schemas.event as event_schema
 import core.schemas.response.event as event_response
 from core.enums.definition import ColumnDefinition
 from core.enums.error import ErrorType
+from core.enums.status import PluginStatus
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event.job import prepare_prefix_and_send
 from core.functions.event.validation import validate_columns
@@ -78,7 +79,8 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
     # Send the event to the plugins
     prepare_prefix_and_send(
         project_id=project_id,
-        model_names={plugin.key: plugin.model_name for plugin in db_project.plugins},
+        model_names={plugin.key: plugin.model_name for plugin in db_project.plugins
+                     if plugin.status == PluginStatus.STREAMING},
         event_id=db_event.id,
         columns_definition=columns_definition,
         case_attributes=case_attributes,

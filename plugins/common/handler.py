@@ -84,7 +84,7 @@ def handle_training_data(ch: BlockingChannel, data: dict, algo: Type[Algorithm],
             channel=ch,
             receiver_id="core",
             message_type=MessageType.ERROR_REPORT,
-            data={"project_id": project_id, "plugin_id": plugin_id, "detail": "Error while processing data"}
+            data={"project_id": project_id, "plugin_id": plugin_id, "detail": "Error while pre-processing data"}
         )
         logger.warning(f"Handle training data failed: {e}", exc_info=True)
 

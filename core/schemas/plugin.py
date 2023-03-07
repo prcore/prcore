@@ -24,6 +24,7 @@ class Plugin(PluginBase):
     id: int
     created_at: datetime
     updated_at: datetime | None = None
+    error: str | None = None
 
     class Config:
         orm_mode = True

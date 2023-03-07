@@ -14,6 +14,7 @@ class ErrorType(str, Enum):
     PROCESS_DATASET_ERROR = "There was an error processing the dataset"
 
     PROJECT_NOT_FOUND = "Project not found"
+    PROJECT_ERROR = "Project is in error status"
     PROJECT_EXISTED = "Project already existed for this event log"
     PROJECT_NOT_READY = "Project not ready"
     PROJECT_NOT_PREPROCESSED = "Project not preprocessed"
