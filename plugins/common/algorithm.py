@@ -154,15 +154,13 @@ def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> Da
 def get_model_and_features_by_activities(instance: Algorithm, prefix: List[dict]) -> Union[dict, tuple]:
     # Predict the result
     if any(x["ACTIVITY"] not in instance.get_data()["mapping"] for x in prefix):
-        return get_null_output(instance.get_basic_info()["name"], instance.get_basic_info()["prescription_type"],
-                               "The prefix contains an activity that is not in the training set")
+        return get_null_output(instance, "The prefix contains an activity that is not in the training set")
 
     # Get the length of the prefix
     length = len(prefix)
     model = instance.get_data()["models"].get(length)
     if not model:
-        return get_null_output(instance.get_basic_info()["name"], instance.get_basic_info()["prescription_type"],
-                               "The model is not trained for the given prefix length")
+        return get_null_output(instance, "The model is not trained for the given prefix length")
 
     # Get the features of the prefix
     features = [instance.get_data()["mapping"][x["ACTIVITY"]] for x in prefix]
@@ -184,13 +182,13 @@ def get_score(model, x_val, y_val) -> dict:
     }
 
 
-def get_null_output(plugin_name: str, plugin_type: str, detail: str) -> dict:
+def get_null_output(instance: Algorithm, detail: str) -> dict:
     return {
         "date": datetime.now().isoformat(),
-        "type": plugin_type,
+        "type": instance.get_basic_info()["prescription_type"],
         "output": None,
         "model": {
-            "name": plugin_name,
+            "name": instance.get_basic_info()["name"],
             "detail": detail
         }
     }

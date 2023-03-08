@@ -119,7 +119,6 @@ def handle_streaming_prescription_request(ch: BlockingChannel, data: dict, insta
         result = instance.predict(prefix)
     except Exception as e:
         logger.warning(f"Predicting prefix failed: {e}", exc_info=True)
-        result = get_null_output(instance.get_basic_info()["name"], instance.get_basic_info()["prescription_type"],
-                                 f"Predicting prefix failed： {e}")
+        result = get_null_output(instance, f"Predicting prefix failed： {e}")
 
     send_streaming_prescription_result(ch, project_id, event_id, result)

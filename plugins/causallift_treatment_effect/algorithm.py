@@ -96,15 +96,13 @@ class CausalLiftAlgorithm(Algorithm):
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result by using the given prefix
         if any(x["ACTIVITY"] not in self.get_data()["mapping"] for x in prefix):
-            return get_null_output(self.get_basic_info()["name"], self.get_basic_info()["prescription_type"],
-                                   "The prefix contains an activity that is not in the training set")
+            return get_null_output(self, "The prefix contains an activity that is not in the training set")
 
         # Get the length of the prefix
         length = len(prefix)
         training_df = self.get_data()["training_dfs"].get(length)
         if training_df is None:
-            return get_null_output(self.get_basic_info()["name"], self.get_basic_info()["prescription_type"],
-                                   "The model is not trained for the given prefix length")
+            return get_null_output(self, "The model is not trained for the given prefix length")
 
         # Get the features of the prefix
         features = [self.get_data()["mapping"][x["ACTIVITY"]] for x in prefix]
