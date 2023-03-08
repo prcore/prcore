@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from core.enums.definition import ColumnDefinition
 from core.functions.training.util import get_ordinal_encoded_df
 from plugins.common.algorithm import (Algorithm, get_model_and_features_by_activities, get_prescription_output,
-                                      get_encoded_df_from_df_by_activity, get_score, get_null_output)
+                                      get_encoded_df_from_df_by_activity, get_score)
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -41,12 +41,13 @@ class RandomAlgorithm(Algorithm):
         case_ids = encoded_df[ColumnDefinition.CASE_ID].values
         activities = encoded_df[ColumnDefinition.ACTIVITY].values
         outcomes = encoded_df[ColumnDefinition.OUTCOME].values
-        unique_case_ids = np.unique(case_ids)
-        self.__grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
-        self.__grouped_outcomes = [outcomes[case_ids == case_id] for case_id in unique_case_ids]
-        self.__lengths = [len(case) for case in self.__grouped_activities]
-        self.set_count_encoding_df(encoded_df, np.unique(activities))
-        self.set_data_value("activities", np.unique(activities).tolist())
+        unique_case_ids, case_id_counts = np.unique(case_ids, return_counts=True)
+        self.__lengths = [case_id_counts[i] for i in np.argsort(unique_case_ids)]
+        self.__grouped_activities = np.split(activities, np.cumsum(case_id_counts)[:-1])
+        self.__grouped_outcomes = np.split(outcomes, np.cumsum(case_id_counts)[:-1])
+        unique_activities = np.unique(activities)
+        self.set_count_encoding_df(encoded_df, unique_activities)
+        self.set_data_value("activities", unique_activities)
         return ""
 
     def set_count_encoding_df(self, df: DataFrame, activities: np.ndarray) -> None:
@@ -73,8 +74,10 @@ class RandomAlgorithm(Algorithm):
         for length in range(min_length, max_length):
             if len([group for group in self.__grouped_activities if len(group) >= length]) < threshold:
                 continue
-            x = [group[:length] for group in self.__grouped_activities if len(group) >= length]
-            y = [group[length - 1] for group in self.__grouped_outcomes if len(group) >= length]
+            x = np.array([group[:length] for group in self.__grouped_activities if len(group) >= length],
+                         dtype=np.int32)
+            y = np.array([group[length - 1] for group in self.__grouped_outcomes if len(group) >= length],
+                         dtype=np.int32)
             x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
             rf = RandomForestClassifier()
             try:
@@ -86,9 +89,8 @@ class RandomAlgorithm(Algorithm):
             scores[length] = get_score(rf, x_val, y_val)
 
         # Train the model for count encoding df
-        x = self.__count_encoding_df.drop(ColumnDefinition.OUTCOME, axis=1)
-        x = x[self.get_data()["activities_code"]].values
-        y = self.__count_encoding_df[ColumnDefinition.OUTCOME].values
+        x = self.__count_encoding_df.drop(ColumnDefinition.OUTCOME, axis=1).values.astype(np.int32)
+        y = self.__count_encoding_df[ColumnDefinition.OUTCOME].values.astype(np.int32)
         x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
         rf = RandomForestClassifier()
         rf.fit(x_train, y_train)

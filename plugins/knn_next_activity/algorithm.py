@@ -31,11 +31,12 @@ class KNNAlgorithm(Algorithm):
         self.set_data_value("activities_code", list(mapping.keys()))
         case_ids = encoded_df[ColumnDefinition.CASE_ID].values
         activities = encoded_df[ColumnDefinition.ACTIVITY].values
-        unique_case_ids = np.unique(case_ids)
-        self.__grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
-        self.__lengths = [len(case) for case in self.__grouped_activities]
-        self.set_count_encoding_df(encoded_df, np.unique(activities))
-        self.set_data_value("activities", np.unique(activities).tolist())
+        unique_case_ids, case_id_counts = np.unique(case_ids, return_counts=True)
+        self.__lengths = [case_id_counts[i] for i in np.argsort(unique_case_ids)]
+        self.__grouped_activities = np.split(activities, np.cumsum(case_id_counts)[:-1])
+        unique_activities = np.unique(activities)
+        self.set_count_encoding_df(encoded_df, unique_activities)
+        self.set_data_value("activities", unique_activities)
         return ""
 
     def set_count_encoding_df(self, df: DataFrame, activities: np.ndarray) -> None:
@@ -66,8 +67,8 @@ class KNNAlgorithm(Algorithm):
         for length in range(min_length, max_length):
             if len([group for group in self.__grouped_activities if len(group) > length]) < threshold:
                 continue
-            x = [group[:length] for group in self.__grouped_activities if len(group) > length]
-            y = [group[length] for group in self.__grouped_activities if len(group) > length]
+            x = np.array([group[:length] for group in self.__grouped_activities if len(group) > length], dtype=np.int32)
+            y = np.array([group[length] for group in self.__grouped_activities if len(group) > length], dtype=np.int32)
             x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
             knn = KNeighborsClassifier(n_neighbors=self.get_parameter_value("n_neighbors"))
             knn.fit(x_train, y_train)
@@ -75,8 +76,8 @@ class KNNAlgorithm(Algorithm):
             scores[length] = get_score(knn, x_val, y_val)
 
         # Train the model for count encoding df
-        x = self.__count_encoding_df.drop("label", axis=1)[self.get_data()["activities_code"]].values
-        y = self.__count_encoding_df["label"].values
+        x = self.__count_encoding_df.drop("label", axis=1)[self.get_data()["activities_code"]].values.astype(np.int32)
+        y = self.__count_encoding_df["label"].values.astype(np.int32)
         x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
         knn = KNeighborsClassifier(n_neighbors=self.get_parameter_value("n_neighbors"))
         knn.fit(x_train, y_train)
