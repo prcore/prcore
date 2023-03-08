@@ -81,42 +81,21 @@ class Algorithm:
             return False
         return True
 
-    def preprocess(self) -> str:  # noqa
+    def preprocess(self) -> str:
         # Pre-process the data
-        try:
-            pass  # noqa
-        except Exception as e:
-            return str(e)
-        return ""
+        pass
 
     def train(self) -> str:
         # Train the model
-        try:
-            if self.get_data():
-                pass  # noqa
-        except Exception as e:
-            return str(e)
-        return ""
+        pass
 
     def predict(self, prefix: List[dict]) -> dict:
-        # Predict the result
-        try:
-            if prefix:
-                return {}
-        except Exception as e:
-            logger.warning(f"Prediction failed: {e}", exc_info=True)
-            return get_null_output(self.get_basic_info()["name"], self.get_basic_info()["prescription_type"],
-                                   f"Prediction failed： {e}")
+        # Predict the result by using the given prefix
+        pass
 
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result using a DataFrame
-        result = {}
-        try:
-            if df:
-                return {}
-        except Exception as e:
-            logger.warning(f"Predict df failed: {e}", exc_info=True)
-        return result
+        pass
 
 
 def read_df_from_path(directory: str, df_name: str) -> DataFrame:

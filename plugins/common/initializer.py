@@ -79,20 +79,28 @@ def deactivate_instance(project_id: int) -> None:
 
 
 def start_training(instance: Algorithm) -> None:
-    preprocess_error = instance.preprocess()
+    try:
+        preprocess_error = instance.preprocess()
+    except Exception as e:
+        logger.warning(f"Pre-processing failed: {e}", exc_info=True)
+        preprocess_error = str(e)
     if preprocess_error:
         send_error_report(instance.get_project_id(), instance.get_plugin_id(),
-                          f"Pre-process failed: {preprocess_error}")
+                          f"Pre-processing failed: {preprocess_error}")
         return
 
     send_training_start(instance)
-    train_error = instance.train()
+    try:
+        train_error = instance.train()
+    except Exception as e:
+        logger.warning(f"Training failed: {e}", exc_info=True)
+        train_error = str(e)
     if train_error:
-        send_error_report(instance.get_project_id(), instance.get_plugin_id(), f"Train failed: {train_error}")
+        send_error_report(instance.get_project_id(), instance.get_plugin_id(), f"Training failed: {train_error}")
         return
 
     model_name = instance.save_model()
     if not model_name:
-        send_error_report(instance.get_project_id(), instance.get_plugin_id(), "Save model failed")
+        send_error_report(instance.get_project_id(), instance.get_plugin_id(), "Saving model failed")
         return
     send_model_name(instance, model_name)

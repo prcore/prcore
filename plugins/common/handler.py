@@ -12,7 +12,7 @@ from core.enums.message import MessageType
 from core.functions.message.util import get_data_from_body
 
 from plugins.common import memory
-from plugins.common.algorithm import Algorithm, read_df_from_path, check_training_df
+from plugins.common.algorithm import Algorithm, read_df_from_path, check_training_df, get_null_output
 from plugins.common.initializer import (preprocess_and_train, activate_instance_from_model_file,
                                         get_instance_from_model_file, deactivate_instance)
 from plugins.common.sender import (send_online_report, send_data_report, send_error_report,
@@ -93,7 +93,11 @@ def handle_dataset_prescription_request(ch: BlockingChannel, data: dict, instanc
     result_key = data["result_key"]
     ongoing_df_name = data["ongoing_df_name"]
     df = read_df_from_path(path.TEMP_PATH, ongoing_df_name)
-    result = instance.predict_df(df)
+    try:
+        result = instance.predict_df(df)
+    except Exception as e:
+        logger.warning(f"Predicting df failed: {e}", exc_info=True)
+        result = {}
     send_dataset_prescription_result(ch, project_id, result_key, result)
     deactivate_instance(project_id)
 
@@ -111,5 +115,11 @@ def handle_streaming_prescription_request(ch: BlockingChannel, data: dict, insta
     project_id = data["project_id"]
     event_id = data["event_id"]
     prefix = data["data"]
-    result = instance.predict(prefix)
+    try:
+        result = instance.predict(prefix)
+    except Exception as e:
+        logger.warning(f"Predicting prefix failed: {e}", exc_info=True)
+        result = get_null_output(instance.get_basic_info()["name"], instance.get_basic_info()["prescription_type"],
+                                 f"Predicting prefix failed： {e}")
+
     send_streaming_prescription_result(ch, project_id, event_id, result)

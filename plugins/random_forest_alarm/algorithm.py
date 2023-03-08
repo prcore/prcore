@@ -35,22 +35,18 @@ class RandomAlgorithm(Algorithm):
 
     def preprocess(self) -> str:
         # Pre-process the data
-        try:
-            encoded_df, mapping = get_ordinal_encoded_df(self.get_df(), ColumnDefinition.ACTIVITY)
-            self.set_data_value("mapping", {v: k for k, v in mapping.items()})
-            self.set_data_value("activities_code", list(mapping.keys()))
-            case_ids = encoded_df[ColumnDefinition.CASE_ID].values
-            activities = encoded_df[ColumnDefinition.ACTIVITY].values
-            outcomes = encoded_df[ColumnDefinition.OUTCOME].values
-            unique_case_ids = np.unique(case_ids)
-            self.__grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
-            self.__grouped_outcomes = [outcomes[case_ids == case_id] for case_id in unique_case_ids]
-            self.__lengths = [len(case) for case in self.__grouped_activities]
-            self.set_count_encoding_df(encoded_df, np.unique(activities))
-            self.set_data_value("activities", np.unique(activities).tolist())
-        except Exception as e:
-            logger.warning(f"Pre-processing failed: {e}", exc_info=True)
-            return str(e)
+        encoded_df, mapping = get_ordinal_encoded_df(self.get_df(), ColumnDefinition.ACTIVITY)
+        self.set_data_value("mapping", {v: k for k, v in mapping.items()})
+        self.set_data_value("activities_code", list(mapping.keys()))
+        case_ids = encoded_df[ColumnDefinition.CASE_ID].values
+        activities = encoded_df[ColumnDefinition.ACTIVITY].values
+        outcomes = encoded_df[ColumnDefinition.OUTCOME].values
+        unique_case_ids = np.unique(case_ids)
+        self.__grouped_activities = [activities[case_ids == case_id] for case_id in unique_case_ids]
+        self.__grouped_outcomes = [outcomes[case_ids == case_id] for case_id in unique_case_ids]
+        self.__lengths = [len(case) for case in self.__grouped_activities]
+        self.set_count_encoding_df(encoded_df, np.unique(activities))
+        self.set_data_value("activities", np.unique(activities).tolist())
         return ""
 
     def set_count_encoding_df(self, df: DataFrame, activities: np.ndarray) -> None:
@@ -67,80 +63,68 @@ class RandomAlgorithm(Algorithm):
 
     def train(self) -> str:
         # Train the model
-        try:
-            min_length = min(self.__lengths)
-            max_length = max(self.__lengths)
-            threshold = 100  # The minimum number of cases needed to train the model
-            models = {}
-            scores = {}
+        min_length = min(self.__lengths)
+        max_length = max(self.__lengths)
+        threshold = 100  # The minimum number of cases needed to train the model
+        models = {}
+        scores = {}
 
-            # Train the model for ordinal coding df by each length
-            for length in range(min_length, max_length):
-                if len([group for group in self.__grouped_activities if len(group) >= length]) < threshold:
-                    continue
-                x = [group[:length] for group in self.__grouped_activities if len(group) >= length]
-                y = [group[length - 1] for group in self.__grouped_outcomes if len(group) >= length]
-                x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
-                rf = RandomForestClassifier()
-                try:
-                    rf.fit(x_train, y_train)
-                except ValueError as e:
-                    logger.warning(f"Training failed: {e}")
-                    continue
-                models[length] = rf
-                scores[length] = get_score(rf, x_val, y_val)
-
-            # Train the model for count encoding df
-            x = self.__count_encoding_df.drop(ColumnDefinition.OUTCOME, axis=1)
-            x = x[self.get_data()["activities_code"]].values
-            y = self.__count_encoding_df[ColumnDefinition.OUTCOME].values
+        # Train the model for ordinal coding df by each length
+        for length in range(min_length, max_length):
+            if len([group for group in self.__grouped_activities if len(group) >= length]) < threshold:
+                continue
+            x = [group[:length] for group in self.__grouped_activities if len(group) >= length]
+            y = [group[length - 1] for group in self.__grouped_outcomes if len(group) >= length]
             x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
             rf = RandomForestClassifier()
-            rf.fit(x_train, y_train)
-            models["count_encoding"] = rf
-            scores["count_encoding"] = get_score(rf, x_val, y_val)
+            try:
+                rf.fit(x_train, y_train)
+            except ValueError as e:
+                logger.warning(f"Training failed: {e}")
+                continue
+            models[length] = rf
+            scores[length] = get_score(rf, x_val, y_val)
 
-            # Set the models and scores
-            self.set_data_value("models", models)
-            self.set_data_value("scores", scores)
-        except Exception as e:
-            logger.warning(f"Training failed: {e}", exc_info=True)
-            return str(e)
+        # Train the model for count encoding df
+        x = self.__count_encoding_df.drop(ColumnDefinition.OUTCOME, axis=1)
+        x = x[self.get_data()["activities_code"]].values
+        y = self.__count_encoding_df[ColumnDefinition.OUTCOME].values
+        x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
+        rf = RandomForestClassifier()
+        rf.fit(x_train, y_train)
+        models["count_encoding"] = rf
+        scores["count_encoding"] = get_score(rf, x_val, y_val)
+
+        # Set the models and scores
+        self.set_data_value("models", models)
+        self.set_data_value("scores", scores)
         return ""
 
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result
-        try:
-            model_and_features = get_model_and_features_by_activities(self, prefix)
-            if isinstance(model_and_features, dict):
-                return model_and_features
-            model, features = model_and_features
+        model_and_features = get_model_and_features_by_activities(self, prefix)
+        if isinstance(model_and_features, dict):
+            return model_and_features
+        model, features = model_and_features
 
-            # Predict the probability of negative outcomes
-            predictions = list(zip(model.classes_, model.predict_proba([features]).tolist()[0]))
-            output = round(get_negative_proba(predictions), 4)
-            length = len(features)
-            return get_prescription_output(self, output, length, f"ordinal-encoding-length-{length}")
-        except Exception as e:
-            logger.warning(f"Prediction failed: {e}", exc_info=True)
-            return get_null_output(self.get_basic_info()["name"], self.get_basic_info()["prescription_type"],
-                                   f"Prediction failed： {e}")
+        # Predict the probability of negative outcomes
+        predictions = list(zip(model.classes_, model.predict_proba([features]).tolist()[0]))
+        output = round(get_negative_proba(predictions), 4)
+        length = len(features)
+        return get_prescription_output(self, output, length, f"ordinal-encoding-length-{length}")
 
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result by using the given dataframe
         result = {}
-        try:
-            encoded_df = get_encoded_df_from_df_by_activity(self, df)
-            model = self.get_data()["models"]["count_encoding"]
-            predictions = model.predict_proba(encoded_df[self.get_data()["activities_code"]].values)
-            # Get the result
-            for case_id, prediction in zip(encoded_df.index, predictions):
-                result[case_id] = get_prescription_output(
-                    instance=self,
-                    output=round(get_negative_proba(list(zip(model.classes_, prediction.tolist()))), 4),
-                    model_key=len(encoded_df.columns),
-                    model_name="count-encoding"
-                )
-        except Exception as e:
-            logger.warning(f"Predict df failed: {e}", exc_info=True)
+        encoded_df = get_encoded_df_from_df_by_activity(self, df)
+        model = self.get_data()["models"]["count_encoding"]
+        predictions = model.predict_proba(encoded_df[self.get_data()["activities_code"]].values)
+        # Get the result
+        for case_id, prediction in zip(encoded_df.index, predictions):
+            result[case_id] = get_prescription_output(
+                instance=self,
+                output=round(get_negative_proba(list(zip(model.classes_, prediction.tolist()))), 4),
+                model_key=len(encoded_df.columns),
+                model_name="count-encoding"
+            )
         return result
