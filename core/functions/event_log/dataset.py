@@ -161,7 +161,7 @@ def get_transition_recognized_dataframe(df: DataFrame, definition: definition_sc
         return df[df[transition_column].str.upper().isin([complete_transition, abort_transition])]
     else:
         df = df[df[transition_column].str.upper().isin([start_transition, complete_transition, abort_transition])]
-        return get_timestamped_dataframe_by_transition(df, definition)
+        return process_df_parallel(get_timestamped_dataframe_by_transition, df, definition, (definition,))
 
 
 def get_timestamped_dataframe_by_transition(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
@@ -241,21 +241,13 @@ def get_bool_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefini
 
 def get_outcome_and_treatment_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
     # Get outcome and treatment dataframe
-    case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
-    processes_number = get_processes_number()
-    unique_cases = df[case_id_column].unique()
-    case_splits = np.array_split(unique_cases, processes_number)
-    df_splits = [df[df[case_id_column].isin(case_split)] for case_split in case_splits]
-
-    with Pool(processes_number) as pool:
-        results = pool.starmap(get_labelled_dataframe_by_parallel, [(df_split,  definition) for df_split in df_splits])
-
-    result_df = pd.concat(results)
-    return result_df
+    if not definition.outcome_definition and not definition.treatment_definition:
+        return df
+    return process_df_parallel(get_labelled_dataframe, df, definition, (definition,))
 
 
-def get_labelled_dataframe_by_parallel(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
-    # Get labelled dataframe by parallel
+def get_labelled_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
+    # Get labelled dataframe
     case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
     outcome_definition = definition.outcome_definition
     treatment_definition = definition.treatment_definition
@@ -386,7 +378,8 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
         definition = columns_definition.get(column)
 
         if not definition:
-            if column in {ColumnDefinition.DURATION, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
+            if column in {ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
+                          ColumnDefinition.DURATION, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
                           ColumnDefinition.COMPLETE_INDICATOR}:
                 definition = ColumnDefinition(column)
             else:
@@ -402,6 +395,22 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
             columns_need_to_rename[column] = f"EVENT_ATTRIBUTE_{definition}_{column}"
     df = df.rename(columns=columns_need_to_rename)
     return df
+
+
+def process_df_parallel(target: callable, df: DataFrame, definition: definition_schema.Definition,
+                        args: tuple) -> DataFrame:
+    # Process dataframe parallel
+    case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
+    processes_number = get_processes_number()
+    unique_cases = df[case_id_column].unique()
+    case_splits = np.array_split(unique_cases, processes_number)
+    df_splits = [df[df[case_id_column].isin(case_split)] for case_split in case_splits]
+
+    with Pool(processes_number) as pool:
+        results = pool.starmap(target, [(df_split,) + args for df_split in df_splits])
+
+    result_df = pd.concat(results)
+    return result_df
 
 
 def get_original_dataset_path(db_event_log: event_log_model.EventLog) -> str:
