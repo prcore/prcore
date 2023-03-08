@@ -1,4 +1,5 @@
 import logging
+from multiprocessing import Pool
 from random import randint
 
 import numpy as np
@@ -14,6 +15,7 @@ from core.enums.definition import ColumnDefinition, DefinitionType, Transition
 from core.functions.definition.condition import check_or_conditions
 from core.functions.definition.util import get_defined_column_name, get_start_timestamp
 from core.functions.event_log.df import get_dataframe_by_id_or_name
+from core.functions.general.etc import get_processes_number
 from core.functions.general.file import copy_file, get_new_path
 from core.starters.database import SessionLocal
 
@@ -239,6 +241,21 @@ def get_bool_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDefini
 
 def get_outcome_and_treatment_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
     # Get outcome and treatment dataframe
+    case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
+    processes_number = get_processes_number()
+    unique_cases = df[case_id_column].unique()
+    case_splits = np.array_split(unique_cases, processes_number)
+    df_splits = [df[df[case_id_column].isin(case_split)] for case_split in case_splits]
+
+    with Pool(processes_number) as pool:
+        results = pool.starmap(get_labelled_dataframe_by_parallel, [(df_split,  definition) for df_split in df_splits])
+
+    result_df = pd.concat(results)
+    return result_df
+
+
+def get_labelled_dataframe_by_parallel(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
+    # Get labelled dataframe by parallel
     case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
     outcome_definition = definition.outcome_definition
     treatment_definition = definition.treatment_definition

@@ -92,7 +92,7 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
 
     # Start the pre-processing
     engine.dispose()
-    process_daemon(start_pre_processing, (db_project.id, get_active_plugins()))
+    process_daemon(start_pre_processing, (db_project.id, get_active_plugins()), threaded=True)
 
     # Start the test file watching
     result_key and run_project_watcher_for_ongoing_dataset(db_project.id, result_key)

@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from multiprocessing import Process
+from multiprocessing import cpu_count, Process
 from random import choice
 from string import ascii_letters, digits
 from threading import active_count, Thread, Timer
@@ -50,12 +50,31 @@ def get_message_id() -> str:
     return f"{get_current_time_label()}-{random_str(16)}"
 
 
-def process_daemon(func: Callable, args: Tuple) -> Process:
+def get_processes_number() -> int:
+    if cpu_count() <= 2:
+        result = 1
+    elif cpu_count() < 16:
+        result = cpu_count() // 2
+    else:
+        result = 8
+    return result
+
+
+def process_daemon(target: Callable, args: Tuple, threaded: bool = False) -> None:
     # Process daemon
-    p = Process(target=func, args=args)
-    p.daemon = True
+    if threaded:
+        thread(target=process_for_threaded, args=(target, args), daemon=True)
+    else:
+        p = Process(target=target, args=args)
+        p.daemon = True
+        p.start()
+
+
+def process_for_threaded(target: Callable, args: Tuple) -> None:
+    p = Process(target=target, args=args)
+    p.daemon = False
     p.start()
-    return p
+    p.join()
 
 
 def random_str(i: int) -> str:
