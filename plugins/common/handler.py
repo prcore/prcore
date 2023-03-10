@@ -36,7 +36,7 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
         else:
             memory.processed_messages[message_id] = datetime.now()
         if message_type == MessageType.ONLINE_INQUIRY:
-            handle_online_inquiry(ch, basic_info)
+            handle_online_inquiry(basic_info)
         elif message_type == MessageType.TRAINING_DATA:
             handle_training_data(ch, data, algo, basic_info, needed_columns)
         elif message_type == MessageType.DATASET_PRESCRIPTION_REQUEST:
@@ -55,8 +55,8 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def handle_online_inquiry(ch: BlockingChannel, basic_info: dict) -> None:
-    send_online_report(ch, basic_info)
+def handle_online_inquiry(basic_info: dict) -> None:
+    send_online_report(basic_info)
 
 
 def handle_training_data(ch: BlockingChannel, data: dict, algo: Type[Algorithm], basic_info: Dict[str, Any],
