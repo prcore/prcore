@@ -18,6 +18,7 @@ from core.starters.rabbitmq import parameters
 from plugins.common import memory
 from plugins.common.algorithm import Algorithm
 from plugins.common.handler import callback
+from plugins.common.sender import send_online_report
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ def plugin_scheduler() -> None:
     scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
     scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
     scheduler.add_job(processed_messages_clean, "interval", [memory.processed_messages], minutes=5)
+    scheduler.add_job(send_online_report, "interval", minutes=14)
     scheduler.start()
 
 

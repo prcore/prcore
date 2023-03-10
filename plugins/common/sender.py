@@ -13,7 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 def send_online_report(ch: BlockingChannel, basic_info: dict) -> bool:
-    return send_message_by_channel(ch, "core", MessageType.ONLINE_REPORT, basic_info)
+    result = False
+
+    try:
+        result = send_message_by_channel(ch, "core", MessageType.ONLINE_REPORT, basic_info)
+    except Exception as e:
+        logger.error(f"Error while sending online report: {e}")
+
+    return result
 
 
 def send_data_report(ch: BlockingChannel, project_id: int, plugin_id: int, applicable: bool) -> bool:
