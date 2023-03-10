@@ -56,6 +56,8 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     db_event_log = event_log_crud.get_event_log(db, create_body.event_log_id)
     if not db_event_log:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_NOT_FOUND)
+    elif not db_event_log.definition or not db_event_log.definition.columns_definition:
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_DEFINITION_NOT_FOUND)
     db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
     if db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_EXISTED)

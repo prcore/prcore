@@ -10,7 +10,14 @@ logger = logging.getLogger(__name__)
 
 def send_online_inquires() -> bool:
     # Send online inquiries to all plugins
-    return all(send_online_inquiry(plugin_id) for plugin_id in config.ENABLED_PLUGINS)
+    result = False
+
+    try:
+        result = all(send_online_inquiry(plugin_id) for plugin_id in config.ENABLED_PLUGINS)
+    except Exception as e:
+        logger.warning(f"Send online inquiries error: {e}", exc_info=True)
+
+    return result
 
 
 def send_online_inquiry(plugin_id: str) -> bool:

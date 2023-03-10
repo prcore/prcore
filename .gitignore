@@ -2,7 +2,7 @@ data/
 data/datasets/
 envs/
 venv*/
-scripts/rsync.sh
+scripts/rsync*.sh
 scripts/chmod.sh
 scripts/flow.sh
 scripts/continue.sh
