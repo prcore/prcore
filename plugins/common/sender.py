@@ -12,11 +12,11 @@ from plugins.common.algorithm import Algorithm
 logger = logging.getLogger(__name__)
 
 
-def send_online_report(ch: BlockingChannel, basic_info: dict) -> bool:
+def send_online_report(basic_info: dict) -> bool:
     result = False
 
     try:
-        result = send_message_by_channel(ch, "core", MessageType.ONLINE_REPORT, basic_info)
+        result = send_message("core", MessageType.ONLINE_REPORT, basic_info)
     except Exception as e:
         logger.error(f"Error while sending online report: {e}")
 
