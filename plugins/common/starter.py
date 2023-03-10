@@ -24,12 +24,12 @@ from plugins.common.sender import send_online_report
 logger = logging.getLogger(__name__)
 
 
-def plugin_scheduler() -> None:
+def plugin_scheduler(basic_info: dict) -> None:
     # Start the scheduler
     scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 300}, timezone=str(get_localzone()))
     scheduler.add_job(log_rotation, "cron", hour=23, minute=59)
     scheduler.add_job(processed_messages_clean, "interval", [memory.processed_messages], minutes=5)
-    scheduler.add_job(send_online_report, "interval", minutes=14)
+    scheduler.add_job(send_online_report, "interval", [basic_info], minutes=14)
     scheduler.start()
 
 

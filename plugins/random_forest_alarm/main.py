@@ -11,5 +11,5 @@ for _ in logging.root.manager.loggerDict:
         logging.getLogger(_).setLevel(logging.CRITICAL)
 
 if __name__ == "__main__":
-    plugin_scheduler()
+    plugin_scheduler(basic_info)
     plugin_run(basic_info, needed_columns, RandomAlgorithm)
