@@ -456,9 +456,9 @@ def get_ongoing_dataset_path(db_event_log: event_log_model.EventLog) -> str:
         columns = simulation_df.columns.tolist()
         for _, group in grouped_df:
             values = group.values
-            if group.shape[0] < 3:
+            if group.shape[0] < 4:
                 continue
-            length = randint(3, group.shape[0])
+            length = randint(3, group.shape[0] - 1)
             ongoing_cases.extend(values[:length])
         ongoing_cases_df = pd.DataFrame(ongoing_cases, columns=columns)
         ongoing_cases_df.to_csv(temp_path, index=False)
