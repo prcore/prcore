@@ -264,6 +264,7 @@ def get_labelled_dataframe(df: DataFrame, definition: definition_schema.Definiti
 
 def get_labelled_dataframe_by_both(df: DataFrame, case_id_column: str,
                                    definition: definition_schema.Definition) -> DataFrame:
+    df = df.reset_index(drop=True)
     result = df.groupby(case_id_column, group_keys=True).apply(lambda x: label_outcome_and_treatment(x, definition))
     result.columns = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]
     result = result.reset_index(drop=True)
