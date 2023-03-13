@@ -12,7 +12,7 @@ from core.enums.definition import ColumnDefinition
 logger = logging.getLogger(__name__)
 
 
-def get_dataframes_by_length(df: DataFrame) -> dict:
+def get_one_hot_dataframes_by_length(df: DataFrame) -> dict:
     grouped_df = df.groupby(ColumnDefinition.CASE_ID)
     dataframes = {}
     all_activities = sorted(set(df[ColumnDefinition.ACTIVITY]))
