@@ -1,5 +1,4 @@
 import logging
-from collections import OrderedDict
 from multiprocessing import Pool, cpu_count
 from typing import Optional
 
@@ -17,7 +16,7 @@ def get_dataframes_by_length(df: DataFrame) -> dict:
     grouped_df = df.groupby(ColumnDefinition.CASE_ID)
     dataframes = {}
     all_activities = sorted(set(df[ColumnDefinition.ACTIVITY]))
-    lengths_split = np.array_split(sorted(list(set([len(g) for _, g in grouped_df]))), cpu_count() * 2)
+    lengths_split = np.array_split(sorted(list(set([len(g) for _, g in grouped_df]))), cpu_count() * 4)
 
     with Pool(16) as pool:
         results = pool.starmap(
@@ -44,13 +43,13 @@ def generate_dataframe_for_lengths(grouped_df: DataFrame, activities: list, leng
 def get_sliced_groups(grouped_df: DataFrame, activities: list, length: int) -> Optional[DataFrame]:
     sliced_groups = [get_one_hot_encoded_df(group.iloc[:length], activities)
                      for _, group in grouped_df if len(group) >= length + 1]
-    if len(sliced_groups) < 100:
+    if len(sliced_groups) < 1000:
         return None
     return pd.concat(sliced_groups, ignore_index=True)
 
 
 def get_one_hot_encoded_df(group: DataFrame, activities: list) -> DataFrame:
-    data = OrderedDict()
+    data = {}
     for activity in activities:
         data[f"{ColumnDefinition.ACTIVITY}_{activity}"] = 1 if activity in set(group[ColumnDefinition.ACTIVITY]) else 0
     for label in [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]:
