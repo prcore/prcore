@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from causallift import CausalLift
 from pandas import DataFrame
+from sklearn.preprocessing import LabelBinarizer
 
 from core.enums.definition import ColumnDefinition
 from core.functions.training.util import get_ordinal_encoded_df
@@ -107,6 +108,49 @@ class CausalLiftAlgorithm(Algorithm):
         training_dfs = {}
         for length, df in self.__one_hot_dataframes.items():
             training_dfs[length] = df
+        self.set_data_value("training_dfs", training_dfs)
+        return ""
+
+    def train_one_hot_faster(self) -> str:
+        # Train the model
+        min_length = min(self.__lengths) if min(self.__lengths) > 3 else 3
+        max_length = max(self.__lengths)
+        threshold = 1000  # The minimum number of cases needed to train the model
+        training_dfs = {}
+
+        from datetime import datetime
+        start_time = datetime.now()
+
+        activities = self.get_data()["activities"]
+        lb = LabelBinarizer()
+        lb.fit(activities)
+
+        # Get the training data for ordinal coding df by each length
+        for length in range(min_length, max_length):
+            if len([group for group in self.__grouped_activities if len(group) > length]) < threshold:
+                continue
+            training_data = []
+            for i, group in enumerate(self.__grouped_activities):
+                if len(group) < length:
+                    continue
+                x_raw = group[:length]
+                arr_encoded = lb.transform(x_raw)
+                arr_sum = arr_encoded.sum(axis=0)
+                x = np.where(arr_sum > 0, 1, 0)
+                y = self.__grouped_outcomes[i]
+                t = self.__grouped_treatments[i]
+                training_data.append([x, y, t])
+            training_df = pd.DataFrame(training_data, columns=["Activities", "Outcome", "Treatment"])
+            activities_df = pd.DataFrame(np.stack(training_df["Activities"], axis=0),
+                                         columns=lb.classes_.tolist())
+            training_df = pd.concat([activities_df, training_df[["Outcome", "Treatment"]]], axis=1)
+            if training_df["Treatment"].nunique() != 2:
+                continue
+            training_dfs[length] = training_df
+
+        end_time = datetime.now()
+        print('Time taken: {}'.format(end_time - start_time))
+
         self.set_data_value("training_dfs", training_dfs)
         return ""
 
