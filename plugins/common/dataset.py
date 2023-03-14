@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
+from pandas import DataFrame, read_pickle, read_csv
 from sklearn.preprocessing import LabelBinarizer
 
 from core.enums.dataset import EncodingType, OutcomeType
@@ -13,6 +13,15 @@ from core.functions.general.etc import get_processes_number
 
 # Enable logging
 logger = logging.getLogger(__name__)
+
+
+def read_df_from_path(directory: str, df_name: str) -> DataFrame:
+    try:
+        return read_pickle(f"{directory}/{df_name}.pkl")
+    except ValueError:
+        # If the plugin's Python version is 3.6, then the pickle protocol is not compatible,
+        # so we need to read the CSV file
+        return read_csv(f"{directory}/{df_name}.csv")
 
 
 def get_encoded_dfs_by_activity(original_df: DataFrame, encoding_type: EncodingType, outcome_type: OutcomeType,

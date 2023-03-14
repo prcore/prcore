@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 from core.enums.definition import ColumnDefinition, Operator, Transition
@@ -17,12 +18,13 @@ class ProjectDefinition(BaseModel):
 class DefinitionBase(BaseModel):
     columns_definition: dict[str, ColumnDefinition | None]
     case_attributes: list[str] | None = None
-    outcome_definition: list[list[ProjectDefinition]] | None = None
-    treatment_definition: list[list[ProjectDefinition]] | None = None
     fast_mode: bool = True
     start_transition: Transition = Transition.START
     complete_transition: Transition = Transition.COMPLETE
     abort_transition: Transition = Transition.ATE_ABORT
+    outcome_definition: list[list[ProjectDefinition]] | None = None
+    treatment_definition: list[list[ProjectDefinition]] | None = None
+    additional_info: dict[str, Any] | None = None
 
 
 class DefinitionCreate(DefinitionBase):

@@ -42,6 +42,14 @@ def update_status(db: Session, db_plugin: model.Plugin, status: str) -> model.Pl
     return db_plugin
 
 
+def update_parameters(db: Session, db_plugin: model.Plugin, parameters: dict) -> model.Plugin:
+    # Update a plugin's parameters
+    db_plugin.parameters = parameters
+    db.commit()
+    db.refresh(db_plugin)
+    return db_plugin
+
+
 def set_plugin_error(db: Session, db_plugin: model.Plugin, error: str) -> model.Plugin:
     # Set error of a plugin
     db_plugin.status = PluginStatus.ERROR

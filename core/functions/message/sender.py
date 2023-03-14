@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from core.confs import config
 from core.enums.message import MessageType
@@ -25,66 +26,70 @@ def send_online_inquiry(plugin_id: str) -> bool:
     return send_message(plugin_id, MessageType.ONLINE_INQUIRY, {})
 
 
-def send_training_data_to_all_plugins(project_id: int, training_df_name: str, treatment_definition: list,
-                                      plugins: dict[str, int]) -> bool:
+def send_training_data_to_all_plugins(plugins: dict[str, int], project_id: int, training_df_name: str,
+                                      additional_info: dict[str, Any]) -> bool:
     # Send training data to all plugins
-    return all(send_training_data(plugin_key, project_id, plugins[plugin_key], training_df_name, treatment_definition)
+    return all(send_training_data(plugin_key, project_id, plugins[plugin_key], training_df_name, additional_info)
                for plugin_key in plugins)
 
 
 def send_training_data(plugin_key: str, project_id: int, plugin_id: int, training_df_name: str,
-                       treatment_definition: list) -> bool:
+                       additional_info: dict[str, Any]) -> bool:
     # Send training data to a specific plugin
     return send_message(plugin_key, MessageType.TRAINING_DATA, {
         "project_id": project_id,
         "plugin_id": plugin_id,
         "training_df_name": training_df_name,
-        "treatment_definition": treatment_definition
+        "additional_info": additional_info
     })
 
 
-def send_ongoing_dataset_to_all_plugins(project_id: int, plugins: dict[str, int], model_names: dict[int, str],
-                                        result_key: str, dataset_name: str) -> bool:
+def send_dataset_prescription_request_to_all_plugins(plugins: dict[str, int], project_id: int,
+                                                     model_names: dict[int, str], result_key: str, dataset_name: str,
+                                                     additional_info: dict[str, Any]) -> bool:
     # Send ongoing dataset to all plugins
-    return all(send_ongoing_dataset(plugin_key, project_id, model_names[plugins[plugin_key]], result_key, dataset_name)
+    return all(send_dataset_prescription_request(plugin_key, project_id, model_names[plugins[plugin_key]], result_key,
+                                                 dataset_name, additional_info)
                for plugin_key in plugins)
 
 
-def send_ongoing_dataset(plugin_key: str, project_id: int, model_name: str, result_key: str,
-                         ongoing_df_name: str) -> bool:
+def send_dataset_prescription_request(plugin_key: str, project_id: int, model_name: str, result_key: str,
+                                      ongoing_df_name: str, additional_info: dict[str, Any]) -> bool:
     # Send ongoing dataset to a specific plugin
     return send_message(plugin_key, MessageType.DATASET_PRESCRIPTION_REQUEST, {
         "project_id": project_id,
         "model_name": model_name,
         "result_key": result_key,
-        "ongoing_df_name": ongoing_df_name
+        "ongoing_df_name": ongoing_df_name,
+        "additional_info": additional_info
     })
 
 
-def send_streaming_prepare_to_all_plugins(project_id: int, plugins: dict[str, int],
-                                          model_names: dict[int, str]) -> bool:
+def send_streaming_prepare_to_all_plugins(plugins: dict[str, int], project_id: int, model_names: dict[int, str],
+                                          additional_info: dict[str, Any]) -> bool:
     # Send streaming prepare to all plugins
-    return all(send_streaming_prepare(plugin_key, project_id, model_names[plugins[plugin_key]])
+    return all(send_streaming_prepare(plugin_key, project_id, model_names[plugins[plugin_key]], additional_info)
                for plugin_key in plugins)
 
 
-def send_streaming_prepare(plugin_key: str, project_id: int, model_name: str) -> bool:
+def send_streaming_prepare(plugin_key: str, project_id: int, model_name: str, additional_info: dict[str, Any]) -> bool:
     # Send streaming prepare to a specific plugin
     return send_message(plugin_key, MessageType.STREAMING_PREPARE, {
         "project_id": project_id,
-        "model_name": model_name
+        "model_name": model_name,
+        "additional_info": additional_info
     })
 
 
-def send_prescription_request_to_all_plugins(project_id: int, plugins: list[str], model_names: dict[str, str],
-                                             event_id: int, prefix: list[dict]) -> bool:
+def send_streaming_prescription_request_to_all_plugins(project_id: int, plugins: list[str], model_names: dict[str, str],
+                                                       event_id: int, prefix: list[dict]) -> bool:
     # Send prescription request to all plugins
-    return all(send_prescription_request(plugin_key, project_id, model_names[plugin_key], event_id, prefix)
+    return all(send_streaming_prescription_request(plugin_key, project_id, model_names[plugin_key], event_id, prefix)
                for plugin_key in plugins)
 
 
-def send_prescription_request(plugin_key: str, project_id: int, model_name: str, event_id: int,
-                              prefix: list[dict]) -> bool:
+def send_streaming_prescription_request(plugin_key: str, project_id: int, model_name: str, event_id: int,
+                                        prefix: list[dict]) -> bool:
     # Send prescription request to a specific plugin
     return send_message(plugin_key, MessageType.STREAMING_PRESCRIPTION_REQUEST, {
         "project_id": project_id,

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from time import sleep
-from typing import BinaryIO
+from typing import Any, BinaryIO
 
 import core.crud.project as project_crud
 import core.models.project as project_model
@@ -9,14 +9,14 @@ import core.schemas.definition as definition_schema
 from core.confs import path
 from core.enums.definition import ColumnDefinition
 from core.enums.status import ProjectStatus, PluginStatus
-from core.functions.definition.util import get_defined_column_name
+from core.functions.definition.util import get_additional_info, get_defined_column_name
 from core.functions.event_log.dataset import (get_cases_result_skeleton, get_new_processed_dataframe,
                                               get_renamed_dataframe)
 from core.functions.event_log.file import get_dataframe_from_file
 from core.functions.general.decorator import threaded
 from core.functions.general.etc import random_str
 from core.functions.general.file import delete_file, get_new_path
-from core.functions.message.sender import send_ongoing_dataset_to_all_plugins
+from core.functions.message.sender import send_dataset_prescription_request_to_all_plugins
 from core.starters import memory
 from core.starters.database import SessionLocal
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: str,
-                                   db_project: project_model.Project) -> str:
+                                   db_project: project_model.Project, new_additional_info: dict[str, Any]) -> str:
     # Get the result key of the ongoing dataset
     result = ""
 
@@ -59,6 +59,8 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
         df = get_new_processed_dataframe(df, definition)
         cases = get_cases_result_skeleton(df, get_defined_column_name(columns_definition, ColumnDefinition.CASE_ID))
         cases_count = len(cases)
+        additional_info = get_additional_info(definition_schema.Definition.from_orm(db_project.event_log.definition),
+                                              new_additional_info)
 
         # Send the result request to the plugins
         while (result_key := random_str(8)) in memory.ongoing_results:
@@ -68,9 +70,11 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
             "date": datetime.now(),
             "project_id": db_project.id,
             "dataframe": df,
-            "plugins": {plugin.key: plugin.id for plugin in db_project.plugins},
+            "plugins": {plugin.key: plugin.id for plugin in db_project.plugins
+                        if plugin.status != PluginStatus.ERROR and not plugin.disabled},
             "model_names": {plugin.id: plugin.model_name for plugin in db_project.plugins},
             "ongoing_df_name": "",
+            "additional_info": additional_info,
             "results": {},
             "error": "",
             "cases_count": cases_count,
@@ -105,6 +109,7 @@ def process_ongoing_dataset(result_key: str) -> bool:
         model_names = data["model_names"]
         columns_definition = data["columns_definition"]
         case_attributes = data["case_attributes"]
+        additional_info = data["additional_info"]
 
         # Get renamed df and save it to the temp path
         df = get_renamed_dataframe(df, columns_definition, case_attributes)
@@ -116,7 +121,8 @@ def process_ongoing_dataset(result_key: str) -> bool:
         memory.ongoing_results[result_key]["ongoing_df_name"] = temp_path.split("/")[-1].split(".")[0]
 
         # Send the dataset to the plugins
-        send_ongoing_dataset_to_all_plugins(project_id, plugins, model_names, result_key, ongoing_df_name)
+        send_dataset_prescription_request_to_all_plugins(plugins, project_id, model_names, result_key, ongoing_df_name,
+                                                         additional_info)
         result = True
     except ValueError as e:
         logger.error(f"Process ongoing dataset error: {e}")
@@ -153,7 +159,8 @@ def run_project_watcher_for_ongoing_dataset(project_id: int, result_key: str) ->
                     return False
                 ongoing_result = memory.ongoing_results[result_key]
                 ongoing_result["plugins"] = {plugin.key: plugin.id for plugin in db_project.plugins
-                                             if plugin.status in {PluginStatus.TRAINED, PluginStatus.STREAMING}}
+                                             if plugin.status in {PluginStatus.TRAINED, PluginStatus.STREAMING}
+                                             and not plugin.disabled}
                 ongoing_result["model_names"] = {plugin.id: plugin.model_name for plugin in db_project.plugins}
                 break
             sleep(5)

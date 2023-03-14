@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -19,12 +19,13 @@ class Plugin(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     project_id = Column(Integer, ForeignKey("project.id"))
     key = Column(String, nullable=False)
-    name = Column(String, nullable=False)
     prescription_type = Column(String, nullable=False)
+    name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     parameters = Column(JSONB, nullable=False, default={})
     status = Column(String, nullable=True)
     error = Column(String, nullable=True)
+    disabled = Column(Boolean, nullable=True, default=False)
     model_name = Column(String, nullable=True)
 
     project = relationship("Project", back_populates="plugins")

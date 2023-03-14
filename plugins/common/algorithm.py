@@ -1,9 +1,9 @@
 import logging
 import pickle
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
-from pandas import DataFrame, read_pickle, read_csv
+from pandas import DataFrame
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 from core.confs import path
@@ -15,16 +15,18 @@ logger = logging.getLogger(__name__)
 
 
 class Algorithm:
-    def __init__(self, basic_info: Dict[str, Any], project_id: int, plugin_id: Optional[int] = None,
-                 df: Optional[DataFrame] = None, model_name: str = None, treatment_definition: list = None):
-        self.__basic_info: Dict[str, Any] = basic_info
-        self.__df: DataFrame = df
-        self.__model_name: str = model_name
+    def __init__(self, algo_data: Dict[str, Any]):
+        self.__basic_info: Dict[str, Any] = algo_data.get("basic_info")
+        self.__project_id: int = algo_data.get("project_id")
+        self.__plugin_id: int = algo_data.get("plugin_id")
+        self.__df: DataFrame = algo_data.get("df")
+        self.__parameters: Dict[str, Any] = algo_data.get("parameters")
+        self.__additional_info: Dict[str, Any] = algo_data.get("additional_info")
+        self.__model_name: str = algo_data.get("model_name")
         self.__data = {
-            "project_id": project_id,
-            "plugin_id": plugin_id,
-            "parameters": self.__basic_info["parameters"],
-            "treatment_definition": treatment_definition
+            "project_id": self.__project_id,
+            "plugin_id": self.__plugin_id,
+            "parameters": self.__parameters
         }
 
     def get_basic_info(self) -> Dict[str, Any]:
@@ -35,13 +37,17 @@ class Algorithm:
         # Get training data
         return self.__df
 
+    def get_additional_info_value(self, key: str) -> Any:
+        # Get additional information
+        return self.__additional_info.get(key)
+
     def get_data(self) -> Dict[str, Any]:
         # Get data
         return self.__data
 
     def get_parameter_value(self, key: str) -> Any:
         # Get parameter value
-        return self.__data["parameters"][key]
+        return self.__data["parameters"].get(key)
 
     def set_data_value(self, key: str, value: Any):
         # Set data value
@@ -96,48 +102,6 @@ class Algorithm:
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result using a DataFrame
         pass
-
-
-def read_df_from_path(directory: str, df_name: str) -> DataFrame:
-    try:
-        return read_pickle(f"{directory}/{df_name}.pkl")
-    except ValueError:
-        # If the plugin's Python version is 3.6, then the pickle protocol is not compatible,
-        # so we need to read the CSV file
-        return read_csv(f"{directory}/{df_name}.csv")
-
-
-def check_training_df(df: DataFrame, needed_columns: List[str]) -> Union[str, bool]:
-    # Basic check
-    if (ColumnDefinition.CASE_ID not in df.columns
-            or not get_timestamp_columns(df)
-            or ColumnDefinition.ACTIVITY not in df.columns):
-        return False
-
-    # Check if all needed columns are in the df
-    for column in needed_columns:
-        if column in {ColumnDefinition.CASE_ID,
-                      ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
-                      ColumnDefinition.ACTIVITY}:
-            continue
-        if column not in df.columns:
-            return False
-
-    # Check if the df has only two classes for outcome and treatment
-    for column in {ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT}:
-        if column in needed_columns and column in df.columns and df[column].nunique() != 2:
-            return f"The {column} column must have two classes, please adjust your {column.lower()} definition"
-
-    return True
-
-
-def get_timestamp_columns(df: DataFrame) -> List[str]:
-    if ColumnDefinition.TIMESTAMP in df.columns:
-        return [ColumnDefinition.TIMESTAMP]
-    elif ColumnDefinition.START_TIMESTAMP in df.columns and ColumnDefinition.END_TIMESTAMP in df.columns:
-        return [ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP]
-    else:
-        return []
 
 
 def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> DataFrame:

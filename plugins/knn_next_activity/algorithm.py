@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -17,9 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class KNNAlgorithm(Algorithm):
-    def __init__(self, basic_info: Dict[str, Any], project_id: int, plugin_id: Optional[int] = None,
-                 df: Optional[DataFrame] = None, model_name: str = None, treatment_definition: list = None):
-        super().__init__(basic_info, project_id, plugin_id, df, model_name, treatment_definition)
+    def __init__(self, algo_data: Dict[str, Any]):
+        super().__init__(algo_data)
         self.__grouped_activities = []
         self.__lengths = []
         self.__count_encoding_df = None

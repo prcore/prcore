@@ -11,10 +11,12 @@ import core.schemas.definition as definition_schema
 import core.schemas.plugin as plugin_schema
 import core.schemas.request.event_log as event_log_request
 from core.enums.status import PluginStatus
+from core.functions.definition.util import get_additional_info
 from core.functions.event_log.dataset import pre_process_data
 from core.functions.event_log.df import get_dataframe
 from core.functions.event_log.validation import validate_columns_definition, validate_case_attributes
 from core.functions.message.sender import send_training_data_to_all_plugins
+from core.functions.plugin.util import get_parameters_for_plugin
 from core.functions.project.streaming import disable_streaming
 from core.starters.database import SessionLocal
 
@@ -34,12 +36,13 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog,
             created_at=db_event_log.definition.created_at,
             columns_definition=update_body.columns_definition,
             case_attributes=update_body.case_attributes,
-            outcome_definition=None,
-            treatment_definition=None,
             fast_mode=update_body.fast_mode,
             start_transition=update_body.start_transition,
             complete_transition=update_body.complete_transition,
-            abort_transition=update_body.abort_transition
+            abort_transition=update_body.abort_transition,
+            outcome_definition=None,
+            treatment_definition=None,
+            additional_info=None
         ))
         db_project = project_crud.get_project_by_event_log_id(db, db_event_log.id)
         db_project and disable_streaming(db, db_project, redefined=True)
@@ -56,7 +59,7 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog,
     return event_log_crud.associate_definition(db, db_event_log, db_definition.id)
 
 
-def start_pre_processing(project_id: int, active_plugins: dict, redefined: bool = False) -> bool:
+def start_pre_processing(project_id: int, active_plugins: dict, parameters: dict, redefined: bool = False) -> bool:
     # Start pre-processing the data
     with SessionLocal() as db:
         db_project = project_crud.get_project_by_id(db, project_id)
@@ -80,6 +83,8 @@ def start_pre_processing(project_id: int, active_plugins: dict, redefined: bool 
         if redefined:
             for plugin in db_project.plugins:
                 plugin_crud.update_status(db, plugin, PluginStatus.PREPROCESSING)
+                parameters = get_parameters_for_plugin(plugin.key, active_plugins, parameters)
+                plugin_crud.update_parameters(db, plugin, parameters)
             plugins = {plugin.key: plugin.id for plugin in db_project.plugins}
         else:
             for plugin_key in plugin_keys:
@@ -87,17 +92,17 @@ def start_pre_processing(project_id: int, active_plugins: dict, redefined: bool 
                     db=db,
                     plugin=plugin_schema.PluginCreate(
                         key=plugin_key,
-                        name=active_plugins[plugin_key]["name"],
                         prescription_type=active_plugins[plugin_key]["prescription_type"],
+                        name=active_plugins[plugin_key]["name"],
                         description=active_plugins[plugin_key]["description"],
-                        parameters=active_plugins[plugin_key]["parameters"],
+                        parameters=get_parameters_for_plugin(plugin_key, active_plugins, parameters),
                         status=PluginStatus.WAITING
                     ),
                     project_id=project_id
                 )
                 plugins[plugin_key] = plugin.id
 
-        treatment_definition = definition.dict()["treatment_definition"]
-        send_training_data_to_all_plugins(project_id, training_df_name, treatment_definition, plugins)
+        additional_info = get_additional_info(definition, {})
+        send_training_data_to_all_plugins(plugins, project_id, training_df_name, additional_info)
 
     return True

@@ -125,7 +125,9 @@ def mark_as_sent(db: Session, event_ids: list[int]) -> bool:
 def enable_streaming(db: Session, project_id: int) -> None:
     # Enable the streaming
     db_project = project_crud.get_project_by_id(db, project_id)
-    if not get_active_plugins() or not all([plugin.status == PluginStatus.STREAMING for plugin in db_project.plugins if plugin.status != PluginStatus.ERROR]):
+    if (not get_active_plugins()
+            or not all([plugin.status == PluginStatus.STREAMING for plugin in db_project.plugins
+                        if plugin.status != PluginStatus.ERROR and not plugin.disabled])):
         return
     if db_project.status == ProjectStatus.SIMULATING:
         proceed_simulation(

@@ -18,10 +18,12 @@ import core.crud.project as project_crud
 import core.models.project as project_model
 import core.schemas.request.project as project_request
 import core.schemas.response.project as project_response
+import core.schemas.definition as definition_schema
 import core.schemas.project as project_schema
 from core.confs import path
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus, ProjectStatusGroup, PluginStatus
+from core.functions.definition.util import get_additional_info
 from core.functions.event_log.dataset import (get_ongoing_dataset_path, get_original_dataset_path,
                                               get_processed_dataset_path, get_simulation_dataset_path)
 from core.functions.event_log.job import start_pre_processing
@@ -70,11 +72,12 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
     treatment and validate_project_definition(treatment, columns_definition)
 
     # Create the project
-    definition_crud.set_outcome_treatment_definition(
+    definition_crud.set_project_level_definition(
         db=db,
         db_definition=db_event_log.definition,
         outcome=create_body.positive_outcome,
-        treatment=create_body.treatment
+        treatment=create_body.treatment,
+        additional_info=create_body.additional_info
     )
     db_project = project_crud.create_project(
         db=db,
@@ -87,14 +90,14 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         _file = test["file"]
         separator = test["separator"]
         extension = test["extension"]
-        result_key = get_ongoing_dataset_result_key(_file, extension, separator, db_project)
+        result_key = get_ongoing_dataset_result_key(_file, extension, separator, db_project, {})
         memory.log_tests.pop(db_event_log.id)
     else:
         result_key = None
 
     # Start the pre-processing
     engine.dispose()
-    process_daemon(start_pre_processing, (db_project.id, get_active_plugins()), threaded=True)
+    process_daemon(start_pre_processing, (db_project.id, get_active_plugins(), create_body.parameters), threaded=True)
 
     # Start the test file watching
     result_key and run_project_watcher_for_ongoing_dataset(db_project.id, result_key)
@@ -174,17 +177,18 @@ def update_project_definition(request: Request, project_id: int,
     disable_streaming(db, db_project, True)
 
     # Update the project
-    definition_crud.set_outcome_treatment_definition(
+    definition_crud.set_project_level_definition(
         db=db,
         db_definition=db_event_log.definition,
         outcome=update_body.positive_outcome,
-        treatment=update_body.treatment
+        treatment=update_body.treatment,
+        additional_info=update_body.additional_info
     )
 
     # Start the pre-processing
     project_crud.update_status(db, db_project, ProjectStatus.PREPROCESSING)
     engine.dispose()
-    process_daemon(start_pre_processing, (db_project.id, get_active_plugins(), True))
+    process_daemon(start_pre_processing, (db_project.id, get_active_plugins(), update_body.parameters, True))
 
     return {
         "message": "Project definition updated successfully",
@@ -224,6 +228,7 @@ def delete_project(request: Request, project_id: int,
 @router.post("/{project_id}/result", response_model=project_response.DatasetUploadResponse)
 def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: BackgroundTasks,
                            file: UploadFile = Form(), seperator: str = Form(","),
+                           upload_body: project_request.UploadOngoingDatasetRequest | None = None,
                            db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Upload ongoing dataset to project {project_id} - from IP {get_real_ip(request)}")
 
@@ -235,7 +240,8 @@ def upload_ongoing_dataset(request: Request, project_id: int, background_tasks: 
     if db_project.status not in {ProjectStatus.TRAINED, ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_NOT_READY)
 
-    result_key = get_ongoing_dataset_result_key(file.file, extension, seperator, db_project)
+    result_key = get_ongoing_dataset_result_key(file.file, extension, seperator, db_project,
+                                                upload_body and upload_body.additional_info)
     if not result_key:
         raise HTTPException(status_code=400, detail=ErrorType.PROCESS_DATASET_ERROR)
 
@@ -290,6 +296,7 @@ def get_ongoing_dataset_result(request: Request, project_id: int, result_key: st
 @router.put("/{project_id}/stream/start", response_model=project_response.StreamProjectResponse)
 @router.put("/{project_id}/stream/start/{streaming_type}", response_model=project_response.StreamProjectResponse)
 def streaming_start(request: Request, project_id: int, streaming_type: str = "streaming",
+                    streaming_body: project_request.StreamingOperationRequest | None = None,
                     db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Enable streaming mode <{streaming_type}> for project {project_id} - "
                    f"from IP {get_real_ip(request)}")
@@ -309,7 +316,9 @@ def streaming_start(request: Request, project_id: int, streaming_type: str = "st
     plugins = {plugin.key: plugin.id for plugin in db_project.plugins
                if plugin.status in {PluginStatus.TRAINED, PluginStatus.STREAMING}}
     model_names = {plugin.id: plugin.model_name for plugin in db_project.plugins}
-    send_streaming_prepare_to_all_plugins(db_project.id, plugins, model_names)
+    additional_info = get_additional_info(definition_schema.Definition.from_orm(db_project.event_log.definition),
+                                          streaming_body and streaming_body.additional_info)
+    send_streaming_prepare_to_all_plugins(plugins, db_project.id, model_names, additional_info)
     return {
         "message": "Project streaming started successfully",
         "project_id": project_id

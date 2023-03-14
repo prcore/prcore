@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -25,9 +25,8 @@ def get_negative_proba(predictions: List[Tuple[int, float]]) -> float:
 
 
 class RandomAlgorithm(Algorithm):
-    def __init__(self, basic_info: Dict[str, Any], project_id: int, plugin_id: Optional[int] = None,
-                 df: Optional[DataFrame] = None, model_name: str = None, treatment_definition: list = None):
-        super().__init__(basic_info, project_id, plugin_id, df, model_name, treatment_definition)
+    def __init__(self, algo_data: Dict[str, Any]):
+        super().__init__(algo_data)
         self.__grouped_activities = []
         self.__grouped_outcomes = []
         self.__lengths = []

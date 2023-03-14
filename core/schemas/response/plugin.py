@@ -11,3 +11,8 @@ logger = logging.getLogger(__name__)
 class AllPluginsResponse(BaseModel):
     message: str
     plugins: list[Plugin] = []
+
+
+class PluginResponse(BaseModel):
+    message: str
+    plugin: Plugin

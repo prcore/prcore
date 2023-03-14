@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from core.confs import config
 from core.enums.definition import ColumnDefinition
@@ -15,6 +15,8 @@ basic_info: Dict[str, Any] = {
     "prescription_type": PluginType.TREATMENT_EFFECT,
     "description": ("This plugin uses Uplift Modeling package CasualLift to get the CATE "
                     "and probability of outcome if treatment is applied or not"),
-    "parameters": {}
+    "parameters": {},
+    "needed_columns": [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT],
+    "needed_info_for_training": [],
+    "needed_info_for_prediction": ["treatment_definition"]
 }
-needed_columns: List[ColumnDefinition] = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]

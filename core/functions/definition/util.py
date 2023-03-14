@@ -1,5 +1,7 @@
 import logging
+from typing import Any
 
+import core.schemas.definition as definition_schema
 from core.enums.definition import ColumnDefinition, DefinitionType, Operator, SupportedOperators
 
 # Enable logging
@@ -74,3 +76,15 @@ def get_start_timestamp(columns_definition: dict[str, ColumnDefinition]) -> str:
     # Get start timestamp column name
     return (get_defined_column_name(columns_definition, ColumnDefinition.TIMESTAMP)
             or get_defined_column_name(columns_definition, ColumnDefinition.START_TIMESTAMP))
+
+
+def get_additional_info(definition: definition_schema.Definition,
+                        new_additional_info: dict[str, Any]) -> dict[str, Any]:
+    # Get additional info
+    treatment_definition = definition.dict()["treatment_definition"]
+    stored_additional_info = definition.dict()["additional_info"]
+    stored_additional_info = stored_additional_info if stored_additional_info else {}
+    if not new_additional_info:
+        new_additional_info = {}
+    additional_info = {**stored_additional_info, **new_additional_info, "treatment_definition": treatment_definition}
+    return additional_info

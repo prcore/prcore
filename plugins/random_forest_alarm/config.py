@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from core.confs import config
 from core.enums.definition import ColumnDefinition
@@ -14,6 +14,8 @@ basic_info: Dict[str, Any] = {
     "name": "Random forest negative outcome probability",
     "prescription_type": PluginType.ALARM,
     "description": "This plugin predicts the alarm probability based on the random forest algorithm.",
-    "parameters": {}
+    "parameters": {},
+    "needed_columns": [ColumnDefinition.OUTCOME],
+    "needed_info_for_training": [],
+    "needed_info_for_prediction": []
 }
-needed_columns: List[ColumnDefinition] = [ColumnDefinition.OUTCOME]

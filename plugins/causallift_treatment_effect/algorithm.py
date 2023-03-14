@@ -1,11 +1,15 @@
 import logging
+import os
+import warnings
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
 from causallift import CausalLift
 from pandas import DataFrame
+from pandas.core.common import SettingWithCopyWarning
+from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 from sklearn.preprocessing import LabelBinarizer
 
 from core.enums.definition import ColumnDefinition
@@ -16,11 +20,17 @@ from plugins.common.dataset import get_boolean_encoding_dataframes_by_length
 # Enable logging
 logger = logging.getLogger(__name__)
 
+# Ignore warnings caused by the causallift package itself
+warnings.simplefilter("ignore", category=DeprecationWarning)
+warnings.simplefilter("ignore", category=ConvergenceWarning)
+warnings.simplefilter("ignore", category=SettingWithCopyWarning)
+warnings.simplefilter("ignore", category=UndefinedMetricWarning)
+os.environ["PYTHONWARNINGS"] = "ignore"
+
 
 class CausalLiftAlgorithm(Algorithm):
-    def __init__(self, basic_info: Dict[str, Any], project_id: int, plugin_id: Optional[int] = None,
-                 df: Optional[DataFrame] = None, model_name: str = None, treatment_definition: list = None):
-        super().__init__(basic_info, project_id, plugin_id, df, model_name, treatment_definition)
+    def __init__(self, algo_data: Dict[str, Any]):
+        super().__init__(algo_data)
         self.__grouped_activities = []
         self.__grouped_outcomes = []
         self.__grouped_treatments = []
@@ -96,8 +106,9 @@ class CausalLiftAlgorithm(Algorithm):
         features = [self.get_data()["mapping"][x["ACTIVITY"]] for x in prefix]
 
         # Get the CATE using two models approach
-        test_df = DataFrame([features], columns=[f"Activity_{i}" for i in range(length)])
-        cl = CausalLift(train_df=training_df, test_df=test_df, enable_ipw=True, logging_config=None)
+        test_df = DataFrame([features], columns=[f"EVENT_{i}" for i in range(length)])
+        cl = CausalLift(train_df=training_df, test_df=test_df, enable_ipw=True, logging_config=None,
+                        col_treatment=ColumnDefinition.TREATMENT, col_outcome=ColumnDefinition.OUTCOME, verbose=0)
         train_df, test_df = cl.estimate_cate_by_2_models()
         proba_if_treated = round(test_df["Proba_if_Treated"].values[0].item(), 4)
         proba_if_untreated = round(test_df["Proba_if_Untreated"].values[0].item(), 4)
@@ -107,7 +118,7 @@ class CausalLiftAlgorithm(Algorithm):
             "proba_if_treated": proba_if_treated,
             "proba_if_untreated": proba_if_untreated,
             "cate": cate,
-            "treatment": self.get_data()["treatment_definition"]
+            "treatment": self.get_additional_info_value("treatment_definition")
         }
         return {
             "date": datetime.now().isoformat(),
@@ -128,7 +139,8 @@ class CausalLiftAlgorithm(Algorithm):
         encoded_df.columns = encoded_df.columns.astype(str)
         training_df.columns = training_df.columns.astype(str)
         # Get the CATE using two models approach
-        cl = CausalLift(train_df=training_df, test_df=encoded_df, enable_ipw=True, logging_config=None)
+        cl = CausalLift(train_df=training_df, test_df=encoded_df, enable_ipw=True, logging_config=None,
+                        col_treatment=ColumnDefinition.TREATMENT, col_outcome=ColumnDefinition.OUTCOME)
         train_df, test_df = cl.estimate_cate_by_2_models()
         # Get the result
         for case_id, p in zip(encoded_df.index, test_df.values):
@@ -139,7 +151,7 @@ class CausalLiftAlgorithm(Algorithm):
                 "proba_if_treated": proba_if_treated,
                 "proba_if_untreated": proba_if_untreated,
                 "cate": cate,
-                "treatment": self.get_data()["treatment_definition"]
+                "treatment": self.get_additional_info_value("treatment_definition")
             }
             result[case_id] = {
                 "date": datetime.now().isoformat(),
@@ -248,7 +260,7 @@ class CausalLiftAlgorithm(Algorithm):
             "proba_if_treated": proba_if_treated,
             "proba_if_untreated": proba_if_untreated,
             "cate": cate,
-            "treatment": self.get_data()["treatment_definition"]
+            "treatment": self.get_additional_info_value("treatment_definition")
         }
         return {
             "date": datetime.now().isoformat(),

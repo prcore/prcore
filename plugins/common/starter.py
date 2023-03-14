@@ -1,6 +1,6 @@
 import logging
 from time import sleep
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, Type
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from pika import BasicProperties
@@ -8,7 +8,6 @@ from pika.exceptions import ConnectionClosedByBroker
 from tzlocal import get_localzone
 
 from core.confs import config
-from core.enums.definition import ColumnDefinition
 from core.enums.message import MessageType
 from core.functions.general.timer import log_rotation, processed_messages_clean
 from core.functions.general.etc import get_message_id
@@ -33,7 +32,7 @@ def plugin_scheduler(basic_info: dict) -> None:
     scheduler.start()
 
 
-def plugin_run(basic_info: Dict[str, Any], needed_columns: List[ColumnDefinition], algo: Type[Algorithm]) -> None:
+def plugin_run(algo: Type[Algorithm], basic_info: Dict[str, Any]) -> None:
     # Start the rabbitmq connection
     connection = None
     try:
@@ -44,8 +43,12 @@ def plugin_run(basic_info: Dict[str, Any], needed_columns: List[ColumnDefinition
         channel.basic_consume(
             queue=config.APP_ID,
             on_message_callback=lambda ch, method, properties, body: callback(
-                ch, method, properties, body,
-                basic_info, needed_columns, algo
+                ch=ch,
+                method=method,
+                properties=properties,
+                body=body,
+                algo=algo,
+                basic_info=basic_info
             )
         )
         channel.basic_publish(
@@ -59,7 +62,7 @@ def plugin_run(basic_info: Dict[str, Any], needed_columns: List[ColumnDefinition
         except ConnectionClosedByBroker:
             logger.warning("Connection to RabbitMQ closed by broker. Trying again in 5 seconds...")
             sleep(5)
-            return plugin_run(basic_info, needed_columns, algo)
+            return plugin_run(algo, basic_info)
     except KeyboardInterrupt:
         logger.warning("Plugin stopped by user")
     finally:
