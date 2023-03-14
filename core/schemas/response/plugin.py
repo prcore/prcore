@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -16,3 +17,8 @@ class AllPluginsResponse(BaseModel):
 class PluginResponse(BaseModel):
     message: str
     plugin: Plugin
+
+
+class AvailablePluginsResponse(BaseModel):
+    message: str
+    plugins: dict[str, dict[str, Any]] = {}

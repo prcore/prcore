@@ -58,6 +58,22 @@ def update_additional_info(db: Session, db_plugin: model.Plugin, additional_info
     return db_plugin
 
 
+def disable_plugin(db: Session, db_plugin: model.Plugin) -> model.Plugin:
+    # Disable a plugin
+    db_plugin.disabled = True
+    db.commit()
+    db.refresh(db_plugin)
+    return db_plugin
+
+
+def enable_plugin(db: Session, db_plugin: model.Plugin) -> model.Plugin:
+    # Enable a plugin
+    db_plugin.disabled = False
+    db.commit()
+    db.refresh(db_plugin)
+    return db_plugin
+
+
 def set_plugin_error(db: Session, db_plugin: model.Plugin, error: str) -> model.Plugin:
     # Set error of a plugin
     db_plugin.status = PluginStatus.ERROR

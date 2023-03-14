@@ -11,6 +11,9 @@ class ErrorType(str, Enum):
     INVALID_STREAMING_TYPE = "Invalid streaming type"
     INVALID_DATASET_TYPE = "Invalid dataset type"
 
+    PLUGIN_NOT_FOUND = "Plugin not found"
+    PLUGIN_NOT_READY = "Plugin not ready"
+
     PROCESS_DATASET_ERROR = "There was an error processing the dataset"
 
     PROJECT_NOT_FOUND = "Project not found"
