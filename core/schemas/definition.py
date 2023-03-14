@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import Any
 
 from pydantic import BaseModel
 from core.enums.definition import ColumnDefinition, Operator, Transition

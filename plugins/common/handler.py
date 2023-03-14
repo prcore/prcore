@@ -11,7 +11,7 @@ from core.enums.message import MessageType
 from core.functions.message.util import get_data_from_body
 
 from plugins.common import memory
-from plugins.common.algorithm import Algorithm, get_null_output
+from plugins.common.algorithm import Algorithm
 from plugins.common.check import check_needed_columns, check_column_classes, check_needed_info
 from plugins.common.dataset import read_df_from_path
 from plugins.common.initializer import (preprocess_and_train, activate_instance_from_model_file,
@@ -135,12 +135,14 @@ def handle_streaming_prepare(ch: BlockingChannel, data: dict, algo: Type[Algorit
                              basic_info: Dict[str, Any]) -> None:
     project_id = data["project_id"]
     model_name = data["model_name"]
+    additional_info = data["additional_info"]
     plugin_id = activate_instance_from_model_file(
         algo=algo,
         algo_data={
             "basic_info": basic_info,
             "project_id": project_id,
-            "model_name": model_name
+            "model_name": model_name,
+            "additional_info": additional_info
         }
     )
     if not plugin_id:
@@ -166,6 +168,6 @@ def handle_streaming_prescription_request(ch: BlockingChannel, data: dict, algo:
         result = instance.predict(prefix)
     except Exception as e:
         logger.warning(f"Predicting prefix failed: {e}", exc_info=True)
-        result = get_null_output(instance, f"Predicting prefix failed： {e}")
+        result = instance.get_null_output(f"Predicting prefix failed： {e}")
 
     send_streaming_prescription_result(ch, project_id, event_id, result)

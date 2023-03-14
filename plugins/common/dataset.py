@@ -45,6 +45,7 @@ def get_encoded_dfs_by_activity(original_df: DataFrame, encoding_type: EncodingT
     case_ids = df[ColumnDefinition.CASE_ID].values
     unique_case_ids = np.unique(case_ids)
     activities = df[ColumnDefinition.ACTIVITY].values
+    data["case_ids"] = unique_case_ids.tolist()
     data["grouped_activities"] = [activities[case_ids == case_id] for case_id in unique_case_ids]
     data["lengths"] = sorted({len(trace) for trace in data["grouped_activities"]})
     if ColumnDefinition.OUTCOME in df.columns:
@@ -119,7 +120,8 @@ def get_test_df_by_activity(length: int, encoding_type: EncodingType, data: Dict
         x = get_data_array(group, length, encoding_type, data.get("lb"))
         if x is None:
             continue
-        test_data.append([x])
+        c = data["case_ids"][i]
+        test_data.append([x, c])
     return get_test_df_from_data_list(test_data, length, encoding_type, data.get("lb"))
 
 
@@ -145,8 +147,9 @@ def get_test_df_from_data_list(test_data: List[List[Union[np.array, int]]], leng
                                lb: Optional[LabelBinarizer]) -> Optional[DataFrame]:
     if len(test_data) == 0:
         return None
-    df = pd.DataFrame(data=test_data, columns=[ColumnDefinition.ACTIVITY])
-    return get_activities_df(df, length, encoding_type, lb)
+    test_df = pd.DataFrame(data=test_data, columns=[ColumnDefinition.ACTIVITY, ColumnDefinition.CASE_ID])
+    activities_df = get_activities_df(test_df, length, encoding_type, lb)
+    return pd.concat([activities_df, test_df[[ColumnDefinition.CASE_ID]]], axis=1)
 
 
 def get_activities_df(df: DataFrame, length: int, encoding_type: EncodingType,
@@ -173,10 +176,11 @@ def get_training_df_by_activity(length: int, encoding_type: EncodingType, outcom
         t = get_treatment_label(data.get("grouped_treatments"), i)
         if x is None or y is None:
             continue
+        c = data["case_ids"][i]
         if data.get("grouped_treatments") is not None:
-            training_data.append([x, y, t])
+            training_data.append([x, y, t, c])
         else:
-            training_data.append([x, y])
+            training_data.append([x, y, c])
     training_df = get_training_df_from_data_list(training_data, length, encoding_type, data.get("lb"))
     if (training_df is not None
             and encoding_type in {EncodingType.BOOLEAN, EncodingType.FREQUENCY_BASED}
@@ -211,17 +215,18 @@ def get_training_df_from_data_list(training_data: List[List[Union[np.array, int]
     if len(training_data) == 0:
         return None
 
-    if len(training_data[0]) == 2:
-        columns = [ColumnDefinition.ACTIVITY, ColumnDefinition.OUTCOME]
+    if len(training_data[0]) == 3:
+        columns = [ColumnDefinition.ACTIVITY, ColumnDefinition.OUTCOME, ColumnDefinition.CASE_ID]
     else:
-        columns = [ColumnDefinition.ACTIVITY, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]
+        columns = [ColumnDefinition.ACTIVITY, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
+                   ColumnDefinition.CASE_ID]
     training_df = pd.DataFrame(data=training_data, columns=columns)
 
     activities_df = get_activities_df(training_df, length, encoding_type, lb)
-    if len(training_data[0]) == 2:
-        label_columns = [ColumnDefinition.OUTCOME]
+    if len(training_data[0]) == 3:
+        label_columns = [ColumnDefinition.OUTCOME, ColumnDefinition.CASE_ID]
     else:
-        label_columns = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]
+        label_columns = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT, ColumnDefinition.CASE_ID]
     return pd.concat([activities_df, training_df[label_columns]], axis=1)
 
 

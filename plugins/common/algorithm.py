@@ -3,7 +3,7 @@ import pickle
 from datetime import datetime
 from typing import Any, Dict, List, Union
 
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 from core.confs import path
@@ -37,6 +37,10 @@ class Algorithm:
         # Get training data
         return self.__df
 
+    def get_parameter_value(self, key: str) -> Any:
+        # Get parameter value
+        return self.__data["parameters"].get(key)
+
     def get_additional_info_value(self, key: str) -> Any:
         # Get additional information
         return self.__additional_info.get(key)
@@ -48,10 +52,6 @@ class Algorithm:
     def get_data(self) -> Dict[str, Any]:
         # Get data
         return self.__data
-
-    def get_parameter_value(self, key: str) -> Any:
-        # Get parameter value
-        return self.__data["parameters"].get(key)
 
     def set_data_value(self, key: str, value: Any):
         # Set data value
@@ -107,6 +107,27 @@ class Algorithm:
         # Predict the result using a DataFrame
         pass
 
+    @staticmethod
+    def get_case_id(row: Series) -> str:
+        case_id = row[ColumnDefinition.CASE_ID].item()
+        if isinstance(case_id, str):
+            return case_id
+        case_id = str(case_id)
+        if case_id.endswith(".0"):
+            case_id = case_id[:-2]
+        return case_id
+
+    def get_null_output(self, detail: str) -> dict:
+        return {
+            "date": datetime.now().isoformat(),
+            "type": self.get_basic_info()["prescription_type"],
+            "output": None,
+            "model": {
+                "name": self.get_basic_info()["name"],
+                "detail": detail
+            }
+        }
+
 
 def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> DataFrame:
     # Map the activities to the ordinal encoding
@@ -122,13 +143,13 @@ def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> Da
 def get_model_and_features_by_activities(instance: Algorithm, prefix: List[dict]) -> Union[dict, tuple]:
     # Predict the result
     if any(x["ACTIVITY"] not in instance.get_data()["mapping"] for x in prefix):
-        return get_null_output(instance, "The prefix contains an activity that is not in the training set")
+        return instance.get_null_output("The prefix contains an activity that is not in the training set")
 
     # Get the length of the prefix
     length = len(prefix)
     model = instance.get_data()["models"].get(length)
     if not model:
-        return get_null_output(instance, "The model is not trained for the given prefix length")
+        return instance.get_null_output("The model is not trained for the given prefix length")
 
     # Get the features of the prefix
     features = [instance.get_data()["mapping"][x["ACTIVITY"]] for x in prefix]
@@ -147,18 +168,6 @@ def get_score(model, x_val, y_val) -> dict:
         "precision": precision,
         "recall": recall,
         "f1_score": f1
-    }
-
-
-def get_null_output(instance: Algorithm, detail: str) -> dict:
-    return {
-        "date": datetime.now().isoformat(),
-        "type": instance.get_basic_info()["prescription_type"],
-        "output": None,
-        "model": {
-            "name": instance.get_basic_info()["name"],
-            "detail": detail
-        }
     }
 
 
