@@ -23,6 +23,7 @@ class Plugin(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     parameters = Column(JSONB, nullable=False, default={})
+    additional_info = Column(JSONB, nullable=False, default={})
     status = Column(String, nullable=True)
     error = Column(String, nullable=True)
     disabled = Column(Boolean, nullable=True, default=False)

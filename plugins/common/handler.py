@@ -114,10 +114,12 @@ def handle_dataset_prescription_request(ch: BlockingChannel, data: dict, algo: T
     model_name = data["model_name"]
     result_key = data["result_key"]
     ongoing_df_name = data["ongoing_df_name"]
+    additional_info = data["additional_info"]
     instance = get_instance_from_model_file(algo, {
         "project_id": project_id,
         "model_name": model_name,
-        "basic_info": basic_info
+        "basic_info": basic_info,
+        "additional_info": additional_info
     })
     df = read_df_from_path(path.TEMP_PATH, ongoing_df_name)
     try:
@@ -153,10 +155,12 @@ def handle_streaming_prescription_request(ch: BlockingChannel, data: dict, algo:
     model_name = data["model_name"]
     event_id = data["event_id"]
     prefix = data["data"]
+    additional_info = data["additional_info"]
     instance = get_instance_from_model_file(algo, {
         "project_id": project_id,
         "model_name": model_name,
-        "basic_info": basic_info
+        "basic_info": basic_info,
+        "additional_info": additional_info
     })
     try:
         result = instance.predict(prefix)

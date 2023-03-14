@@ -24,7 +24,6 @@ class DefinitionBase(BaseModel):
     abort_transition: Transition = Transition.ATE_ABORT
     outcome_definition: list[list[ProjectDefinition]] | None = None
     treatment_definition: list[list[ProjectDefinition]] | None = None
-    additional_info: dict[str, Any] | None = None
 
 
 class DefinitionCreate(DefinitionBase):

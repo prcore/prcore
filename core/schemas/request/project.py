@@ -14,24 +14,16 @@ class CreateProjectRequest(BaseModel):
     positive_outcome: list[list[ProjectDefinition]] | None = None
     treatment: list[list[ProjectDefinition]] | None = None
     parameters: dict[str, dict[str, Any]] = {}
-    additional_info: dict[str, Any] = {}
+    additional_info: dict[str, dict[str, Any]] = {}
 
 
 class UpdateProjectRequest(BaseModel):
     positive_outcome: list[list[ProjectDefinition]] | None = None
     treatment: list[list[ProjectDefinition]] | None = None
     parameters: dict[str, dict[str, Any]] = {}
-    additional_info: dict[str, Any] = {}
+    additional_info: dict[str, dict[str, Any]] = {}
 
 
 class BasicUpdateProjectRequest(BaseModel):
     name: str
     description: str = ""
-
-
-class UploadOngoingDatasetRequest(BaseModel):
-    additional_info: dict[str, Any] = {}
-
-
-class StreamingOperationRequest(BaseModel):
-    additional_info: dict[str, Any] = {}

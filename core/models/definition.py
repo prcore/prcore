@@ -25,4 +25,3 @@ class Definition(Base):
     abort_transition = Column(String, default=Transition.ATE_ABORT)
     outcome_definition = Column(JSONB, nullable=True)
     treatment_definition = Column(JSONB, nullable=True)
-    additional_info = Column(JSONB, nullable=True)

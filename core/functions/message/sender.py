@@ -27,9 +27,10 @@ def send_online_inquiry(plugin_id: str) -> bool:
 
 
 def send_training_data_to_all_plugins(plugins: dict[str, int], project_id: int, training_df_name: str,
-                                      additional_info: dict[str, Any]) -> bool:
+                                      additional_infos: dict[str, dict[str, Any]]) -> bool:
     # Send training data to all plugins
-    return all(send_training_data(plugin_key, project_id, plugins[plugin_key], training_df_name, additional_info)
+    return all(send_training_data(plugin_key, project_id, plugins[plugin_key], training_df_name,
+                                  additional_infos.get(plugin_key, {}))
                for plugin_key in plugins)
 
 
@@ -46,10 +47,10 @@ def send_training_data(plugin_key: str, project_id: int, plugin_id: int, trainin
 
 def send_dataset_prescription_request_to_all_plugins(plugins: dict[str, int], project_id: int,
                                                      model_names: dict[int, str], result_key: str, dataset_name: str,
-                                                     additional_info: dict[str, Any]) -> bool:
+                                                     additional_infos: dict[str, dict[str, Any]]) -> bool:
     # Send ongoing dataset to all plugins
     return all(send_dataset_prescription_request(plugin_key, project_id, model_names[plugins[plugin_key]], result_key,
-                                                 dataset_name, additional_info)
+                                                 dataset_name, additional_infos.get(plugin_key, {}))
                for plugin_key in plugins)
 
 
@@ -66,9 +67,10 @@ def send_dataset_prescription_request(plugin_key: str, project_id: int, model_na
 
 
 def send_streaming_prepare_to_all_plugins(plugins: dict[str, int], project_id: int, model_names: dict[int, str],
-                                          additional_info: dict[str, Any]) -> bool:
+                                          additional_infos: dict[str, dict[str, Any]]) -> bool:
     # Send streaming prepare to all plugins
-    return all(send_streaming_prepare(plugin_key, project_id, model_names[plugins[plugin_key]], additional_info)
+    return all(send_streaming_prepare(plugin_key, project_id, model_names[plugins[plugin_key]],
+                                      additional_infos.get(plugin_key, {}))
                for plugin_key in plugins)
 
 
@@ -81,25 +83,28 @@ def send_streaming_prepare(plugin_key: str, project_id: int, model_name: str, ad
     })
 
 
-def send_streaming_prescription_request_to_all_plugins(project_id: int, plugins: list[str], model_names: dict[str, str],
-                                                       event_id: int, prefix: list[dict]) -> bool:
+def send_streaming_prescription_request_to_all_plugins(plugins: list[str], project_id: int, model_names: dict[str, str],
+                                                       event_id: int, prefix: list[dict],
+                                                       additional_infos: dict[str, dict[str, Any]]) -> bool:
     # Send prescription request to all plugins
-    return all(send_streaming_prescription_request(plugin_key, project_id, model_names[plugin_key], event_id, prefix)
+    return all(send_streaming_prescription_request(plugin_key, project_id, model_names[plugin_key], event_id, prefix,
+                                                   additional_infos.get(plugin_key, {}))
                for plugin_key in plugins)
 
 
 def send_streaming_prescription_request(plugin_key: str, project_id: int, model_name: str, event_id: int,
-                                        prefix: list[dict]) -> bool:
+                                        prefix: list[dict], additional_info: dict[str, Any]) -> bool:
     # Send prescription request to a specific plugin
     return send_message(plugin_key, MessageType.STREAMING_PRESCRIPTION_REQUEST, {
         "project_id": project_id,
         "model_name": model_name,
         "event_id": event_id,
-        "data": prefix
+        "data": prefix,
+        "additional_info": additional_info
     })
 
 
-def send_streaming_stop_to_all_plugins(project_id: int, plugins: list[str]) -> bool:
+def send_streaming_stop_to_all_plugins(plugins: list[str], project_id: int) -> bool:
     # Send streaming stop to all plugins
     return all(send_streaming_stop(plugin_key, project_id) for plugin_key in plugins)
 

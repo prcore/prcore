@@ -13,7 +13,7 @@ import core.schemas.definition as definition_schema
 from core.confs import path
 from core.enums.definition import ColumnDefinition, DefinitionType, Transition
 from core.functions.definition.condition import check_or_conditions
-from core.functions.definition.util import get_defined_column_name, get_start_timestamp
+from core.functions.definition.util import get_defined_column_name, get_start_timestamp, get_column_definition
 from core.functions.event_log.df import get_dataframe_by_id_or_name
 from core.functions.general.etc import get_processes_number
 from core.functions.general.file import copy_file, get_new_path
@@ -376,16 +376,7 @@ def get_renamed_dataframe(df: DataFrame, columns_definition: dict[str, ColumnDef
     # Get renamed dataframe
     columns_need_to_rename = {}
     for column in df.columns.tolist():
-        definition = columns_definition.get(column)
-
-        if not definition:
-            if column in {ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
-                          ColumnDefinition.DURATION, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
-                          ColumnDefinition.COMPLETE_INDICATOR}:
-                definition = ColumnDefinition(column)
-            else:
-                definition = ColumnDefinition.TEXT
-
+        definition = get_column_definition(column, columns_definition)
         if definition in DefinitionType.SPECIAL:
             columns_need_to_rename[column] = definition
         elif definition == ColumnDefinition.CATEGORICAL:

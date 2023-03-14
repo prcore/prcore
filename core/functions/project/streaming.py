@@ -14,7 +14,7 @@ from core.enums.definition import ColumnDefinition
 from core.enums.status import ProjectStatus, PluginStatus
 from core.functions.general.etc import process_daemon
 from core.functions.message.sender import send_streaming_stop_to_all_plugins
-from core.functions.plugin.collector import get_active_plugins
+from core.functions.plugin.util import get_active_plugins
 from core.models import project as project_model
 from core.schemas import definition as definition_schema
 from core.starters import memory
@@ -150,8 +150,9 @@ def disable_streaming(db: Session, db_project: project_model.Project, redefined:
             plugin_crud.update_status(db, plugin, PluginStatus.TRAINED)
     if memory.streaming_projects.get(db_project.id):
         memory.streaming_projects[db_project.id]["finished"].set()
-    send_streaming_stop_to_all_plugins(db_project.id, [plugin.key for plugin in db_project.plugins
-                                                       if plugin.status == PluginStatus.STREAMING])
+    send_streaming_stop_to_all_plugins([plugin.key for plugin in db_project.plugins
+                                        if plugin.status == PluginStatus.STREAMING],
+                                       db_project.id)
     return True
 
 

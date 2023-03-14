@@ -17,6 +17,7 @@ class PluginCreate(PluginBase):
     name: str
     description: str | None = None
     parameters: dict[str, str | bool | int | float | list] = {}
+    additional_info: dict[str, str | bool | int | float | list] = {}
     status: str | None = None
 
 
@@ -33,6 +34,7 @@ class Plugin(PluginBase):
     name: str
     description: str | None = None
     parameters: dict[str, str | bool | int | float | list] = {}
+    additional_info: dict[str, str | bool | int | float | list] = {}
     status: str | None = None
     error: str | None = None
     disabled: bool = False

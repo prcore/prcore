@@ -41,6 +41,10 @@ class Algorithm:
         # Get additional information
         return self.__additional_info.get(key)
 
+    def set_additional_info(self, additional_info: Dict[str, Any]):
+        # Set additional information
+        self.__additional_info = additional_info
+
     def get_data(self) -> Dict[str, Any]:
         # Get data
         return self.__data

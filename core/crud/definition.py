@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -34,7 +33,6 @@ def update_definition(db: Session, definition: schema.Definition) -> model.Defin
     db_definition.abort_transition = definition.abort_transition
     db_definition.outcome_definition = definition.outcome_definition
     db_definition.treatment_definition = definition.treatment_definition
-    db_definition.additional_info = definition.additional_info
     db.commit()
     db.refresh(db_definition)
 
@@ -43,12 +41,10 @@ def update_definition(db: Session, definition: schema.Definition) -> model.Defin
 
 def set_project_level_definition(db: Session, db_definition: model.Definition,
                                  outcome: list[list[schema.ProjectDefinition]],
-                                 treatment: list[list[schema.ProjectDefinition]],
-                                 additional_info: dict[str, Any] | None) -> model.Definition:
+                                 treatment: list[list[schema.ProjectDefinition]]) -> model.Definition:
     # Set project level definition
     db_definition.outcome_definition = [[d.dict() for d in data] for data in outcome] if outcome else None
     db_definition.treatment_definition = [[d.dict() for d in data] for data in treatment] if treatment else None
-    db_definition.additional_info = additional_info
     db.commit()
     db.refresh(db_definition)
     return db_definition

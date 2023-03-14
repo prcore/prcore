@@ -17,7 +17,7 @@ from core.enums.message import MessageType
 from core.enums.status import PluginStatus, ProjectStatus
 from core.functions.message.sender import send_online_inquires
 from core.functions.message.util import get_connection, get_data_from_body
-from core.functions.plugin.collector import is_plugin_active
+from core.functions.plugin.util import is_plugin_active
 from core.functions.project.streaming import enable_streaming, check_simulation
 from core.functions.project.util import get_project_status
 from core.starters import memory
@@ -89,10 +89,14 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
 
 def handle_online_report(data: dict) -> None:
     memory.available_plugins[data["id"]] = {
-        "name": data["name"],
-        "prescription_type": data["prescription_type"],
-        "description": data["description"],
-        "parameters": data["parameters"],
+        "prescription_type": data.get("prescription_type", "Unknown"),
+        "name": data.get("name", "Plugin"),
+        "description": data.get("description", "No description"),
+        "parameters": data.get("parameters", {}),
+        "needed_columns": data.get("needed_columns", []),
+        "needed_info_for_training": data.get("needed_info_for_training", []),
+        "needed_info_for_prediction": data.get("needed_info_for_prediction", []),
+        "supported_encoding": data.get("supported_encoding", []),
         "online": datetime.now()
     }
 

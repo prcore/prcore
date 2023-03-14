@@ -7,6 +7,7 @@ import core.crud.case as case_crud
 import core.crud.event as event_crud
 import core.crud.project as project_crud
 import core.schemas.case as case_schema
+import core.schemas.definition as definition_schema
 import core.schemas.event as event_schema
 import core.schemas.response.event as event_response
 from core.enums.definition import ColumnDefinition
@@ -16,6 +17,7 @@ from core.functions.definition.util import get_defined_column_name
 from core.functions.event.job import prepare_prefix_and_send
 from core.functions.event.validation import validate_columns
 from core.functions.general.request import get_real_ip, get_db
+from core.functions.plugin.util import enhance_additional_infos, get_active_plugins
 from core.functions.project.streaming import check_simulation
 from core.security.token import validate_token
 from core.starters import memory
@@ -76,6 +78,13 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
             "event": db_event
         }
 
+    # Get additional infos
+    additional_infos = enhance_additional_infos(
+        additional_infos={plugin.key: plugin.additional_info for plugin in db_project.plugins},
+        active_plugins=get_active_plugins(),
+        definition=definition_schema.Definition.from_orm(db_definition)
+    )
+
     # Send the event to the plugins
     prepare_prefix_and_send(
         project_id=project_id,
@@ -84,7 +93,8 @@ async def receive_event(request: Request, project_id: int, db: Session = Depends
         event_id=db_event.id,
         columns_definition=columns_definition,
         case_attributes=case_attributes,
-        data=[db_event.attributes for db_event in db_case.events]
+        data=[db_event.attributes for db_event in db_case.events],
+        additional_infos=additional_infos
     )
     return {
         "message": "Event received successfully",
