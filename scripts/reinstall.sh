@@ -15,6 +15,6 @@ bash mkdir.sh
 cd ..
 docker builder prune -f --filter "until=6h"
 docker compose build
-docker compose up -d
+docker compose up -d --remove-orphans
 
 echo "Re-installation completed!"
