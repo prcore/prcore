@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from core.enums.definition import ColumnDefinition
 from core.functions.training.util import get_ordinal_encoded_df
 from plugins.common.algorithm import (Algorithm, get_model_and_features_by_activities, get_prescription_output,
-                                      get_encoded_df_from_df_by_activity, get_score)
+                                      get_encoded_df_from_df_by_activity)
 
 # Enable logging
 logger = logging.getLogger(__name__)

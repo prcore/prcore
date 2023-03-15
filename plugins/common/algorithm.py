@@ -128,6 +128,33 @@ class Algorithm:
             }
         }
 
+    @staticmethod
+    def get_score(model, x_val, y_val) -> dict:
+        # Get the score of the model
+        y_pred = model.predict(x_val)
+        accuracy = round(model.score(x_val, y_val), 4)
+        precision = round(precision_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+        recall = round(recall_score(y_val, y_pred, average="weighted", zero_division=1), 4)
+        f1 = round(f1_score(y_val, y_pred, average="weighted"), 4)
+        return {
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1
+        }
+
+    def get_prescription_output(self, output: Any, model_key: Union[int, str], model_code: str) -> dict:
+        return {
+            "date": datetime.now().isoformat(),
+            "type": self.get_basic_info()["prescription_type"],
+            "output": output,
+            "plugin": {
+                "name": self.get_basic_info()["name"],
+                "model": model_code,
+                **self.get_data()["scores"][model_key]
+            }
+        }
+
 
 def get_encoded_df_from_df_by_activity(instance: Algorithm, df: DataFrame) -> DataFrame:
     # Map the activities to the ordinal encoding
@@ -154,21 +181,6 @@ def get_model_and_features_by_activities(instance: Algorithm, prefix: List[dict]
     # Get the features of the prefix
     features = [instance.get_data()["mapping"][x["ACTIVITY"]] for x in prefix]
     return model, features
-
-
-def get_score(model, x_val, y_val) -> dict:
-    # Get the score of the model
-    y_pred = model.predict(x_val)
-    accuracy = round(model.score(x_val, y_val), 4)
-    precision = round(precision_score(y_val, y_pred, average="weighted", zero_division=1), 4)
-    recall = round(recall_score(y_val, y_pred, average="weighted", zero_division=1), 4)
-    f1 = round(f1_score(y_val, y_pred, average="weighted"), 4)
-    return {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1
-    }
 
 
 def get_prescription_output(instance: Algorithm, output: Any, model_key: Union[int, str], model_name: str) -> dict:

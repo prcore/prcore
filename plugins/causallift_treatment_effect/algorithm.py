@@ -29,7 +29,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 class CausalLiftAlgorithm(Algorithm):
     def __init__(self, algo_data: Dict[str, Any]):
         super().__init__(algo_data)
-        self.__training_dfs = {}
+        self.__training_dfs: Dict[int, DataFrame] = {}
 
     def preprocess(self) -> str:
         # Pre-process the data
@@ -93,7 +93,7 @@ class CausalLiftAlgorithm(Algorithm):
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result by using the given dataframe
         result = {}
-        result_dfs = {}
+        result_dfs: Dict[int, DataFrame] = {}
 
         # Get the test df for each length
         test_dfs, _ = get_encoded_dfs_by_activity(
@@ -106,15 +106,12 @@ class CausalLiftAlgorithm(Algorithm):
         )
 
         # Get the result for each length
-        start_time = datetime.now()
         for length, test_df in test_dfs.items():
             training_df = self.get_data()["training_dfs"].get(length)
             if training_df is None:
                 continue
             result_df = self.get_result(training_df, test_df)
             result_dfs[length] = result_df
-        end_time = datetime.now()
-        logger.info(f"Prediction time: {end_time - start_time}")
 
         # Merge the result
         if len(result_dfs) <= 0:

@@ -88,6 +88,7 @@ def handle_training_data(ch: BlockingChannel, data: Dict[str, Any], algo: Type[A
         if not info_check:
             return send_data_report(ch, project_id, plugin_id, info_check)
 
+        send_data_report(ch, project_id, plugin_id, True)
         default_params = basic_info.get("parameters", {})
         user_params = data.get("parameters", {})
         parameters = {**default_params, **user_params}
@@ -123,6 +124,7 @@ def handle_dataset_prescription_request(ch: BlockingChannel, data: dict, algo: T
     })
     df = read_df_from_path(path.TEMP_PATH, ongoing_df_name)
     try:
+        instance.set_additional_info(additional_info)
         result = instance.predict_df(df)
     except Exception as e:
         logger.warning(f"Predicting df failed: {e}", exc_info=True)

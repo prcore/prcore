@@ -46,14 +46,15 @@ def get_encoded_dfs_by_activity(original_df: DataFrame, encoding_type: EncodingT
     unique_case_ids = np.unique(case_ids)
     activities = df[ColumnDefinition.ACTIVITY].values
     data["case_ids"] = unique_case_ids.tolist()
-    data["grouped_activities"] = [activities[case_ids == case_id] for case_id in unique_case_ids]
+    grouped_activities_series = df.groupby(ColumnDefinition.CASE_ID)[ColumnDefinition.ACTIVITY].apply(np.array)
+    data["grouped_activities"] = [grouped_activities_series[case_id] for case_id in unique_case_ids]
     data["lengths"] = sorted({len(trace) for trace in data["grouped_activities"]})
     if ColumnDefinition.OUTCOME in df.columns:
-        outcomes = df[ColumnDefinition.OUTCOME].values
-        data["grouped_outcomes"] = [outcomes[case_ids == case_id][0] for case_id in unique_case_ids]
+        grouped_outcomes_series = df.groupby(ColumnDefinition.CASE_ID)[ColumnDefinition.OUTCOME].apply(np.array)
+        data["grouped_outcomes"] = [grouped_outcomes_series[case_id][0] for case_id in unique_case_ids]
     if include_treatment and ColumnDefinition.TREATMENT in df.columns:
-        treatments = df[ColumnDefinition.TREATMENT].values
-        data["grouped_treatments"] = [treatments[case_ids == case_id][0] for case_id in unique_case_ids]
+        grouped_treatments_series = df.groupby(ColumnDefinition.CASE_ID)[ColumnDefinition.TREATMENT].apply(np.array)
+        data["grouped_treatments"] = [grouped_treatments_series[case_id][0] for case_id in unique_case_ids]
     if encoding_type in {EncodingType.BOOLEAN, EncodingType.FREQUENCY_BASED}:
         if existing_data is not None and "lb" in existing_data:
             lb = existing_data["lb"]

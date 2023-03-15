@@ -46,6 +46,7 @@ def activate_instance_from_model_file(algo: Type[Algorithm], algo_data: Dict[str
     instance = get_instance_from_model_file(algo, algo_data)
     if instance is None:
         return 0
+    instance.set_additional_info(algo_data.get("additional_info", {}))
     return instance.get_plugin_id()
 
 
