@@ -189,7 +189,7 @@ def handle_streaming_prescription_result(data: dict) -> None:
     result = data["data"]
     with SessionLocal() as db:
         db_project = project_crud.get_project_by_id(db, project_id)
-        if not db_project:
+        if not db_project or db_project.status not in {ProjectStatus.STREAMING, ProjectStatus.SIMULATING}:
             return
         event = event_crud.get_event_by_id(db, event_id)
         if not event:
