@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 import core.crud.plugin as plugin_crud
+import core.schemas.request.plugin as plugin_request
 import core.schemas.response.plugin as plugin_response
 from core.functions.common.request import get_real_ip, get_db
 from core.functions.plugin.util import get_active_plugins
@@ -33,6 +34,20 @@ def read_available_plugins(request: Request, _: bool = Depends(validate_token)):
     return {
         "message": "Available plugins retrieved successfully",
         "plugins": get_active_plugins()
+    }
+
+
+@router.put("/{plugin_id}/additional_info", response_model=plugin_response.PluginResponse)
+def update_plugin_additional_info(request: Request, plugin_id: int,
+                                  additional_info: plugin_request.UpdateAdditionalInfoRequest,
+                                  _: bool = Depends(validate_token), db: Session = Depends(get_db)):
+    logger.warning(f"Update plugin {plugin_id} additional info - from IP {get_real_ip(request)}")
+    db_plugin = plugin_crud.get_plugin_by_id(db, plugin_id)
+    validation_plugin_status(db_plugin)
+    new_additional_info = {**db_plugin.additional_info, **additional_info}
+    return {
+        "message": "Plugin additional info updated successfully",
+        "plugin": plugin_crud.update_additional_info(db, db_plugin, new_additional_info)
     }
 
 

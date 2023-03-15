@@ -6,7 +6,6 @@ from typing import Optional
 
 from pandas import DataFrame, read_pickle
 
-from core.confs import path
 from core.functions.common.etc import random_str
 
 # Enable logging
