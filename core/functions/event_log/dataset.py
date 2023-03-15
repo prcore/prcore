@@ -243,7 +243,9 @@ def get_outcome_and_treatment_dataframe(df: DataFrame, definition: definition_sc
     # Get outcome and treatment dataframe
     if not definition.outcome_definition and not definition.treatment_definition:
         return df
-    return process_df_parallel(get_labelled_dataframe, df, definition, (definition,))
+    # TODO: Fix parallel processing
+    return get_labelled_dataframe(df, definition)
+    # return process_df_parallel(get_labelled_dataframe, df, definition, (definition,))
 
 
 def get_labelled_dataframe(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
@@ -397,9 +399,6 @@ def process_df_parallel(target: callable, df: DataFrame, definition: definition_
     unique_cases = df[case_id_column].unique()
     case_splits = np.array_split(unique_cases, processes_number)
     df_splits = [df[df[case_id_column].isin(case_split)] for case_split in case_splits]
-
-    # TODO solve this temporary solution
-    processes_number = 1
 
     with Pool(processes_number) as pool:
         results = pool.starmap(target, [(df_split,) + args for df_split in df_splits])
