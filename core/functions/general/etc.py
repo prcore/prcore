@@ -1,11 +1,12 @@
 import logging
+import re
 from datetime import datetime
 from multiprocessing import cpu_count, Process
 from random import choice
 from string import ascii_letters, digits
 from threading import active_count, Thread, Timer
 from time import localtime, strftime
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Any
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -95,3 +96,31 @@ def thread(target: Callable, args: Tuple, kwargs: dict = None, daemon: bool = Tr
         logger.warning(f"Current threads: {active_count()}")
 
     return result
+
+
+def convert_to_seconds(time_str: Any):
+    time_str = str(time_str).strip().lower()
+    if time_str.isdigit():
+        return int(time_str)
+
+    match = re.match(r"^(\d+)\s*(\w+)$", time_str)
+    if not match:
+        raise ValueError("Invalid input")
+
+    value = int(match.group(1))
+    unit = match.group(2)
+
+    if unit in ["months", "month", "mo", "m"]:
+        return value * 30 * 24 * 60 * 60
+    elif unit in ["weeks", "week", "wk", "w"]:
+        return value * 7 * 24 * 60 * 60
+    elif unit in ["days", "day", "d"]:
+        return value * 24 * 60 * 60
+    elif unit in ["hours", "hour", "hr", "h"]:
+        return value * 60 * 60
+    elif unit in ["minutes", "minute", "min", "m"]:
+        return value * 60
+    elif unit in ["seconds", "second", "sec", "s"]:
+        return value
+    else:
+        raise ValueError("Invalid unit")

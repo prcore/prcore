@@ -1,5 +1,4 @@
 import logging
-import re
 from typing import Any
 
 import numpy as np
@@ -8,6 +7,7 @@ from pandas import DataFrame
 
 from core.enums.definition import ColumnDefinition, Operator, SupportedOperators
 from core.functions.definition.util import get_supported_operators
+from core.functions.general.etc import convert_to_seconds
 from core.schemas.definition import ProjectDefinition
 
 # Enable logging
@@ -149,31 +149,3 @@ def compare_categorical(group: DataFrame, column_name: str, threshold: Any) -> b
     # Compare categorical
     threshold = str(threshold).lower()
     return np.any(group[column_name].str.lower() == threshold)
-
-
-def convert_to_seconds(time_str):
-    time_str = str(time_str).strip().lower()
-    if time_str.isdigit():
-        return int(time_str)
-
-    match = re.match(r"^(\d+)\s*(\w+)$", time_str)
-    if not match:
-        raise ValueError("Invalid input")
-
-    value = int(match.group(1))
-    unit = match.group(2)
-
-    if unit in ["months", "month", "mo", "m"]:
-        return value * 30 * 24 * 60 * 60
-    elif unit in ["weeks", "week", "wk", "w"]:
-        return value * 7 * 24 * 60 * 60
-    elif unit in ["days", "day", "d"]:
-        return value * 24 * 60 * 60
-    elif unit in ["hours", "hour", "hr", "h"]:
-        return value * 60 * 60
-    elif unit in ["minutes", "minute", "min", "m"]:
-        return value * 60
-    elif unit in ["seconds", "second", "sec", "s"]:
-        return value
-    else:
-        raise ValueError("Invalid unit")

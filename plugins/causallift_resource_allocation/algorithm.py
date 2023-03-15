@@ -1,8 +1,8 @@
 import logging
 import os
 import warnings
-from datetime import datetime
-from typing import Any, Dict, List
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from causallift import CausalLift
@@ -14,8 +14,9 @@ from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 from core.confs import path
 from core.enums.dataset import OutcomeType
 from core.enums.definition import ColumnDefinition
-from core.functions.general.etc import random_str
+from core.functions.general.etc import convert_to_seconds, random_str
 from core.functions.general.file import delete_file
+from plugins.causallift_resource_allocation import memory
 from plugins.common.algorithm import Algorithm
 from plugins.common.dataset import get_encoded_dfs_by_activity
 
@@ -57,6 +58,11 @@ class CausalLiftAlgorithm(Algorithm):
 
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result by using the given prefix
+        available_resources = self.get_additional_info_value("available_resources")
+        treatment_duration = convert_to_seconds(self.get_additional_info_value("treatment_duration"))
+        if not available_resources or not treatment_duration:
+            return self.get_null_output("The available resources or the treatment duration is not provided")
+
         length = len(prefix)
         training_df = self.get_data()["training_dfs"].get(length)
         if training_df is None:
@@ -75,19 +81,20 @@ class CausalLiftAlgorithm(Algorithm):
 
         # Get the CATE using two models approach
         result_df = self.get_result(training_df, test_df)
-        proba_if_treated = round(result_df["Proba_if_Treated"].values[0].item(), 4)
-        proba_if_untreated = round(result_df["Proba_if_Untreated"].values[0].item(), 4)
         cate = round(result_df["CATE"].values[0].item(), 4)
-        output = {
-            "proba_if_treated": proba_if_treated,
-            "proba_if_untreated": proba_if_untreated,
-            "cate": cate,
-            "treatment": self.get_additional_info_value("treatment_definition")
-        }
+        resource_allocation = self.get_resource_allocation_result(available_resources, treatment_duration, cate)
+        resource = resource_allocation["resource"]
+        detail = resource_allocation["detail"]
+        if not resource:
+            return self.get_null_output(detail)
         return {
             "date": datetime.now().isoformat(),
             "type": self.get_basic_info()["prescription_type"],
-            "output": output,
+            "output": {
+                "cate": cate,
+                "resource": resource,
+                "allocated_until": detail.isoformat()
+            },
             "plugin": {
                 "name": self.get_basic_info()["name"],
                 "model": f"{self.get_parameter_value('encoding')}-length-{length}",
@@ -96,56 +103,7 @@ class CausalLiftAlgorithm(Algorithm):
 
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result by using the given dataframe
-        result = {}
-        result_dfs: Dict[int, DataFrame] = {}
-
-        # Get the test df for each length
-        test_dfs, _ = get_encoded_dfs_by_activity(
-            original_df=df,
-            encoding_type=self.get_parameter_value("encoding"),
-            outcome_type=OutcomeType.LABELLED,
-            include_treatment=False,
-            for_test=True,
-            existing_data=self.get_data()
-        )
-
-        # Get the result for each length
-        for length, test_df in test_dfs.items():
-            training_df = self.get_data()["training_dfs"].get(length)
-            if training_df is None:
-                continue
-            result_df = self.get_result(training_df, test_df)
-            result_dfs[length] = result_df
-
-        # Merge the result
-        if len(result_dfs) <= 0:
-            return result
-        for length, result_df in result_dfs.items():
-            treatment_definition = self.get_additional_info_value("treatment_definition")
-            prescription_type = self.get_basic_info()["prescription_type"]
-            plugin_name = self.get_basic_info()["name"]
-            model_code = f"{self.get_parameter_value('encoding')}-length-{length}"
-            for _, row in result_df.iterrows():
-                case_id = self.get_case_id(row)
-                proba_if_treated = round(row["Proba_if_Treated"].item(), 4)
-                proba_if_untreated = round(row["Proba_if_Untreated"].item(), 4)
-                cate = round(row["CATE"].item(), 4)
-                output = {
-                    "proba_if_treated": proba_if_treated,
-                    "proba_if_untreated": proba_if_untreated,
-                    "cate": cate,
-                    "treatment": treatment_definition
-                }
-                result[case_id] = {
-                    "date": datetime.now().isoformat(),
-                    "type": prescription_type,
-                    "output": output,
-                    "plugin": {
-                        "name": plugin_name,
-                        "model": model_code
-                    }
-                }
-        return result
+        return {}
 
     @staticmethod
     def get_result(training_df: DataFrame, test_df: DataFrame) -> DataFrame:
@@ -176,3 +134,41 @@ class CausalLiftAlgorithm(Algorithm):
         finally:
             delete_file(temp_dir)
         return result_df
+
+    def get_resource_allocation_result(self, available_resources: List[str], treatment_duration: int,
+                                       cate: float) -> dict:
+        # Get the resource allocation result
+        if cate <= 0:
+            return {
+                "resource": None,
+                "detail": "The CATE is less than or equal to 0, so no resource allocation is needed"
+            }
+        project_id = self.get_data()["project_id"]
+        selected_resource = self.select_resource(project_id, available_resources, treatment_duration)
+        if selected_resource is None:
+            return {
+                "resource": None,
+                "detail": "There is no available resource"
+            }
+        return {
+            "resource": selected_resource,
+            "detail": memory.resources[project_id][selected_resource]
+        }
+
+    @staticmethod
+    def select_resource(project_id: int, available_resources: List[str], treatment_duration: int) -> Optional[str]:
+        if memory.resources.get(project_id) is None:
+            memory.resources[project_id] = {}
+        allocated_resource = memory.resources.get(project_id)
+        now = datetime.now()
+        for resource in available_resources:
+            if resource in allocated_resource:
+                available_since = allocated_resource[resource]
+                if now <= available_since:
+                    continue
+                memory.resources[project_id][resource] = now + timedelta(seconds=treatment_duration)
+                return resource
+            else:
+                memory.resources[project_id][resource] = now + timedelta(seconds=treatment_duration)
+                return resource
+        return None

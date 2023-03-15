@@ -12,7 +12,7 @@ services:
       - rabbitmq
     restart: always
     environment:
-      ENABLED_PLUGINS: "plugin-knn-next-activity || plugin-random-forest-alarm || plugin-causallift-treatment-effect"
+      ENABLED_PLUGINS: "plugin-knn-next-activity || plugin-random-forest-alarm || plugin-causallift-treatment-effect || plugin-causallift-resource-allocation"
       APP_ID: "core"
       API_TOKEN: ${API_TOKEN}
       API_USERNAME: ${API_USERNAME}
@@ -57,6 +57,27 @@ services:
     networks:
       - prcore
 
+  plugin-random-forest-alarm:
+    build:
+      context: .
+      dockerfile: plugins/random_forest_alarm/Dockerfile
+    container_name: prcore-plugin-random-forest-alarm
+    depends_on:
+      - core
+    restart: always
+    environment:
+      APP_ID: "plugin-random-forest-alarm"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+    volumes:
+      - ./data/event_logs:/code/data/event_logs
+      - ./data/plugins:/code/data/plugins
+      - ./data/tmp:/code/data/tmp
+    networks:
+      - prcore
+
   plugin-causallift-treatment-effect:
     build:
       context: .
@@ -78,16 +99,16 @@ services:
     networks:
       - prcore
 
-  plugin-random-forest-alarm:
+  plugin-causallift-resource-allocation:
     build:
       context: .
-      dockerfile: plugins/random_forest_alarm/Dockerfile
-    container_name: prcore-plugin-random-forest-alarm
+      dockerfile: plugins/causallift_resource_allocation/Dockerfile
+    container_name: prcore-plugin-causallift-resource-allocation
     depends_on:
       - core
     restart: always
     environment:
-      APP_ID: "plugin-random-forest-alarm"
+      APP_ID: "plugin-causallift-resource-allocation"
       RABBITMQ_HOST: "rabbitmq"
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: ${RABBITMQ_USER}

@@ -1,7 +1,7 @@
 import logging
 from os import remove
 from os.path import exists
-from shutil import copy, move
+from shutil import copy, move, rmtree
 
 from core.functions.general.etc import random_str
 
@@ -33,7 +33,12 @@ def delete_file(path: str) -> bool:
         if not(path and exists(path)):
             return False
 
-        result = remove(path) or True
+        try:
+            remove(path)
+        except IsADirectoryError:
+            rmtree(path)
+
+        result = True
     except Exception as e:
         logger.warning(f"Delete file error: {e}", exc_info=True)
 
