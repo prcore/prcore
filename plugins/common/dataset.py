@@ -1,5 +1,5 @@
 import logging
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -229,50 +229,3 @@ def get_training_df_from_data_list(training_data: List[List[Union[np.array, int]
     else:
         label_columns = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT, ColumnDefinition.CASE_ID]
     return pd.concat([activities_df, training_df[label_columns]], axis=1)
-
-
-def get_boolean_encoding_dataframes_by_length(df: DataFrame) -> dict:
-    # If one type of activity occurs in a trace, the corresponding column is set to 1, otherwise 0
-    grouped_df = df.groupby(ColumnDefinition.CASE_ID)
-    dataframes = {}
-    all_activities = sorted(set(df[ColumnDefinition.ACTIVITY]))
-    lengths_split = np.array_split(sorted(list(set([len(g) for _, g in grouped_df]))), cpu_count() * 4)
-
-    with Pool(cpu_count()) as pool:
-        results = pool.starmap(
-            func=generate_boolean_encoded_dataframe_for_lengths,
-            iterable=[(grouped_df, all_activities, lens) for lens in lengths_split]
-        )
-
-    for chunk in results:
-        dataframes.update(chunk)
-
-    return dataframes
-
-
-def generate_boolean_encoded_dataframe_for_lengths(grouped_df: DataFrame, activities: list, lengths: list) -> dict:
-    result = {}
-    for length in lengths:
-        r = get_boolean_encoded_sliced_groups(grouped_df, activities, length)
-        if r is None:
-            continue
-        result[length] = r
-    return result
-
-
-def get_boolean_encoded_sliced_groups(grouped_df: DataFrame, activities: list, length: int) -> Optional[DataFrame]:
-    sliced_groups = [get_boolean_encoded_df(group.iloc[:length], activities)
-                     for _, group in grouped_df if len(group) >= length + 1]
-    if len(sliced_groups) < 1000:
-        return None
-    return pd.concat(sliced_groups, ignore_index=True)
-
-
-def get_boolean_encoded_df(group: DataFrame, activities: list) -> DataFrame:
-    data = {}
-    for activity in activities:
-        data[f"{ColumnDefinition.ACTIVITY}_{activity}"] = 1 if activity in set(group[ColumnDefinition.ACTIVITY]) else 0
-    for label in [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]:
-        if label in group:
-            data[label] = group.iloc[0][label]
-    return pd.DataFrame([data])
