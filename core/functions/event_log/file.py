@@ -6,7 +6,7 @@ from pandas import DataFrame, read_csv
 from pm4py import read_xes
 
 from core.confs import path
-from core.functions.general.file import get_extension, get_new_path, delete_file
+from core.functions.common.file import get_extension, get_new_path, delete_file
 
 # Enable logging
 logger = logging.getLogger(__name__)

@@ -2,8 +2,12 @@ import logging
 from os import remove
 from os.path import exists
 from shutil import copy, move, rmtree
+from typing import Optional
 
-from core.functions.general.etc import random_str
+from pandas import DataFrame, read_pickle
+
+from core.confs import path
+from core.functions.common.etc import random_str
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -25,18 +29,18 @@ def copy_file(src: str, dst: str) -> bool:
     return result
 
 
-def delete_file(path: str) -> bool:
+def delete_file(file_path: str) -> bool:
     # Delete a file
     result = False
 
     try:
-        if not(path and exists(path)):
+        if not(file_path and exists(file_path)):
             return False
 
         try:
-            remove(path)
+            remove(file_path)
         except IsADirectoryError:
-            rmtree(path)
+            rmtree(file_path)
 
         result = True
     except Exception as e:
@@ -45,12 +49,12 @@ def delete_file(path: str) -> bool:
     return result
 
 
-def get_extension(path: str) -> str:
-    # Get the extension of a file
+def get_extension(file_name: str) -> str:
+    # Get the extension of a file name
     result = ""
 
     try:
-        result = result if "." not in path else path.split(".")[-1]
+        result = result if "." not in file_name else file_name.split(".")[-1]
         result = result.lower()
     except Exception as e:
         logger.warning(f"Get extension error: {e}", exc_info=True)
@@ -91,3 +95,13 @@ def move_file(src: str, dst: str) -> bool:
         logger.warning(f"Move file error: {e}", exc_info=True)
 
     return result
+
+
+def get_dataframe_from_pickle(df_path: str) -> Optional[DataFrame]:
+    # Get dataframe from pickle file
+    return read_pickle(df_path)
+
+
+def save_dataframe_to_pickle(df_path: str, df: DataFrame) -> None:
+    # Save dataframe to pickle file
+    df.to_pickle(df_path)

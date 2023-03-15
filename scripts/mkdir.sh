@@ -15,6 +15,8 @@ mkdir -p ../data/event_logs/simulation_df
 mkdir -p ../data/logs
 mkdir -p ../data/plugins/logs
 mkdir -p ../data/plugins/models
+mkdir -p ../data/processor
+mkdir -p ../data/processor/logs
 mkdir -p ../data/tmp
 
 mkdir -p ../data/postgres

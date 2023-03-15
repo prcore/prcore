@@ -1,9 +1,13 @@
 import logging
+from datetime import datetime
 from typing import Any
 
+import core.schemas.definition as definition_schema
 from core.confs import config
 from core.enums.message import MessageType
+from core.functions.common.etc import random_str
 from core.functions.message.util import send_message
+from core.starters import memory
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -114,3 +118,29 @@ def send_streaming_stop(plugin_key: str, project_id: int) -> bool:
     return send_message(plugin_key, MessageType.STREAMING_STOP, {
         "project_id": project_id
     })
+
+
+def send_process_request(df_name: str, definition: definition_schema.Definition) -> str:
+    # Send process request to the data processor
+    request_key = random_str(8)
+    while request_key in list(memory.pending_dfs):
+        request_key = random_str(8)
+    memory.pending_dfs[request_key] = {
+        "date": datetime.now(),
+        "df_name": df_name,
+        "finished": False
+    }
+    definition = definition.dict()
+    for key, value in definition.items():
+        if isinstance(value, datetime):
+            definition[key] = value.isoformat()
+    send_message(
+        receiver_id="processor",
+        message_type=MessageType.PROCESS_REQUEST,
+        data={
+            "request_key": request_key,
+            "df_name": df_name,
+            "definition": definition
+        }
+    )
+    return request_key

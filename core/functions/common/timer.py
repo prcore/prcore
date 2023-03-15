@@ -4,8 +4,8 @@ from subprocess import run
 from typing import Dict
 
 from core import confs
-from core.functions.general.etc import get_readable_time
-from core.functions.general.file import move_file
+from core.functions.common.etc import get_readable_time
+from core.functions.common.file import move_file
 
 # Enable logging
 logger = logging.getLogger(__name__)

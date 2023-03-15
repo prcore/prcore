@@ -6,8 +6,8 @@ import pandas as pd
 from pandas import DataFrame
 
 from core.enums.definition import ColumnDefinition, Operator, SupportedOperators
+from core.functions.common.etc import convert_to_seconds
 from core.functions.definition.util import get_supported_operators
-from core.functions.general.etc import convert_to_seconds
 from core.schemas.definition import ProjectDefinition
 
 # Enable logging

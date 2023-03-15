@@ -13,11 +13,11 @@ from tzlocal import get_localzone
 from core import security
 from core.starters.database import Base, engine, SessionLocal
 from core.starters.rabbitmq import parameters
-from core.functions.general.etc import delay, thread
+from core.functions.common.etc import delay, thread
+from core.functions.common.timer import processed_messages_clean, log_rotation
 from core.functions.message.handler import callback, start_consuming, stop_consuming, consuming_stopped
 from core.functions.message.sender import send_online_inquires
 from core.functions.tool.timer import clean_local_storage, pop_unused_data, stop_unread_simulations
-from core.functions.general.timer import processed_messages_clean, log_rotation
 from core.routers import event, event_log, plugin, project
 from core.starters import memory
 

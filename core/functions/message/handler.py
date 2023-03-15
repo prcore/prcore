@@ -81,6 +81,8 @@ def callback(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProper
             handle_streaming_ready(data)
         elif message_type == MessageType.STREAMING_PRESCRIPTION_RESULT:
             handle_streaming_prescription_result(data)
+        elif message_type == MessageType.PROCESS_RESULT:
+            handle_process_result(data)
     except Exception as e:
         logger.error(f"Error while handling message {message_type}: {e}", exc_info=True)
     finally:
@@ -201,6 +203,18 @@ def handle_streaming_prescription_result(data: dict) -> None:
             event_crud.mark_as_prescribed(db, event)
         # Check if the simulation is finished
         check_simulation(db, db_project)
+
+
+def handle_process_result(data: dict) -> None:
+    request_key = data["request_key"]
+    df_name = data["df_name"]
+    processed_df = data.get("processed_df")
+    if request_key not in memory.pending_dfs:
+        return
+    if df_name != memory.pending_dfs[request_key]["df_name"]:
+        return
+    memory.pending_dfs[request_key]["processed_df"] = processed_df
+    memory.pending_dfs[request_key]["finished"] = True
 
 
 def update_project_status(db: Session, project_id: int) -> None:

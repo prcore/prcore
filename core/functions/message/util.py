@@ -9,7 +9,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import AMQPConnectionError
 
 from core.enums.message import MessageType
-from core.functions.general.etc import get_message_id
+from core.functions.common.etc import get_message_id
 from core.starters.rabbitmq import parameters
 
 # Enable logging

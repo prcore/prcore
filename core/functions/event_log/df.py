@@ -1,13 +1,13 @@
 import logging
 
-from pandas import read_pickle, DataFrame
+from pandas import DataFrame
 from sqlalchemy.orm import Session
 
 from core.confs import path
 from core.crud.event_log import set_df_name
+from core.functions.common.etc import get_current_time_label
+from core.functions.common.file import get_new_path, get_dataframe_from_pickle, save_dataframe_to_pickle
 from core.models.event_log import EventLog
-from core.functions.general.etc import get_current_time_label
-from core.functions.general.file import get_new_path
 from core.starters import memory
 
 # Enable logging
@@ -23,7 +23,7 @@ def get_dataframe_by_id_or_name(event_log_id: int, df_name: str) -> DataFrame | 
     # Get dataframe from memory or pickle file
     df = get_dataframe_from_memory(event_log_id=event_log_id)
     if df is None and df_name:
-        df = get_dataframe_from_pickle(filename=df_name)
+        df = get_dataframe_from_pickle(f"{path.EVENT_LOG_DATAFRAME_PATH}/{df_name}")
         save_dataframe_to_memory(event_log_id=event_log_id, df=df)
     return df
 
@@ -31,11 +31,6 @@ def get_dataframe_by_id_or_name(event_log_id: int, df_name: str) -> DataFrame | 
 def get_dataframe_from_memory(event_log_id: int) -> DataFrame | None:
     # Get dataframe from memory
     return memory.dataframes.get(event_log_id)
-
-
-def get_dataframe_from_pickle(filename: str) -> DataFrame:
-    # Get dataframe from pickle file
-    return read_pickle(f"{path.EVENT_LOG_DATAFRAME_PATH}/{filename}")
 
 
 def save_dataframe(db: Session, db_event_log: EventLog, df: DataFrame) -> None:
@@ -53,8 +48,3 @@ def save_dataframe(db: Session, db_event_log: EventLog, df: DataFrame) -> None:
 def save_dataframe_to_memory(event_log_id: int, df: DataFrame) -> None:
     # Save dataframe to memory
     memory.dataframes[event_log_id] = df
-
-
-def save_dataframe_to_pickle(df_path: str, df: DataFrame) -> None:
-    # Save dataframe to pickle file
-    df.to_pickle(df_path)

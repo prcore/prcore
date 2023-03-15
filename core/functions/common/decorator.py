@@ -1,7 +1,7 @@
 import logging
 from functools import wraps
 
-from core.functions.general.etc import thread
+from core.functions.common.etc import thread
 
 # Enable logging
 logger = logging.getLogger(__name__)

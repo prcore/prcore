@@ -52,13 +52,7 @@ def get_message_id() -> str:
 
 
 def get_processes_number() -> int:
-    if cpu_count() <= 2:
-        result = 1
-    elif cpu_count() < 16:
-        result = cpu_count() // 2
-    else:
-        result = 8
-    return result
+    return cpu_count()
 
 
 def process_daemon(target: Callable, args: Tuple, threaded: bool = False) -> None:

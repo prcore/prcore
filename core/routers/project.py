@@ -23,13 +23,13 @@ import core.schemas.project as project_schema
 from core.confs import path
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus, ProjectStatusGroup, PluginStatus
+from core.functions.common.etc import thread
+from core.functions.common.file import delete_file, get_extension
+from core.functions.common.request import get_real_ip, get_db
 from core.functions.plugin.util import enhance_additional_infos, get_active_plugins
 from core.functions.event_log.dataset import (get_ongoing_dataset_path, get_original_dataset_path,
                                               get_processed_dataset_path, get_simulation_dataset_path)
 from core.functions.event_log.job import start_pre_processing
-from core.functions.general.etc import process_daemon
-from core.functions.general.file import delete_file, get_extension
-from core.functions.general.request import get_real_ip, get_db
 from core.functions.message.sender import send_streaming_prepare_to_all_plugins
 from core.functions.project.prescribe import (delete_result_from_memory, get_ongoing_dataset_result_key,
                                               process_ongoing_dataset, run_project_watcher_for_ongoing_dataset)
@@ -95,10 +95,9 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
 
     # Start the pre-processing
     engine.dispose()
-    process_daemon(
+    thread(
         target=start_pre_processing,
-        args=(db_project.id, get_active_plugins(), create_body.parameters, create_body.additional_info),
-        threaded=True
+        args=(db_project.id, get_active_plugins(), create_body.parameters, create_body.additional_info)
     )
 
     # Start the test file watching
@@ -189,10 +188,9 @@ def update_project_definition(request: Request, project_id: int,
     # Start the pre-processing
     project_crud.update_status(db, db_project, ProjectStatus.PREPROCESSING)
     engine.dispose()
-    process_daemon(
+    thread(
         target=start_pre_processing,
-        args=(db_project.id, get_active_plugins(), update_body.parameters, update_body.additional_info, True),
-        threaded=True
+        args=(db_project.id, get_active_plugins(), update_body.parameters, update_body.additional_info, True)
     )
 
     return {

@@ -14,8 +14,8 @@ from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 from core.confs import path
 from core.enums.dataset import OutcomeType
 from core.enums.definition import ColumnDefinition
-from core.functions.general.etc import convert_to_seconds, random_str
-from core.functions.general.file import delete_file
+from core.functions.common.etc import convert_to_seconds, random_str
+from core.functions.common.file import delete_file
 from plugins.causallift_resource_allocation import memory
 from plugins.common.algorithm import Algorithm
 from plugins.common.dataset import get_encoded_dfs_by_activity

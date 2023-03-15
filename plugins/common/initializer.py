@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Optional, Type
 
-from core.functions.general.decorator import threaded
+from core.functions.common.decorator import threaded
 from plugins.common import memory
 from plugins.common.algorithm import Algorithm
 from plugins.common.sender import send_error_report, send_training_start, send_model_name

@@ -8,7 +8,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 
 from core.confs import path
 from core.enums.definition import ColumnDefinition
-from core.functions.general.file import get_new_path
+from core.functions.common.file import get_new_path
 
 # Enable logging
 logger = logging.getLogger(__name__)

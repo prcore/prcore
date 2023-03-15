@@ -12,14 +12,14 @@ import core.crud.event as event_crud
 from core.crud import project as project_crud, plugin as plugin_crud
 from core.enums.definition import ColumnDefinition
 from core.enums.status import ProjectStatus, PluginStatus
-from core.functions.general.etc import process_daemon
+from core.functions.common.etc import process_daemon
 from core.functions.message.sender import send_streaming_stop_to_all_plugins
 from core.functions.plugin.util import get_active_plugins
 from core.models import project as project_model
 from core.schemas import definition as definition_schema
 from core.starters import memory
 from core.starters.database import engine
-from simulation import run_simulation
+from simulator import run_simulation
 
 # Enable logging
 logger = logging.getLogger(__name__)

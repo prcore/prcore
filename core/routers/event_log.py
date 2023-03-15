@@ -13,15 +13,15 @@ import core.schemas.event_log as event_log_schema
 from core.confs import path
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
+from core.functions.common.etc import get_current_time_label
+from core.functions.common.request import get_real_ip, get_db
+from core.functions.common.file import get_extension, get_new_path
 from core.functions.definition.util import get_available_options
 from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
 from core.functions.event_log.dataset import get_completed_transition_df
 from core.functions.event_log.df import get_dataframe, save_dataframe
 from core.functions.event_log.job import set_definition
 from core.functions.event_log.file import get_dataframe_from_file
-from core.functions.general.etc import get_current_time_label
-from core.functions.general.request import get_real_ip, get_db
-from core.functions.general.file import get_extension, get_new_path
 from core.security.token import validate_token
 from core.starters import memory
 

@@ -36,6 +36,27 @@ services:
     networks:
       - prcore
 
+  processor:
+    build:
+      context: .
+      dockerfile: processor/Dockerfile
+    container_name: prcore-processor
+    depends_on:
+      - core
+    restart: always
+    environment:
+      APP_ID: "processor"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+    volumes:
+      - ./data/event_logs:/code/data/event_logs
+      - ./data/processor:/code/data/processor
+      - ./data/tmp:/code/data/tmp
+    networks:
+      - prcore
+
   plugin-knn-next-activity:
     build:
       context: .

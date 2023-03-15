@@ -10,9 +10,9 @@ import core.schemas.definition as definition_schema
 from core.confs import config
 from core.confs import path
 from core.enums.definition import ColumnDefinition
+from core.functions.common.etc import random_str
 from core.functions.definition.util import get_defined_column_name
-from core.functions.event_log.dataset import get_new_processed_dataframe
-from core.functions.general.etc import random_str
+from core.functions.event_log.dataset import get_processed_dataframe_for_new_dataset
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ def load_simulation_df(simulation_df_name: str) -> DataFrame:
 
 def preprocess_df(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:
     # Preprocess a simulation dataframe
-    df = get_new_processed_dataframe(df, definition)
+    df = get_processed_dataframe_for_new_dataset(df, definition)
     # Add case prefix
     case_prefix = random_str(8)
     case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)

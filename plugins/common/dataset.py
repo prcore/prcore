@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelBinarizer
 
 from core.enums.dataset import EncodingType, OutcomeType
 from core.enums.definition import ColumnDefinition
-from core.functions.general.etc import get_processes_number
+from core.functions.common.etc import get_processes_number
 
 # Enable logging
 logger = logging.getLogger(__name__)

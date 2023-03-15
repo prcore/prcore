@@ -9,14 +9,14 @@ import core.schemas.definition as definition_schema
 from core.confs import path
 from core.enums.definition import ColumnDefinition
 from core.enums.status import ProjectStatus, PluginStatus
+from core.functions.common.dataset import get_renamed_dataframe
+from core.functions.common.decorator import threaded
+from core.functions.common.etc import random_str
+from core.functions.common.file import delete_file, get_new_path
 from core.functions.definition.util import get_defined_column_name
 from core.functions.plugin.util import enhance_additional_infos, get_active_plugins
-from core.functions.event_log.dataset import (get_cases_result_skeleton, get_new_processed_dataframe,
-                                              get_renamed_dataframe)
+from core.functions.event_log.dataset import get_cases_result_skeleton, get_processed_dataframe_for_new_dataset
 from core.functions.event_log.file import get_dataframe_from_file
-from core.functions.general.decorator import threaded
-from core.functions.general.etc import random_str
-from core.functions.general.file import delete_file, get_new_path
 from core.functions.message.sender import send_dataset_prescription_request_to_all_plugins
 from core.starters import memory
 from core.starters.database import SessionLocal
@@ -57,7 +57,7 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
 
         # Get a preprocessed dataframe and cases
         definition = definition_schema.Definition.from_orm(db_project.event_log.definition)
-        df = get_new_processed_dataframe(df, definition)
+        df = get_processed_dataframe_for_new_dataset(df, definition)
         cases = get_cases_result_skeleton(df, get_defined_column_name(columns_definition, ColumnDefinition.CASE_ID))
         cases_count = len(cases)
         additional_infos = enhance_additional_infos(

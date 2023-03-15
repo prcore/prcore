@@ -3,6 +3,7 @@ from enum import Enum
 
 class MessageType(str, Enum):
     """Enum for message type."""
+    # Between core and plugins
     ONLINE_INQUIRY = "ONLINE_INQUIRY"
     ONLINE_REPORT = "ONLINE_REPORT"
     TRAINING_DATA = "TRAINING_DATA"
@@ -17,3 +18,6 @@ class MessageType(str, Enum):
     STREAMING_PRESCRIPTION_REQUEST = "STREAMING_PRESCRIPTION_REQUEST"
     STREAMING_PRESCRIPTION_RESULT = "STREAMING_PRESCRIPTION_RESULT"
     STREAMING_STOP = "STREAMING_STOP"
+    # Between core and processor
+    PROCESS_REQUEST = "PROCESS_REQUEST"
+    PROCESS_RESULT = "PROCESS_RESULT"
