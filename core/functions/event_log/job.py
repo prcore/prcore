@@ -65,7 +65,10 @@ def start_pre_processing(project_id: int, active_plugins: dict, parameters: dict
         if not db_project:
             return False
         definition = definition_schema.Definition.from_orm(db_project.event_log.definition)
-        training_df_name = pre_process_data(db_project.event_log.id, db_project.event_log.df_name, definition)
+        event_log_id = db_project.event_log.id
+        df_name = db_project.event_log.df_name
+
+    training_df_name = pre_process_data(event_log_id, df_name, definition)
 
     with SessionLocal() as db:
         db_project = project_crud.get_project_by_id(db, project_id)
