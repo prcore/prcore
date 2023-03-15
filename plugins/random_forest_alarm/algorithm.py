@@ -1,16 +1,15 @@
 import logging
 from typing import Any, Dict, List, Tuple
 
-import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
+from core.enums.dataset import OutcomeType
 from core.enums.definition import ColumnDefinition
-from core.functions.training.util import get_ordinal_encoded_df
-from plugins.common.algorithm import (Algorithm, get_model_and_features_by_activities, get_prescription_output,
-                                      get_encoded_df_from_df_by_activity)
+from plugins.common.algorithm import Algorithm
+from plugins.common.dataset import get_encoded_dfs_by_activity
 
 # Enable logging
 logger = logging.getLogger(__name__)
@@ -27,105 +26,93 @@ def get_negative_proba(predictions: List[Tuple[int, float]]) -> float:
 class RandomAlgorithm(Algorithm):
     def __init__(self, algo_data: Dict[str, Any]):
         super().__init__(algo_data)
-        self.__grouped_activities = []
-        self.__grouped_outcomes = []
-        self.__lengths = []
-        self.__count_encoding_df = None
+        self.__training_dfs: Dict[int, DataFrame] = {}
 
     def preprocess(self) -> str:
         # Pre-process the data
-        encoded_df, mapping = get_ordinal_encoded_df(self.get_df(), ColumnDefinition.ACTIVITY)
-        self.set_data_value("mapping", {v: k for k, v in mapping.items()})
-        self.set_data_value("activities_code", list(mapping.keys()))
-        case_ids = encoded_df[ColumnDefinition.CASE_ID].values
-        activities = encoded_df[ColumnDefinition.ACTIVITY].values
-        outcomes = encoded_df[ColumnDefinition.OUTCOME].values
-        unique_case_ids, case_id_counts = np.unique(case_ids, return_counts=True)
-        self.__lengths = [case_id_counts[i] for i in np.argsort(unique_case_ids)]
-        self.__grouped_activities = np.split(activities, np.cumsum(case_id_counts)[:-1])
-        self.__grouped_outcomes = np.split(outcomes, np.cumsum(case_id_counts)[:-1])
-        unique_activities = np.unique(activities)
-        self.set_count_encoding_df(encoded_df, unique_activities)
-        self.set_data_value("activities", unique_activities)
+        self.__training_dfs, data = get_encoded_dfs_by_activity(
+            original_df=self.get_df(),
+            encoding_type=self.get_parameter_value("encoding"),
+            outcome_type=OutcomeType.LABELLED,
+            include_treatment=False,
+            for_test=False,
+            existing_data={}
+        )
+        for key in data:
+            if key in {"mapping", "lb"}:
+                self.set_data_value(key, data[key])
         return ""
-
-    def set_count_encoding_df(self, df: DataFrame, activities: np.ndarray) -> None:
-        # Extract the outcome column
-        outcome = df.groupby([ColumnDefinition.CASE_ID])[ColumnDefinition.OUTCOME].first().reindex()
-        # Count the frequency of each activity within each group, excluding the last activity
-        encoded_df = df.groupby([ColumnDefinition.CASE_ID, ColumnDefinition.ACTIVITY]).size().unstack(fill_value=0)
-        # Add missing columns with 0 counts
-        encoded_df = encoded_df.reindex(columns=activities, fill_value=0)
-        # Merge the outcome and treatment columns back into the encoded DataFrame
-        encoded_df = pd.merge(encoded_df, outcome, on=ColumnDefinition.CASE_ID)
-        # Set the count encoding df
-        self.__count_encoding_df = encoded_df
 
     def train(self) -> str:
         # Train the model
-        min_length = min(self.__lengths)
-        max_length = max(self.__lengths)
-        threshold = 100  # The minimum number of cases needed to train the model
         models = {}
         scores = {}
-
-        # Train the model for ordinal coding df by each length
-        for length in range(min_length, max_length):
-            if len([group for group in self.__grouped_activities if len(group) >= length]) < threshold:
-                continue
-            x = np.array([group[:length] for group in self.__grouped_activities if len(group) >= length],
-                         dtype=np.int32)
-            y = np.array([group[length - 1] for group in self.__grouped_outcomes if len(group) >= length],
-                         dtype=np.int32)
+        for length in self.__training_dfs:
+            df = self.__training_dfs[length]
+            x = df.drop([ColumnDefinition.OUTCOME, ColumnDefinition.CASE_ID], axis=1)
+            y = df[ColumnDefinition.OUTCOME]
             x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
             rf = RandomForestClassifier()
-            try:
-                rf.fit(x_train, y_train)
-            except ValueError as e:
-                logger.warning(f"Training failed: {e}")
-                continue
+            rf.fit(x_train, y_train)
             models[length] = rf
-            scores[length] = get_score(rf, x_val, y_val)
-
-        # Train the model for count encoding df
-        x = self.__count_encoding_df.drop(ColumnDefinition.OUTCOME, axis=1).values.astype(np.int32)
-        y = self.__count_encoding_df[ColumnDefinition.OUTCOME].values.astype(np.int32)
-        x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
-        rf = RandomForestClassifier()
-        rf.fit(x_train, y_train)
-        models["count_encoding"] = rf
-        scores["count_encoding"] = get_score(rf, x_val, y_val)
-
-        # Set the models and scores
+            scores[length] = self.get_score(rf, x_val, y_val)
         self.set_data_value("models", models)
         self.set_data_value("scores", scores)
         return ""
 
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result
-        model_and_features = get_model_and_features_by_activities(self, prefix)
-        if isinstance(model_and_features, dict):
-            return model_and_features
-        model, features = model_and_features
+        length = len(prefix)
+        model = self.get_data()["models"].get(length)
+        if model is None:
+            return self.get_null_output("The model is not trained for the given prefix length")
+
+        # Get the test df
+        raw_test_df = pd.DataFrame(prefix)
+        test_df = list(get_encoded_dfs_by_activity(
+            original_df=raw_test_df,
+            encoding_type=self.get_parameter_value("encoding"),
+            outcome_type=OutcomeType.LABELLED,
+            include_treatment=False,
+            for_test=True,
+            existing_data=self.get_data()
+        )[0].values())[0]
 
         # Predict the probability of negative outcomes
-        predictions = list(zip(model.classes_, model.predict_proba([features]).tolist()[0]))
+        predictions = list(
+            zip(model.classes_, model.predict_proba(test_df.drop([ColumnDefinition.CASE_ID], axis=1)).tolist()[0])
+        )
         output = round(get_negative_proba(predictions), 4)
-        length = len(features)
-        return get_prescription_output(self, output, length, f"ordinal-encoding-length-{length}")
+        return self.get_prescription_output(output, length, f"{self.get_parameter_value('encoding')}-length-{length}")
 
     def predict_df(self, df: DataFrame) -> dict:
         # Predict the result by using the given dataframe
         result = {}
-        encoded_df = get_encoded_df_from_df_by_activity(self, df)
-        model = self.get_data()["models"]["count_encoding"]
-        predictions = model.predict_proba(encoded_df[self.get_data()["activities_code"]].values)
-        # Get the result
-        for case_id, prediction in zip(encoded_df.index, predictions):
-            result[case_id] = get_prescription_output(
-                instance=self,
-                output=round(get_negative_proba(list(zip(model.classes_, prediction.tolist()))), 4),
-                model_key=len(encoded_df.columns),
-                model_name="count-encoding"
-            )
+
+        # Get the test df for each length
+        test_dfs, _ = get_encoded_dfs_by_activity(
+            original_df=df,
+            encoding_type=self.get_parameter_value("encoding"),
+            outcome_type=OutcomeType.LABELLED,
+            include_treatment=False,
+            for_test=True,
+            existing_data=self.get_data()
+        )
+
+        # Get the result for each length
+        for length, test_df in test_dfs.items():
+            model = self.get_data()["models"].get(length)
+            if model is None:
+                continue
+            predictions = model.predict_proba(test_df.drop([ColumnDefinition.CASE_ID], axis=1))
+            outputs = [round(get_negative_proba(list(zip(model.classes_, prediction.tolist()))), 4)
+                       for prediction in predictions]
+            for i in range(len(test_df)):
+                case_id = test_df.iloc[i][ColumnDefinition.CASE_ID]
+                result[case_id] = self.get_prescription_output(
+                    output=outputs[i],
+                    model_key=length,
+                    model_code=f"{self.get_parameter_value('encoding')}-length-{length}"
+                )
+
         return result

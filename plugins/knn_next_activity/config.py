@@ -1,9 +1,8 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from core.confs import config
 from core.enums.dataset import EncodingType
-from core.enums.definition import ColumnDefinition
 from core.enums.plugin import PluginType
 
 # Enable logging
@@ -24,4 +23,3 @@ basic_info: Dict[str, Any] = {
     "needed_info_for_prediction": [],
     "supported_encoding": [EncodingType.BOOLEAN, EncodingType.FREQUENCY_BASED, EncodingType.SIMPLE_INDEX]
 }
-needed_columns: List[ColumnDefinition] = []
