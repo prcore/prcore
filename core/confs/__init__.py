@@ -10,7 +10,7 @@ if config.APP_ID == "core":
 elif config.APP_ID == "processor":
     log_path = PROCESSOR_LOG_PATH
 else:
-    log_path = PLUGIN_LOG_PATH
+    log_path = f"{PLUGIN_LOG_PATH}/{APP_ID}"
 
 mkdir(log_path) if not exists(log_path) else None
 
