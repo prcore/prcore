@@ -98,7 +98,7 @@ def update_event_log(request: Request, event_log_id: int, update_body: event_log
 
     df = get_dataframe(db_event_log)
 
-    if not update_body.fast_mode and df.shape[0] > 500000:
+    if not update_body.fast_mode and df.shape[0] > 1000000:
         raise HTTPException(status_code=400, detail=ErrorType.FAST_MODE_ENFORCED)
 
     db_event_log = set_definition(db, db_event_log, update_body)
