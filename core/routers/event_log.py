@@ -1,6 +1,7 @@
 import logging
 from copy import deepcopy
 from datetime import datetime
+from zipfile import BadZipFile
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
@@ -55,7 +56,13 @@ def upload_event_log(request: Request, file: UploadFile = Form(), separator: str
         f.write(file.file.read())
 
     # Get dataframe from file
-    df = get_dataframe_from_file(raw_path, extension, separator)
+    try:
+        df = get_dataframe_from_file(raw_path, extension, separator)
+    except BadZipFile:
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_BAD_ZIP)
+    except Exception as e:
+        logger.warning(f"Failed to get dataframe from file {raw_path}: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
 
     db_event_log = event_log_crud.create_event_log(db, event_log_schema.EventLogCreate(
         file_name=file.filename,
