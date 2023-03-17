@@ -14,6 +14,9 @@ class ErrorType(str, Enum):
 
     PLUGIN_NOT_FOUND = "Plugin not found"
     PLUGIN_NOT_READY = "Plugin not ready"
+    PLUGIN_TRIGGER_TYPE_NOT_VALID = "Plugin trigger type not valid"
+    PLUGIN_ALREADY_DISABLED = "Plugin already disabled"
+    PLUGIN_ALREADY_ENABLED = "Plugin already enabled"
 
     PROCESS_DATASET_ERROR = "There was an error processing the dataset"
 

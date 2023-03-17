@@ -7,5 +7,6 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 
-class UpdateAdditionalInfoRequest(BaseModel):
-    additional_info: dict[str, dict[str, Any]] = {}
+class UpdatePluginRequest(BaseModel):
+    parameters: dict[str, Any] = {}
+    additional_info: dict[str, Any] = {}

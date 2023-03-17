@@ -31,20 +31,22 @@ def send_online_inquiry(plugin_id: str) -> bool:
 
 
 def send_training_data_to_all_plugins(plugins: dict[str, int], project_id: int, training_df_name: str,
+                                      parameters: dict[str, dict[str, Any]],
                                       additional_infos: dict[str, dict[str, Any]]) -> bool:
     # Send training data to all plugins
     return all(send_training_data(plugin_key, project_id, plugins[plugin_key], training_df_name,
-                                  additional_infos.get(plugin_key, {}))
+                                  parameters.get(plugin_key, {}), additional_infos.get(plugin_key, {}))
                for plugin_key in plugins)
 
 
 def send_training_data(plugin_key: str, project_id: int, plugin_id: int, training_df_name: str,
-                       additional_info: dict[str, Any]) -> bool:
+                       parameters: dict[str, Any], additional_info: dict[str, Any]) -> bool:
     # Send training data to a specific plugin
     return send_message(plugin_key, MessageType.TRAINING_DATA, {
         "project_id": project_id,
         "plugin_id": plugin_id,
         "training_df_name": training_df_name,
+        "parameters": parameters,
         "additional_info": additional_info
     })
 
