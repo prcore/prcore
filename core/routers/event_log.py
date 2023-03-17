@@ -33,7 +33,7 @@ def update_event_log(request: Request, event_log_id: int, update_body: event_log
     return process_event_log_definition(event_log_id, update_body, db)
 
 
-@router.put("/{event_log_id}/upload", response_model=event_log_response.UploadEventLogResponse)
+@router.put("/{event_log_id}/upload", response_model=event_log_response.UpdateEventLogResponse)
 def re_upload_event_log(request: Request, event_log_id: int, file: UploadFile = Form(), separator: str = Form(","),
                         db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Re-upload event log <{file and file.filename}> to {event_log_id} - "
