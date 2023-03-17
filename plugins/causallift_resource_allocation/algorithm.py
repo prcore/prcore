@@ -60,7 +60,11 @@ class CausalLiftAlgorithm(Algorithm):
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result by using the given prefix
         available_resources = self.get_additional_info_value("available_resources")
-        treatment_duration = convert_to_seconds(self.get_additional_info_value("treatment_duration"))
+        try:
+            treatment_duration = convert_to_seconds(self.get_additional_info_value("treatment_duration"))
+        except ValueError:
+            treatment_duration = None
+
         if not available_resources or not treatment_duration:
             return self.get_null_output("The available resources or the treatment duration is not provided")
 
