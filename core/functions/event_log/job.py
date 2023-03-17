@@ -15,6 +15,7 @@ import core.schemas.request.event_log as event_log_request
 from core.confs import path
 from core.enums.definition import ColumnDefinition
 from core.enums.status import PluginStatus
+from core.functions.common.decorator import threaded
 from core.functions.common.file import delete_file, get_new_path, get_dataframe_from_pickle
 from core.functions.definition.util import get_defined_column_name
 from core.functions.event_log.df import get_dataframe, get_dataframe_by_id_or_name
@@ -63,6 +64,7 @@ def set_definition(db: Session, db_event_log: event_log_model.EventLog,
     return event_log_crud.associate_definition(db, db_event_log, db_definition.id)
 
 
+@threaded()
 def start_pre_processing(project_id: int, active_plugins: dict, parameters: dict, additional_infos: dict,
                          redefined: bool = False) -> bool:
     # Start pre-processing the data

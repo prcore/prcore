@@ -55,21 +55,11 @@ def get_processes_number() -> int:
     return cpu_count()
 
 
-def process_daemon(target: Callable, args: Tuple, threaded: bool = False) -> None:
+def process_daemon(target: Callable, args: Tuple) -> None:
     # Process daemon
-    if threaded:
-        thread(target=process_for_threaded, args=(target, args), daemon=True)
-    else:
-        p = Process(target=target, args=args)
-        p.daemon = True
-        p.start()
-
-
-def process_for_threaded(target: Callable, args: Tuple) -> None:
     p = Process(target=target, args=args)
-    p.daemon = False
+    p.daemon = True
     p.start()
-    p.join()
 
 
 def random_str(i: int) -> str:

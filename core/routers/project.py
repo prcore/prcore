@@ -23,7 +23,6 @@ import core.schemas.project as project_schema
 from core.confs import path
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus, ProjectStatusGroup, PluginStatus
-from core.functions.common.etc import thread
 from core.functions.common.file import delete_file, get_extension
 from core.functions.common.request import get_real_ip, get_db
 from core.functions.plugin.util import enhance_additional_infos, get_active_plugins
@@ -37,7 +36,6 @@ from core.functions.project.streaming import event_generator, disable_streaming
 from core.functions.project.validation import (validate_project_definition, validate_project_status,
                                                validate_streaming_status)
 from core.starters import memory
-from core.starters.database import engine
 from core.security.token import validate_token
 
 # Enable logging
@@ -94,11 +92,7 @@ def create_project(request: Request, create_body: project_request.CreateProjectR
         result_key = None
 
     # Start the pre-processing
-    engine.dispose()
-    thread(
-        target=start_pre_processing,
-        args=(db_project.id, get_active_plugins(), create_body.parameters, create_body.additional_info)
-    )
+    start_pre_processing(db_project.id, get_active_plugins(), create_body.parameters, create_body.additional_info)
 
     # Start the test file watching
     result_key and run_project_watcher_for_ongoing_dataset(db_project.id, result_key)
@@ -187,11 +181,8 @@ def update_project_definition(request: Request, project_id: int,
 
     # Start the pre-processing
     project_crud.update_status(db, db_project, ProjectStatus.PREPROCESSING)
-    engine.dispose()
-    thread(
-        target=start_pre_processing,
-        args=(db_project.id, get_active_plugins(), update_body.parameters, update_body.additional_info, True)
-    )
+    start_pre_processing(db_project.id, get_active_plugins(), update_body.parameters, update_body.additional_info,
+                         redefined=True)
 
     return {
         "message": "Project definition updated successfully",
