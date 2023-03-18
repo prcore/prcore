@@ -27,7 +27,7 @@ from core.starters import memory
 logger = logging.getLogger(__name__)
 
 
-def process_uploaded_event_log(file: UploadFile, separator: str, test: UploadFile,  db: Session) -> dict:
+def process_uploaded_event_log(file: UploadFile, separator: str, test: UploadFile, db: Session) -> dict:
     if not file or not file.file or (extension := get_extension(file.filename)) not in path.ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
 
