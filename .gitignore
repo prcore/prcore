@@ -7,6 +7,7 @@ scripts/chmod.sh
 scripts/flow.sh
 scripts/continue.sh
 *.ipynb
+docker-compose-*.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

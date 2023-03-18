@@ -12,7 +12,7 @@ services:
       - rabbitmq
     restart: always
     environment:
-      ENABLED_PLUGINS: "plugin-knn-next-activity || plugin-random-forest-alarm || plugin-causallift-treatment-effect || plugin-causallift-resource-allocation"
+      ENABLED_PLUGINS: ${ENABLED_PLUGINS}
       APP_ID: "core"
       API_TOKEN: ${API_TOKEN}
       API_USERNAME: ${API_USERNAME}
