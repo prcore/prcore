@@ -24,17 +24,17 @@ def read_plugins(request: Request, skip: int = 0, limit: int = 100, db: Session 
     return process_plugins_reading(skip, limit, db)
 
 
+@router.get("/available", response_model=plugin_response.AvailablePluginsResponse)
+def read_available_plugins(request: Request, _: bool = Depends(validate_token)):
+    logger.warning(f"Get available plugins - from IP {get_real_ip(request)}")
+    return process_available_plugins_reading()
+
+
 @router.get("/{plugin_id}", response_model=plugin_response.PluginResponse)
 def read_plugin(request: Request, plugin_id: int, db: Session = Depends(get_db),
                 _: bool = Depends(validate_token)):
     logger.warning(f"Read plugin {plugin_id} - from IP {get_real_ip(request)}")
     return process_plugin_reading(plugin_id, db)
-
-
-@router.get("/available", response_model=plugin_response.AvailablePluginsResponse)
-def read_available_plugins(request: Request, _: bool = Depends(validate_token)):
-    logger.warning(f"Get available plugins - from IP {get_real_ip(request)}")
-    return process_available_plugins_reading()
 
 
 @router.put("/{plugin_id}", response_model=plugin_response.PluginResponse)
