@@ -48,7 +48,7 @@ def get_encoded_dfs_by_activity(original_df: DataFrame, encoding_type: EncodingT
     data["case_ids"] = unique_case_ids.tolist()
     grouped_activities_series = df.groupby(ColumnDefinition.CASE_ID)[ColumnDefinition.ACTIVITY].apply(np.array)
     data["grouped_activities"] = [grouped_activities_series[case_id] for case_id in unique_case_ids]
-    data["lengths"] = sorted({len(trace) for trace in data["grouped_activities"]})
+    data["lengths"] = sorted({len(trace) for trace in data["grouped_activities"] if len(trace) >= 3})
     if ColumnDefinition.OUTCOME in df.columns:
         grouped_outcomes_series = df.groupby(ColumnDefinition.CASE_ID)[ColumnDefinition.OUTCOME].apply(np.array)
         data["grouped_outcomes"] = [grouped_outcomes_series[case_id][0] for case_id in unique_case_ids]
@@ -101,7 +101,7 @@ def get_encoded_dataframes_by_activity_for_lengths(lengths: List[int], encoding_
     # Get encoded dataframes by activity for some lengths
     results = {}
     for length in lengths:
-        if not for_test and len([group for group in data["grouped_activities"] if len(group) > length]) < 1000:
+        if not for_test and len([group for group in data["grouped_activities"] if len(group) > length]) < 300:
             continue
         if for_test:
             encoded_df = get_test_df_by_activity(length, encoding_type, data)
