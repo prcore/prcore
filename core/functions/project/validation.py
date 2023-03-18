@@ -66,3 +66,14 @@ def validate_streaming_status(db_project: project_model.Project, operation: str)
     elif operation == "stop":
         if db_project.status not in [ProjectStatus.STREAMING, ProjectStatus.SIMULATING]:
             raise HTTPException(status_code=400, detail=ErrorType.STREAMING_NOT_STARTED)
+
+
+def validate_ongoing_dataset(columns: list[str], columns_definition: dict[str, ColumnDefinition],
+                             case_attributes: list[str]) -> None:
+    for column in columns_definition:
+        if columns_definition.get(column) and column not in columns:
+            raise ValueError(f"Column is defined but not in the new dataset: {column}")
+    if case_attributes:
+        for column in case_attributes:
+            if column not in columns:
+                raise ValueError(f"Case attribute is defined but not in the new dataset: {column}")

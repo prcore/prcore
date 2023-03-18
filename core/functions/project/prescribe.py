@@ -18,6 +18,7 @@ from core.functions.plugin.util import enhance_additional_infos, get_active_plug
 from core.functions.event_log.dataset import get_cases_result_skeleton, get_processed_dataframe_for_new_dataset
 from core.functions.event_log.file import get_dataframe_from_file
 from core.functions.message.sender import send_dataset_prescription_request_to_all_plugins
+from core.functions.project.validation import validate_ongoing_dataset
 from core.starters import memory
 from core.starters.database import SessionLocal
 
@@ -47,13 +48,7 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
         case_attributes = db_project.event_log.definition.case_attributes
 
         # Check the columns definition
-        for column in columns_definition:
-            if columns_definition.get(column) and column not in columns:
-                raise ValueError(f"Column is defined but not in the new dataset: {column}")
-        if case_attributes:
-            for column in case_attributes:
-                if column not in columns:
-                    raise ValueError(f"Case attribute is defined but not in the new dataset: {column}")
+        validate_ongoing_dataset(columns, columns_definition, case_attributes)
 
         # Get a preprocessed dataframe and cases
         definition = definition_schema.Definition.from_orm(db_project.event_log.definition)
