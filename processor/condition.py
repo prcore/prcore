@@ -15,31 +15,44 @@ logger = logging.getLogger(__name__)
 
 
 def check_or_conditions(group: DataFrame, conditions: list[list[ProjectDefinition]],
-                        columns_definition: dict[str, ColumnDefinition]) -> bool:
+                        columns_definition: dict[str, ColumnDefinition],
+                        resource_column: str) -> tuple[bool, str | None]:
     # Check if the data of the row satisfies the OR conditions
     if len(conditions) == 0:
-        return False
+        return False, None
 
     for condition in conditions:
-        if check_and_conditions(group, condition, columns_definition):
-            return True
-    return False
+        result, treatment_resource = check_and_conditions(group, condition, columns_definition, resource_column)
+        if result:
+            return True, treatment_resource
+
+    return False, None
 
 
 def check_and_conditions(group: DataFrame, conditions: list[ProjectDefinition],
-                         columns_definition: dict[str, ColumnDefinition]) -> bool:
+                         columns_definition: dict[str, ColumnDefinition],
+                         resource_column: str) -> tuple[bool, str | None]:
     # Check if the data of the row satisfies the AND conditions
     if len(conditions) == 0:
-        return False
+        return False, None
 
+    mask = np.ones(len(group), dtype=bool)
     for condition in conditions:
-        if not check_atomic_condition(group, condition, columns_definition):
-            return False
-    return True
+        mask &= check_atomic_condition(group, condition, columns_definition)
+
+    row_indices = np.flatnonzero(mask)
+    if len(row_indices) > 0 and resource_column:
+        row_index = row_indices[0]  # Get the index of the first row that meets the conditions
+        treatment_resource = group.iloc[row_index][resource_column]
+        return True, treatment_resource
+    elif len(row_indices) > 0:
+        return True, None
+
+    return False, None
 
 
 def check_atomic_condition(group: DataFrame, condition: ProjectDefinition,
-                           columns_definition: dict[str, ColumnDefinition]) -> bool:
+                           columns_definition: dict[str, ColumnDefinition]) -> pd.Series:
     # Check if the data of the row satisfies the condition
     column_name = condition.column
     column_definition = columns_definition.get(condition.column)
@@ -63,25 +76,25 @@ def check_atomic_condition(group: DataFrame, condition: ProjectDefinition,
     elif supported_operators == SupportedOperators.CATEGORICAL:
         return compare_categorical(group, column_name, threshold)
 
-    return False
+    return pd.Series([False] * len(group), index=group.index)
 
 
-def compare_text(group: DataFrame, column_name: str, operator: Operator, threshold: Any) -> bool:
+def compare_text(group: DataFrame, column_name: str, operator: Operator, threshold: Any) -> pd.Series:
     # Compare text
     threshold = str(threshold).lower()
     if operator == Operator.EQUAL:
-        return np.any(group[column_name].str.lower() == threshold)
+        return group[column_name].str.lower() == threshold
     elif operator == Operator.NOT_EQUAL:
-        return np.any(group[column_name].str.lower() != threshold)
+        return group[column_name].str.lower() != threshold
     elif operator == Operator.CONTAINS:
-        return np.any(threshold in group[column_name].str.lower())
+        return group[column_name].str.lower().str.contains(threshold)
     elif operator == Operator.NOT_CONTAINS:
-        return np.any(threshold not in group[column_name].str.lower())
-    return False
+        return ~group[column_name].str.lower().str.contains(threshold)
+    return pd.Series([False] * len(group), index=group.index)
 
 
 def compare_number(group: DataFrame, column_name: str, columns_definition: dict[str, ColumnDefinition],
-                   operator: Operator, threshold: Any) -> bool:
+                   operator: Operator, threshold: Any) -> pd.Series:
     # Compare number
     if columns_definition.get(column_name, column_name) == ColumnDefinition.DURATION:
         threshold = convert_to_seconds(threshold)
@@ -89,31 +102,33 @@ def compare_number(group: DataFrame, column_name: str, columns_definition: dict[
         threshold = pd.to_numeric(threshold, errors="coerce")
     if threshold < 0 or np.isnan(threshold):
         raise ValueError("Invalid threshold")
+    threshold: float | int
+
     if operator == Operator.EQUAL:
-        return np.any(group[column_name] == threshold)
+        return group[column_name] == threshold
     elif operator == Operator.NOT_EQUAL:
-        return np.any(group[column_name] != threshold)
+        return group[column_name].values != threshold
     elif operator == Operator.LESS_THAN:
-        return np.any(group[column_name] < threshold)
+        return group[column_name].values < threshold
     elif operator == Operator.LESS_THAN_OR_EQUAL:
-        return np.any(group[column_name] <= threshold)
+        return group[column_name].values <= threshold
     elif operator == Operator.GREATER_THAN:
-        return np.any(group[column_name] > threshold)
+        return group[column_name].values > threshold
     elif operator == Operator.GREATER_THAN_OR_EQUAL:
-        return np.any(group[column_name] >= threshold)
-    return False
+        return group[column_name].values >= threshold
+    return pd.Series([False] * len(group), index=group.index)
 
 
-def compare_boolean(group: DataFrame, column_name: str, operator: Operator) -> bool:
+def compare_boolean(group: DataFrame, column_name: str, operator: Operator) -> pd.Series:
     # Compare boolean
     if operator == Operator.IS_TRUE:
-        return np.any(group[column_name])
+        return group[column_name]
     elif operator == Operator.IS_FALSE:
-        return np.any(~group[column_name])
-    return False
+        return ~group[column_name]
+    return pd.Series([False] * len(group), index=group.index)
 
 
-def compare_datetime(group: DataFrame, column_name: str, operator: Operator, threshold: Any) -> bool:
+def compare_datetime(group: DataFrame, column_name: str, operator: Operator, threshold: Any) -> pd.Series:
     # Compare datetime
     threshold = pd.to_datetime(threshold, errors="coerce")
     if pd.isnull(threshold):
@@ -131,21 +146,21 @@ def compare_datetime(group: DataFrame, column_name: str, operator: Operator, thr
         group[column_name] = group[column_name].dt.tz_localize(threshold.tzinfo)
 
     if operator == Operator.EQUAL:
-        return np.any(group[column_name] == threshold)
+        return group[column_name] == threshold
     elif operator == Operator.NOT_EQUAL:
-        return np.any(group[column_name] != threshold)
+        return group[column_name] != threshold
     elif operator == Operator.EARLIER_THAN:
-        return np.any(group[column_name] < threshold)
+        return group[column_name] < threshold
     elif operator == Operator.EARLIER_THAN_OR_EQUAL:
-        return np.any(group[column_name] <= threshold)
+        return group[column_name] <= threshold
     elif operator == Operator.LATER_THAN:
-        return np.any(group[column_name] > threshold)
+        return group[column_name] > threshold
     elif operator == Operator.LESS_THAN_OR_EQUAL:
-        return np.any(group[column_name] >= threshold)
-    return False
+        return group[column_name] >= threshold
+    return pd.Series([False] * len(group), index=group.index)
 
 
-def compare_categorical(group: DataFrame, column_name: str, threshold: Any) -> bool:
+def compare_categorical(group: DataFrame, column_name: str, threshold: Any) -> pd.Series:
     # Compare categorical
     threshold = str(threshold).lower()
-    return np.any(group[column_name].str.lower() == threshold)
+    return group[column_name].str.lower() == threshold

@@ -6,8 +6,8 @@ from pandas import DataFrame
 
 import core.schemas.definition as definition_schema
 from core.enums.definition import ColumnDefinition, DefinitionType
-from core.functions.common.dataset import get_timestamped_dataframe, get_transition_recognized_dataframe, \
-    get_renamed_dataframe
+from core.functions.common.dataset import (get_timestamped_dataframe, get_transition_recognized_dataframe,
+                                           get_renamed_dataframe)
 from core.functions.common.etc import get_processes_number
 from core.functions.definition.util import get_defined_column_name
 from processor.condition import check_or_conditions
@@ -169,87 +169,56 @@ def get_labelled_dataframe(df: DataFrame, definition: definition_schema.Definiti
     # Get labelled dataframe
     case_id_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.CASE_ID)
     outcome_definition = definition.outcome_definition
+    outcome_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.OUTCOME)
     treatment_definition = definition.treatment_definition
+    treatment_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.TREATMENT)
+    resource_column = get_defined_column_name(definition.columns_definition, ColumnDefinition.RESOURCE)
 
-    if outcome_definition and treatment_definition:
-        return get_labelled_dataframe_by_both(df, case_id_column, definition)
-    elif outcome_definition:
-        return get_labelled_dataframe_by_one(df, case_id_column, definition, by_outcome=True)
-    elif treatment_definition:
-        return get_labelled_dataframe_by_one(df, case_id_column, definition, by_outcome=False)
-
-    return df
-
-
-def get_labelled_dataframe_by_both(df: DataFrame, case_id_column: str,
-                                   definition: definition_schema.Definition) -> DataFrame:
     df = df.reset_index(drop=True)
     result = df.groupby(case_id_column, group_keys=True).apply(lambda x: label_outcome_and_treatment(x, definition))
-    result.columns = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT]
+    result.columns = [ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT, ColumnDefinition.TREATMENT_RESOURCE]
     result = result.reset_index(drop=True)
-    df = df.merge(result, left_index=True, right_index=True)
-    return df
 
+    if not outcome_definition and not outcome_column:
+        result = result.drop(columns=[ColumnDefinition.OUTCOME])
+    if not treatment_definition and not treatment_column:
+        result = result.drop(columns=[ColumnDefinition.TREATMENT])
+    if not treatment_definition or treatment_column or not resource_column:
+        result = result.drop(columns=[ColumnDefinition.TREATMENT_RESOURCE])
 
-def get_labelled_dataframe_by_one(df: DataFrame, case_id_column: str, definition: definition_schema.Definition,
-                                  by_outcome: bool = True) -> DataFrame:
-    # Get labelled dataframe by one
-    column_name = ColumnDefinition.OUTCOME if by_outcome else ColumnDefinition.TREATMENT
-    result = df.groupby(case_id_column, group_keys=True).apply(lambda x: label_one_column(x, definition, by_outcome))
-    result.columns = [column_name]
-    result = result.reset_index(drop=True)
     df = df.merge(result, left_index=True, right_index=True)
     return df
 
 
 def label_outcome_and_treatment(group: DataFrame, definition: definition_schema.Definition) -> DataFrame:
-    # Label outcome and treatment
-    outcome, treatment = get_labels(group, definition)
+    # Label outcome and treatment, and get resource
+    outcome, treatment, resource = get_labels(group, definition)
     outcome_label = pd.Series(1 if outcome else 0, index=group.index)
     treatment_label = pd.Series(1 if treatment else 0, index=group.index)
-    return pd.concat([outcome_label, treatment_label], axis=1)
+    resource = pd.Series(resource, index=group.index, dtype="object")
+    return pd.concat([outcome_label, treatment_label, resource], axis=1)
 
 
-def label_one_column(group: DataFrame, definition: definition_schema.Definition, by_outcome: bool = True) -> DataFrame:
-    # Label on column
-    label = get_label(group, definition, by_outcome)
-    return pd.concat([pd.Series(1 if label else 0, index=group.index)], axis=1)
-
-
-def get_labels(group: DataFrame, definition: definition_schema.Definition) -> tuple[bool, bool]:
+def get_labels(group: DataFrame, definition: definition_schema.Definition) -> tuple[bool, bool, str]:
     # Get labels
     columns_definition = definition.columns_definition
     outcome_column = get_defined_column_name(columns_definition, ColumnDefinition.OUTCOME)
     treatment_column = get_defined_column_name(columns_definition, ColumnDefinition.TREATMENT)
+    resource_column = get_defined_column_name(columns_definition, ColumnDefinition.RESOURCE)
+    resource = None
 
     if outcome_column:
         outcome = label_for_outcome(group[outcome_column].iloc[0])
     else:
-        outcome = check_or_conditions(group, definition.outcome_definition, columns_definition)
+        outcome, _ = check_or_conditions(group, definition.outcome_definition, columns_definition, "")
 
     if treatment_column:
         treatment = label_for_treatment(group[treatment_column].iloc[0])
     else:
-        treatment = check_or_conditions(group, definition.treatment_definition, columns_definition)
+        treatment, resource = check_or_conditions(group, definition.treatment_definition, columns_definition,
+                                                  resource_column)
 
-    return outcome, treatment
-
-
-def get_label(group: DataFrame, definition: definition_schema.Definition, by_outcome: bool = True) -> bool:
-    # Get label
-    columns_definition = definition.columns_definition
-    if by_outcome:
-        outcome_column = get_defined_column_name(columns_definition, ColumnDefinition.OUTCOME)
-        if outcome_column:
-            return label_for_outcome(group[outcome_column].iloc[0])
-        else:
-            return check_or_conditions(group, definition.outcome_definition, columns_definition)
-    else:
-        treatment_column = get_defined_column_name(columns_definition, ColumnDefinition.TREATMENT)
-        if not treatment_column:
-            return label_for_treatment(group[treatment_column].iloc[0])
-        else:
-            return False
+    return outcome, treatment, resource
 
 
 def label_for_outcome(data: str | int | float | bool) -> bool | None:

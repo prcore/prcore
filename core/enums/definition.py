@@ -19,6 +19,7 @@ class ColumnDefinition(str, Enum):
     COST = "COST"
     START_TIMESTAMP = "START_TIMESTAMP"
     END_TIMESTAMP = "END_TIMESTAMP"
+    TREATMENT_RESOURCE = "TREATMENT_RESOURCE"
     COMPLETE_INDICATOR = "COMPLETE_INDICATOR"
 
 
@@ -35,7 +36,7 @@ class DefinitionType(str, Enum):
                ColumnDefinition.TIMESTAMP, ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
                ColumnDefinition.RESOURCE, ColumnDefinition.DURATION, ColumnDefinition.COST,
                ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
-               ColumnDefinition.COMPLETE_INDICATOR}
+               ColumnDefinition.TREATMENT_RESOURCE, ColumnDefinition.COMPLETE_INDICATOR}
 
 
 class Operator(str, Enum):
