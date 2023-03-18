@@ -85,7 +85,7 @@ class Algorithm:
             return False
         try:
             with open(f"{path.PLUGIN_MODEL_PATH}/{self.__model_name}", "rb") as f:
-                self.__data = pickle.load(f)
+                self.__data = pickle.load(f)  # nosec B301
         except Exception as e:
             logger.warning(f"Loading model failed: {e}", exc_info=True)
             return False

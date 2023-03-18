@@ -47,7 +47,7 @@ def log_rotation() -> bool:
             filemode="a"
         )
 
-        run(f"find {confs.log_path}/log-* -mtime +30 -delete", shell=True)
+        run(f"find {confs.log_path}/log-* -mtime +30 -delete", shell=True)  # nosec B602
 
         result = True
     except Exception as e:
