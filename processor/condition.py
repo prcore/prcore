@@ -18,7 +18,7 @@ def check_or_conditions(group: DataFrame, conditions: list[list[ProjectDefinitio
                         columns_definition: dict[str, ColumnDefinition],
                         resource_column: str) -> tuple[bool, str | None]:
     # Check if the data of the row satisfies the OR conditions
-    if len(conditions) == 0:
+    if conditions is None or len(conditions) == 0:
         return False, None
 
     for condition in conditions:
