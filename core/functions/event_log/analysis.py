@@ -79,6 +79,7 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
         start_time_prefix_list = ["start", "begin"]
         end_time_prefix_list = ["end", "finish", "complete", "stop"]
         time_suffix_list = ["time", "date", "timestamp"]
+        connection_list = ["_", " ", "-", ":", ".", ""]
 
         if any(case_id_str == name.lower() for case_id_str in ["case id", "case_id", "caseid"]):
             result = ColumnDefinition.CASE_ID
@@ -92,11 +93,13 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
                  for resource_str in ["resource", "user", "person", "agent", "employee", "operator", "representative",
                                       "personnel", "specialist", "worker", "staff", "technician", "technologist"]):
             result = ColumnDefinition.RESOURCE
-        elif any(f"{start_time_prefix} {time_suffix}" == name.lower()
-                 for start_time_prefix in start_time_prefix_list for time_suffix in time_suffix_list):
+        elif any(f"{start_time_prefix}{connection}{time_suffix}" == name.lower()
+                 for start_time_prefix in start_time_prefix_list for time_suffix in time_suffix_list
+                 for connection in connection_list):
             result = ColumnDefinition.START_TIMESTAMP
-        elif any(f"{end_time_prefix} {time_suffix}" == name.lower()
-                 for end_time_prefix in end_time_prefix_list for time_suffix in time_suffix_list):
+        elif any(f"{end_time_prefix}{connection}{time_suffix}" == name.lower()
+                 for end_time_prefix in end_time_prefix_list for time_suffix in time_suffix_list
+                 for connection in connection_list):
             result = ColumnDefinition.END_TIMESTAMP
         elif "duration" in name.lower():
             result = ColumnDefinition.DURATION
