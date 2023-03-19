@@ -76,11 +76,6 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
     result = None
 
     try:
-        start_time_prefix_list = ["start", "begin"]
-        end_time_prefix_list = ["end", "finish", "complete", "stop"]
-        time_suffix_list = ["time", "date", "timestamp"]
-        connection_list = ["_", " ", "-", ":", ".", ""]
-
         if any(case_id_str == name.lower() for case_id_str in ["case id", "case_id", "caseid"]):
             result = ColumnDefinition.CASE_ID
         elif any(activity_str == name.lower() for activity_str in ["activity", "task", "action"]):
@@ -89,17 +84,11 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
             result = ColumnDefinition.TIMESTAMP
         elif "transition" in name.lower():
             result = ColumnDefinition.TRANSITION
-        elif any(resource_str == name.lower()
-                 for resource_str in ["resource", "user", "person", "agent", "employee", "operator", "representative",
-                                      "personnel", "specialist", "worker", "staff", "technician", "technologist"]):
+        elif is_resource_column(name):
             result = ColumnDefinition.RESOURCE
-        elif any(f"{start_time_prefix}{connection}{time_suffix}" == name.lower()
-                 for start_time_prefix in start_time_prefix_list for time_suffix in time_suffix_list
-                 for connection in connection_list):
+        elif is_start_time_column(name):
             result = ColumnDefinition.START_TIMESTAMP
-        elif any(f"{end_time_prefix}{connection}{time_suffix}" == name.lower()
-                 for end_time_prefix in end_time_prefix_list for time_suffix in time_suffix_list
-                 for connection in connection_list):
+        elif is_end_time_column(name):
             result = ColumnDefinition.END_TIMESTAMP
         elif "duration" in name.lower():
             result = ColumnDefinition.DURATION
@@ -109,6 +98,33 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
         logger.warning(f"Get infer from random name error error: {e}", exc_info=True)
 
     return result
+
+
+def is_resource_column(name: str) -> bool:
+    # Check if the column is resource column
+    return any(resource_str == name.lower()
+               for resource_str in ["resource", "user", "person", "agent", "employee", "operator", "representative",
+                                    "personnel", "specialist", "worker", "staff", "technician", "technologist"])
+
+
+def is_start_time_column(name: str) -> bool:
+    # Check if the column is start time column
+    start_time_prefix_list = ["start", "begin"]
+    time_suffix_list = ["time", "date", "timestamp"]
+    connection_list = ["_", " ", "-", ":", ".", ""]
+    return any(f"{start_time_prefix}{connection}{time_suffix}" == name.lower()
+               for start_time_prefix in start_time_prefix_list for time_suffix in time_suffix_list
+               for connection in connection_list)
+
+
+def is_end_time_column(name: str) -> bool:
+    # Check if the column is end time column
+    end_time_prefix_list = ["end", "finish", "complete", "stop"]
+    time_suffix_list = ["time", "date", "timestamp"]
+    connection_list = ["_", " ", "-", ":", ".", ""]
+    return any(f"{end_time_prefix}{connection}{time_suffix}" == name.lower()
+               for end_time_prefix in end_time_prefix_list for time_suffix in time_suffix_list
+               for connection in connection_list)
 
 
 def get_activities_count(df: DataFrame, definition: dict[str, ColumnDefinition]) -> dict[str, int]:
