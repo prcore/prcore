@@ -8,5 +8,3 @@ keepalives
 PYTHONWARNINGS
 nosec
 caseid
-starttime
-endtime

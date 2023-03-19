@@ -76,6 +76,10 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
     result = None
 
     try:
+        start_time_prefix_list = ["start", "begin"]
+        end_time_prefix_list = ["end", "finish", "complete", "stop"]
+        time_suffix_list = ["time", "date", "timestamp"]
+
         if any(case_id_str in name.lower() for case_id_str in ["case id", "case_id", "caseid"]):
             result = ColumnDefinition.CASE_ID
         elif "activity" in name.lower():
@@ -86,9 +90,11 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
             result = ColumnDefinition.TRANSITION
         elif "resource" in name.lower():
             result = ColumnDefinition.RESOURCE
-        elif any(start_time_str in name.lower() for start_time_str in ["start time", "start_time", "starttime"]):
+        elif any(f"{start_time_prefix} {time_suffix}" in name.lower()
+                 for start_time_prefix in start_time_prefix_list for time_suffix in time_suffix_list):
             result = ColumnDefinition.START_TIMESTAMP
-        elif any(end_time_str in name.lower() for end_time_str in ["end time", "end_time", "endtime"]):
+        elif any(f"{end_time_prefix} {time_suffix}" in name.lower()
+                 for end_time_prefix in end_time_prefix_list for time_suffix in time_suffix_list):
             result = ColumnDefinition.END_TIMESTAMP
         elif "duration" in name.lower():
             result = ColumnDefinition.DURATION
