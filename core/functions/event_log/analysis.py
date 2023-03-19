@@ -86,9 +86,9 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
             result = ColumnDefinition.TRANSITION
         elif "resource" in name.lower():
             result = ColumnDefinition.RESOURCE
-        elif "start" in name.lower() and "time" in name.lower():
+        elif any(start_time_str in name.lower() for start_time_str in ["start time", "start_time", "starttime"]):
             result = ColumnDefinition.START_TIMESTAMP
-        elif "end" in name.lower() and "time" in name.lower():
+        elif any(end_time_str in name.lower() for end_time_str in ["end time", "end_time", "endtime"]):
             result = ColumnDefinition.END_TIMESTAMP
         elif "duration" in name.lower():
             result = ColumnDefinition.DURATION
