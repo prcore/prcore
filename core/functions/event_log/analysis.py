@@ -76,7 +76,7 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
     result = None
 
     try:
-        if "case" in name.lower():
+        if any(case_id_str in name.lower() for case_id_str in ["case id", "case_id", "caseid"]):
             result = ColumnDefinition.CASE_ID
         elif "activity" in name.lower():
             result = ColumnDefinition.ACTIVITY
