@@ -33,7 +33,7 @@ def get_column_definition(column: str, columns_definition: dict[str, ColumnDefin
     if not definition:
         if column in {ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP,
                       ColumnDefinition.DURATION, ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT,
-                      ColumnDefinition.COMPLETE_INDICATOR}:
+                      ColumnDefinition.TREATMENT_RESOURCE, ColumnDefinition.COMPLETE_INDICATOR}:
             definition = ColumnDefinition(column)
         else:
             definition = ColumnDefinition.TEXT

@@ -2,6 +2,7 @@ import logging
 import os
 import warnings
 from datetime import datetime, timedelta
+from multiprocessing import cpu_count
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -59,7 +60,11 @@ class CausalLiftAlgorithm(Algorithm):
     def predict(self, prefix: List[dict]) -> dict:
         # Predict the result by using the given prefix
         available_resources = self.get_additional_info_value("available_resources")
-        treatment_duration = convert_to_seconds(self.get_additional_info_value("treatment_duration"))
+        try:
+            treatment_duration = convert_to_seconds(self.get_additional_info_value("treatment_duration"))
+        except ValueError:
+            treatment_duration = None
+
         if not available_resources or not treatment_duration:
             return self.get_null_output("The available resources or the treatment duration is not provided")
 
@@ -111,6 +116,7 @@ class CausalLiftAlgorithm(Algorithm):
                          if x not in {ColumnDefinition.OUTCOME, ColumnDefinition.TREATMENT, ColumnDefinition.CASE_ID}]
         temp_dir = f"{path.TEMP_PATH}/{random_str(16)}"
         try:
+            n_jobs = cpu_count() if cpu_count() <= 8 else 8
             cl = CausalLift(
                 train_df=training_df,
                 test_df=test_df,
@@ -128,6 +134,59 @@ class CausalLiftAlgorithm(Algorithm):
                         filepath=f"{temp_dir}/uplift_models_dict.pickle",
                         version=None
                     )
+                ),
+                uplift_model_params=dict(  # type: ignore
+                    search_cv="sklearn.model_selection.GridSearchCV",
+                    estimator="xgboost.XGBClassifier",
+                    scoring=None,
+                    cv=3,
+                    return_train_score=False,
+                    n_jobs=n_jobs,
+                    param_grid=dict(
+                        random_state=[0],
+                        max_depth=[3],
+                        learning_rate=[0.1],
+                        n_estimators=[100],
+                        verbose=[0],
+                        objective=["binary:logistic"],
+                        booster=["gbtree"],
+                        n_jobs=[-1],
+                        nthread=[None],
+                        gamma=[0],
+                        min_child_weight=[1],
+                        max_delta_step=[0],
+                        subsample=[1],
+                        colsample_bytree=[1],
+                        colsample_bylevel=[1],
+                        reg_alpha=[0],
+                        reg_lambda=[1],
+                        scale_pos_weight=[1],
+                        base_score=[0.5],
+                        missing=[None],
+                    ),
+                ),
+                propensity_model_params=dict(  # type: ignore
+                    search_cv="sklearn.model_selection.GridSearchCV",
+                    estimator="sklearn.linear_model.LogisticRegression",
+                    scoring=None,
+                    cv=3,
+                    return_train_score=False,
+                    n_jobs=n_jobs,
+                    param_grid=dict(
+                        random_state=[0],
+                        C=[0.1, 1, 10],
+                        class_weight=[None],
+                        dual=[False],
+                        fit_intercept=[True],
+                        intercept_scaling=[1],
+                        max_iter=[100],
+                        multi_class=["ovr"],
+                        n_jobs=[1],
+                        penalty=["l1", "l2"],
+                        solver=["liblinear"],
+                        tol=[0.0001],
+                        warm_start=[False],
+                    ),
                 )
             )
             _, result_df = cl.estimate_cate_by_2_models()

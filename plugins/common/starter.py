@@ -32,7 +32,7 @@ def plugin_scheduler(basic_info: dict) -> None:
     scheduler.start()
 
 
-def plugin_run(algo: Type[Algorithm], basic_info: Dict[str, Any]) -> None:
+def plugin_run(algo: Type[Algorithm], basic_info: Dict[str, Any], prefetch_count: int = 0) -> None:
     # Start the rabbitmq connection
     connection = None
     try:
@@ -40,6 +40,7 @@ def plugin_run(algo: Type[Algorithm], basic_info: Dict[str, Any]) -> None:
         logger.warning("Connection to RabbitMQ established")
         channel = connection.channel()
         channel.queue_declare(queue=config.APP_ID)
+        prefetch_count and channel.basic_qos(prefetch_count=prefetch_count)
         channel.basic_consume(
             queue=config.APP_ID,
             on_message_callback=lambda ch, method, properties, body: callback(
@@ -62,7 +63,7 @@ def plugin_run(algo: Type[Algorithm], basic_info: Dict[str, Any]) -> None:
         except ConnectionClosedByBroker:
             logger.warning("Connection to RabbitMQ closed by broker. Trying again in 5 seconds...")
             sleep(5)
-            return plugin_run(algo, basic_info)
+            return plugin_run(algo, basic_info, prefetch_count)
     except KeyboardInterrupt:
         logger.warning("Plugin stopped by user")
     finally:

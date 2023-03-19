@@ -30,7 +30,23 @@ def get_encoded_dfs_by_activity(original_df: DataFrame, encoding_type: EncodingT
     # Get encoded dataframes by activity for different lengths
     df = original_df.copy(deep=True)
     data = {}
+    df, data = get_df_and_data_with_mapping(df, data, existing_data, encoding_type, outcome_type)
+    df, data = get_df_and_data_with_case_groups(df, data, existing_data, encoding_type, include_treatment)
 
+    processes_number = get_processes_number()
+    lengths_split = np.array_split(data["lengths"], processes_number * 4)
+    with Pool(processes=processes_number) as pool:
+        results = pool.starmap(
+            func=get_encoded_dataframes_by_activity_for_lengths,
+            iterable=[(lengths, encoding_type, outcome_type, data, for_test) for lengths in lengths_split]
+        )
+
+    dataframes = {length: r for result in results for length, r in result.items()}
+    return dataframes, data
+
+
+def get_df_and_data_with_mapping(df: DataFrame, data: dict, existing_data: dict,
+                                 encoding_type: EncodingType, outcome_type: OutcomeType) -> Tuple[DataFrame, dict]:
     if existing_data is not None and "mapping" in existing_data:
         mapping = existing_data["mapping"]
         df = get_ordinal_encoded_df_by_given_mapping(df, ColumnDefinition.ACTIVITY, mapping)
@@ -41,14 +57,18 @@ def get_encoded_dfs_by_activity(original_df: DataFrame, encoding_type: EncodingT
     elif outcome_type == OutcomeType.LAST_ACTIVITY:
         _, mapping = get_ordinal_encoded_df_and_mapping(df, ColumnDefinition.ACTIVITY)
         data["mapping"] = mapping
+    return df, data
 
+
+def get_df_and_data_with_case_groups(df: DataFrame, data: dict, existing_data: dict, encoding_type: EncodingType,
+                                     include_treatment: bool) -> Tuple[DataFrame, dict]:
     case_ids = df[ColumnDefinition.CASE_ID].values
     unique_case_ids = np.unique(case_ids)
     activities = df[ColumnDefinition.ACTIVITY].values
     data["case_ids"] = unique_case_ids.tolist()
     grouped_activities_series = df.groupby(ColumnDefinition.CASE_ID)[ColumnDefinition.ACTIVITY].apply(np.array)
     data["grouped_activities"] = [grouped_activities_series[case_id] for case_id in unique_case_ids]
-    data["lengths"] = sorted({len(trace) for trace in data["grouped_activities"]})
+    data["lengths"] = sorted({len(trace) for trace in data["grouped_activities"] if len(trace) >= 3})
     if ColumnDefinition.OUTCOME in df.columns:
         grouped_outcomes_series = df.groupby(ColumnDefinition.CASE_ID)[ColumnDefinition.OUTCOME].apply(np.array)
         data["grouped_outcomes"] = [grouped_outcomes_series[case_id][0] for case_id in unique_case_ids]
@@ -62,18 +82,7 @@ def get_encoded_dfs_by_activity(original_df: DataFrame, encoding_type: EncodingT
             lb = LabelBinarizer()
             lb = lb.fit(np.unique(activities))
         data["lb"] = lb
-
-    processes_number = get_processes_number()
-    lengths_split = np.array_split(data["lengths"], processes_number * 4)
-    with Pool(processes=processes_number) as pool:
-        results = pool.starmap(
-            func=get_encoded_dataframes_by_activity_for_lengths,
-            iterable=[(lengths, encoding_type, outcome_type, data, for_test) for lengths in lengths_split]
-        )
-
-    dataframes = {length: r for result in results for length, r in result.items()}
-
-    return dataframes, data
+    return df, data
 
 
 def get_ordinal_encoded_df_and_mapping(original_df: DataFrame, column: str) -> Tuple[DataFrame, dict]:
@@ -101,7 +110,7 @@ def get_encoded_dataframes_by_activity_for_lengths(lengths: List[int], encoding_
     # Get encoded dataframes by activity for some lengths
     results = {}
     for length in lengths:
-        if not for_test and len([group for group in data["grouped_activities"] if len(group) > length]) < 1000:
+        if not for_test and len([group for group in data["grouped_activities"] if len(group) > length]) < 300:
             continue
         if for_test:
             encoded_df = get_test_df_by_activity(length, encoding_type, data)

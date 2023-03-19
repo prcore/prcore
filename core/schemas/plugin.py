@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -16,8 +17,8 @@ class PluginCreate(PluginBase):
     prescription_type: str
     name: str
     description: str | None = None
-    parameters: dict[str, str | bool | int | float | list] = {}
-    additional_info: dict[str, str | bool | int | float | list] = {}
+    parameters: dict[str, Any] = {}
+    additional_info: dict[str, Any] = {}
     status: str | None = None
 
 
@@ -33,8 +34,8 @@ class Plugin(PluginBase):
     prescription_type: str
     name: str
     description: str | None = None
-    parameters: dict[str, str | bool | int | float | list] = {}
-    additional_info: dict[str, str | bool | int | float | list] = {}
+    parameters: dict[str, Any] = {}
+    additional_info: dict[str, Any] = {}
     status: str | None = None
     error: str | None = None
     disabled: bool = False

@@ -19,18 +19,22 @@ def enhance_additional_infos(additional_infos: dict[str, dict[str, Any]], active
                              definition: definition_schema.Definition) -> dict[str, dict[str, Any]]:
     # Enhance additional infos
     definition = definition.dict()
-
     for plugin_key, plugin_info in active_plugins.items():
-        if plugin_key not in additional_infos:
-            additional_infos[plugin_key] = {}
-        needed_info_for_training = plugin_info.get("needed_info_for_training", [])
-        needed_info_for_prediction = plugin_info.get("needed_info_for_prediction", [])
-        needed_info = needed_info_for_training + needed_info_for_prediction
-        for info in needed_info:
-            if info in definition:
-                additional_infos[plugin_key][info] = definition[info]
-
+        additional_infos[plugin_key] = enhance_additional_info(additional_infos.get(plugin_key, {}), plugin_info,
+                                                               definition)
     return additional_infos
+
+
+def enhance_additional_info(additional_info: dict[str, Any], plugin_info: dict[str, Any],
+                            definition: dict[str, Any]) -> dict[str, Any]:
+    # Enhance additional info from the definition
+    needed_info_for_training = plugin_info.get("needed_info_for_training", [])
+    needed_info_for_prediction = plugin_info.get("needed_info_for_prediction", [])
+    needed_info = needed_info_for_training + needed_info_for_prediction
+    for info in needed_info:
+        if info in definition:
+            additional_info[info] = definition[info]
+    return additional_info
 
 
 def get_active_plugins() -> dict:

@@ -1,12 +1,16 @@
 import logging
+from zipfile import BadZipFile
 
+from fastapi import HTTPException, UploadFile
 from pandas import DataFrame
 from sqlalchemy.orm import Session
 
 from core.confs import path
 from core.crud.event_log import set_df_name
+from core.enums.error import ErrorType
 from core.functions.common.etc import get_current_time_label
 from core.functions.common.file import get_new_path, get_dataframe_from_pickle, save_dataframe_to_pickle
+from core.functions.event_log.file import get_dataframe_from_file
 from core.models.event_log import EventLog
 from core.starters import memory
 
@@ -31,6 +35,29 @@ def get_dataframe_by_id_or_name(event_log_id: int, df_name: str) -> DataFrame | 
 def get_dataframe_from_memory(event_log_id: int) -> DataFrame | None:
     # Get dataframe from memory
     return memory.dataframes.get(event_log_id)
+
+
+def get_df_from_uploaded_file(file: UploadFile, extension: str, separator: str) -> tuple[DataFrame, str]:
+    # Save the file
+    raw_path = get_new_path(
+        base_path=f"{path.EVENT_LOG_RAW_PATH}/",
+        prefix=f"{get_current_time_label()}-",
+        suffix=f".{extension}"
+    )
+
+    with open(raw_path, "wb") as f:
+        f.write(file.file.read())
+
+    # Get dataframe from file
+    try:
+        df = get_dataframe_from_file(raw_path, extension, separator)
+    except BadZipFile:
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_BAD_ZIP)
+    except Exception as e:
+        logger.warning(f"Failed to get dataframe from file {raw_path}: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_INVALID)
+
+    return df, raw_path
 
 
 def save_dataframe(db: Session, db_event_log: EventLog, df: DataFrame) -> None:

@@ -118,6 +118,7 @@ def get_processed_dataframe_for_new_dataset(df: DataFrame, definition: definitio
     df = df.astype(str)
     timestamp_column = get_start_timestamp(definition.columns_definition)
     df = get_timestamped_dataframe(df, definition.columns_definition)
+    definition.fast_mode = True
     df = get_transition_recognized_dataframe(df, definition)
     df.sort_values(by=timestamp_column, inplace=True)
     df = df.astype(str)

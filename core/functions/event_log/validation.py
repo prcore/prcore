@@ -24,6 +24,10 @@ def validate_columns_definition(columns_definition: dict[str, ColumnDefinition |
     if list(columns_definition.values()).count(ColumnDefinition.ACTIVITY) > 1:
         raise HTTPException(status_code=400, detail="Multiple activity columns found")
 
+    return validate_timestamps_definition(columns_definition)
+
+
+def validate_timestamps_definition(columns_definition: dict[str, ColumnDefinition | None]) -> bool:
     if (not (has_timestamp := any(d == ColumnDefinition.TIMESTAMP for d in columns_definition.values()))
             and not any(d == ColumnDefinition.START_TIMESTAMP for d in columns_definition.values())
             and not any(d == ColumnDefinition.END_TIMESTAMP for d in columns_definition.values())):
@@ -34,11 +38,9 @@ def validate_columns_definition(columns_definition: dict[str, ColumnDefinition |
         raise HTTPException(status_code=400, detail="Multiple start timestamp columns found")
     if list(columns_definition.values()).count(ColumnDefinition.END_TIMESTAMP) > 1:
         raise HTTPException(status_code=400, detail="Multiple end timestamp columns found")
-
     if not has_timestamp and not all(d in columns_definition.values()
                                      for d in [ColumnDefinition.START_TIMESTAMP, ColumnDefinition.END_TIMESTAMP]):
         raise HTTPException(status_code=400, detail="Invalid column definition")
-
     return True
 
 

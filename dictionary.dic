@@ -6,4 +6,5 @@ bpic
 MANUALSKIP
 keepalives
 PYTHONWARNINGS
+nosec
 caseid

@@ -60,6 +60,15 @@ def create_event_log(db: Session, event_log: schema.EventLogCreate) -> model.Eve
     return db_event_log
 
 
+def update_event_log(db: Session, db_event_log: model.EventLog, file_name: str, saved_name: str) -> model.EventLog:
+    # Update an event log
+    db_event_log.file_name = file_name
+    db_event_log.saved_name = saved_name
+    db.commit()
+    db.refresh(db_event_log)
+    return db_event_log
+
+
 def associate_definition(db: Session, db_event_log: model.EventLog, definition_id: int) -> model.EventLog:
     # Associate a definition to an event log
     db_event_log.definition_id = definition_id
