@@ -80,20 +80,22 @@ def get_infer_from_random_name(name: str) -> ColumnDefinition | None:
         end_time_prefix_list = ["end", "finish", "complete", "stop"]
         time_suffix_list = ["time", "date", "timestamp"]
 
-        if any(case_id_str in name.lower() for case_id_str in ["case id", "case_id", "caseid"]):
+        if any(case_id_str == name.lower() for case_id_str in ["case id", "case_id", "caseid"]):
             result = ColumnDefinition.CASE_ID
-        elif "activity" in name.lower():
+        elif any(activity_str == name.lower() for activity_str in ["activity", "task", "action"]):
             result = ColumnDefinition.ACTIVITY
         elif "timestamp" in name.lower():
             result = ColumnDefinition.TIMESTAMP
         elif "transition" in name.lower():
             result = ColumnDefinition.TRANSITION
-        elif "resource" in name.lower():
+        elif any(resource_str == name.lower()
+                 for resource_str in ["resource", "user", "person", "agent", "employee", "operator", "representative",
+                                      "personnel", "specialist", "worker", "staff", "technician", "technologist"]):
             result = ColumnDefinition.RESOURCE
-        elif any(f"{start_time_prefix} {time_suffix}" in name.lower()
+        elif any(f"{start_time_prefix} {time_suffix}" == name.lower()
                  for start_time_prefix in start_time_prefix_list for time_suffix in time_suffix_list):
             result = ColumnDefinition.START_TIMESTAMP
-        elif any(f"{end_time_prefix} {time_suffix}" in name.lower()
+        elif any(f"{end_time_prefix} {time_suffix}" == name.lower()
                  for end_time_prefix in end_time_prefix_list for time_suffix in time_suffix_list):
             result = ColumnDefinition.END_TIMESTAMP
         elif "duration" in name.lower():
