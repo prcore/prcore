@@ -65,6 +65,8 @@ def get_dataframe_from_zip(file_path: str, separator: str) -> DataFrame | None:
                 result = get_dataframe_from_xes(temp_path)
             elif extension == "csv":
                 result = get_dataframe_from_csv(temp_path, separator)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.warning(f"Get dataframe from zip error: {e}", exc_info=True)
         delete_file(file_path)

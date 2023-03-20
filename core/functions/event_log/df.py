@@ -51,6 +51,9 @@ def get_df_from_uploaded_file(file: UploadFile, extension: str, separator: str) 
     # Get dataframe from file
     try:
         df = get_dataframe_from_file(raw_path, extension, separator)
+    except HTTPException as e:
+        logger.warning(f"Failed to get dataframe from file {raw_path}: {e.detail}")
+        raise e
     except BadZipFile:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_BAD_ZIP)
     except Exception as e:
