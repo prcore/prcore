@@ -7,3 +7,4 @@ MANUALSKIP
 keepalives
 PYTHONWARNINGS
 nosec
+caseid
