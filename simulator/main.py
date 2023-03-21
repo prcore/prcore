@@ -65,10 +65,9 @@ def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_
             for _ in range(config.SIMULATION_INTERVAL * 10):
                 sleep(0.1)
                 if finished.is_set():
-                    logger.warning("Simulation finished")
                     return
     except Exception as e:
         logger.warning(f"Simulation failed: {e}", exc_info=True)
     finally:
         finished.set()
-        logger.warning("Simulation finished")
+        logger.warning("Simulation finished by simulator")

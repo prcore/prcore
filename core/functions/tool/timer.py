@@ -107,6 +107,7 @@ def stop_unread_simulations() -> bool:
                 db_project = project_crud.get_project_by_id(db, project_id)
                 if not db_project:
                     continue
+                logger.warning(f"Stop unread simulation by timer - {db_project.id}")
                 disable_streaming(db, db_project)
 
         result = True
