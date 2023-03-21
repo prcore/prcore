@@ -52,7 +52,7 @@ def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_
         df_rows_count = len(df.index)
         i = 0
         for index, row in df.iterrows():
-            if finished.is_set():
+            if finished.is_set() or i == 1800:
                 break
             i += 1
             logger.warning(f"Simulation progress of project {project_id} - {i + 1}/{df_rows_count}")
