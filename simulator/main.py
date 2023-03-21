@@ -45,26 +45,30 @@ def preprocess_df(df: DataFrame, definition: definition_schema.Definition) -> Da
 
 def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_id: int,
                    definition: definition_schema.Definition):
-    df = load_simulation_df(simulation_df_name)
-    df = preprocess_df(df, definition)
-    post_url = f"{BASE_URL}/event/{project_id}"
-    df_rows_count = len(df.index)
-    i = 0
-    for index, row in df.iterrows():
-        if finished.is_set():
-            break
-        i += 1
-        logger.warning(f"Simulation progress: {i + 1}/{df_rows_count}")
-        response = requests.post(
-            url=post_url,
-            headers=REQUEST_HEADERS,
-            json=row.to_dict()
-        )
-        logger.warning(response.json()["message"])
-        for _ in range(config.SIMULATION_INTERVAL * 10):
-            sleep(0.1)
+    try:
+        df = load_simulation_df(simulation_df_name)
+        df = preprocess_df(df, definition)
+        post_url = f"{BASE_URL}/event/{project_id}"
+        df_rows_count = len(df.index)
+        i = 0
+        for index, row in df.iterrows():
             if finished.is_set():
-                logger.warning("Simulation finished")
-                return
-    finished.set()
-    logger.warning("Simulation finished")
+                break
+            i += 1
+            logger.warning(f"Simulation progress: {i + 1}/{df_rows_count}")
+            response = requests.post(
+                url=post_url,
+                headers=REQUEST_HEADERS,
+                json=row.to_dict()
+            )
+            logger.warning(response.json()["message"])
+            for _ in range(config.SIMULATION_INTERVAL * 10):
+                sleep(0.1)
+                if finished.is_set():
+                    logger.warning("Simulation finished")
+                    return
+    except Exception as e:
+        logger.warning(f"Simulation failed: {e}", exc_info=True)
+    finally:
+        finished.set()
+        logger.warning("Simulation finished")
