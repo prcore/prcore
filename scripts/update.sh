@@ -10,6 +10,6 @@ fi
 cd ..
 git pull origin main
 docker compose down
-docker builder prune -f --filter "until=6h"
+docker builder prune -a -f --filter "until=6h"
 docker compose build
 docker compose up -d

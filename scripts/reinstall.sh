@@ -13,7 +13,7 @@ sudo rm -rf ./data
 cd ./scripts || exit
 bash mkdir.sh
 cd ..
-docker builder prune -f --filter "until=6h"
+docker builder prune -a -f --filter "until=6h"
 docker compose build
 docker compose up -d --remove-orphans
 
