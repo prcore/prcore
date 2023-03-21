@@ -48,9 +48,13 @@ def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_
     df = load_simulation_df(simulation_df_name)
     df = preprocess_df(df, definition)
     post_url = f"{BASE_URL}/event/{project_id}"
+    df_rows_count = len(df.index)
+    i = 0
     for index, row in df.iterrows():
         if finished.is_set():
             break
+        i += 1
+        logger.warning(f"Simulation progress: {i + 1}/{df_rows_count}")
         response = requests.post(
             url=post_url,
             headers=REQUEST_HEADERS,
