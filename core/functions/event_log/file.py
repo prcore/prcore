@@ -46,11 +46,12 @@ def get_dataframe_from_zip(file_path: str, separator: str) -> DataFrame | None:
     try:
         with ZipFile(file_path) as zip_file:
             name_list = zip_file.namelist()
+            filtered_name_list = [name for name in name_list if name not in path.EXCLUDED_EXTRACTED_FILE_NAMES]
 
-            if len(name_list) != 1:
+            if len(filtered_name_list) != 1:
                 raise HTTPException(status_code=400, detail="Zip file should contain only one file")
 
-            filename = name_list[0]
+            filename = filtered_name_list[0]
             extension = get_extension(filename)
 
             if extension not in path.ALLOWED_EXTRACTED_EXTENSIONS:

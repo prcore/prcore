@@ -14,6 +14,7 @@ TEMP_PATH = "data/tmp"
 # Allowed extensions
 ALLOWED_EXTENSIONS = ["xes", "csv", "zip"]
 ALLOWED_EXTRACTED_EXTENSIONS = ["xes", "csv"]
+EXCLUDED_EXTRACTED_FILE_NAMES = [".DS_Store", "__MACOSX"]
 
 # Create directories
 all_paths = [CORE_LOG_PATH,
