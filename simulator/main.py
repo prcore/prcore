@@ -55,7 +55,7 @@ def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_
             if finished.is_set() or i == 1800:
                 break
             i += 1
-            logger.warning(f"Simulation progress of project {project_id} - {i + 1}/{df_rows_count}")
+            logger.warning(f"Simulation progress of project {project_id} - {i}/{df_rows_count}")
             response = requests.post(
                 url=post_url,
                 headers=REQUEST_HEADERS,
