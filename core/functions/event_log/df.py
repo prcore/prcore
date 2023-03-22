@@ -1,4 +1,5 @@
 import logging
+from gzip import BadGzipFile
 from zipfile import BadZipFile
 
 from fastapi import HTTPException, UploadFile
@@ -54,7 +55,7 @@ def get_df_from_uploaded_file(file: UploadFile, extension: str, separator: str) 
     except HTTPException as e:
         logger.warning(f"Failed to get dataframe from file {raw_path}: {e.detail}")
         raise e
-    except BadZipFile:
+    except (BadZipFile, BadGzipFile):
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_BAD_ZIP)
     except Exception as e:
         logger.warning(f"Failed to get dataframe from file {raw_path}: {e}", exc_info=True)
