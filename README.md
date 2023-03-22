@@ -12,7 +12,10 @@ It is flexible and can be applied to event logs in various domains.
 Its prescribing and predicting algorithms can be easily modified, replaced, or added due to its plugin mechanism. 
 Moreover, its API is easy to use and can be integrated into any application.
 
-![](https://prcore-docs.chaos.run/images/flow.png)
+```mermaid
+flowchart LR
+    upload(Upload) --> train(Train) --> new(New Data) --> result(Prescriptions)
+```
 
 Please check out following links for more information:
 
