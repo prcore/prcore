@@ -266,7 +266,7 @@ def process_df_parallel(target: callable, df: DataFrame, definition: definition_
     processes_number = get_processes_number()
     unique_cases = df[case_id_column].unique()
     case_splits = np.array_split(unique_cases, processes_number)
-    df_splits = [df[df[case_id_column].isin(case_split)] for case_split in case_splits]
+    df_splits = [df[df[case_id_column].isin(case_split)] for case_split in case_splits if len(case_split) > 0]
 
     with Pool(processes_number) as pool:
         results = pool.starmap(target, [(df_split,) + args for df_split in df_splits])
