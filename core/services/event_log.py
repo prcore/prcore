@@ -15,7 +15,8 @@ from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
 from core.functions.common.file import get_extension
 from core.functions.definition.util import get_available_options
-from core.functions.event_log.analysis import get_activities_count, get_brief_with_inferred_definition
+from core.functions.event_log.analysis import (get_activities_count, get_brief_with_inferred_definition,
+                                               get_resources_count)
 from core.functions.event_log.dataset import get_completed_transition_df
 from core.functions.event_log.df import get_dataframe, get_df_from_uploaded_file, save_dataframe
 from core.functions.event_log.job import set_definition, start_pre_processing
@@ -87,6 +88,7 @@ def process_event_log_definition(event_log_id: int, update_body: event_log_reque
         "event_log_id": db_event_log.id,
         "received_definition": db_event_log.definition.columns_definition,
         "activities_count": get_activities_count(df, db_event_log.definition.columns_definition),
+        "resources_count": get_resources_count(df, db_event_log.definition.columns_definition),
         "outcome_options": get_available_options(db_event_log.definition.columns_definition, "outcome"),
         "treatment_options": get_available_options(db_event_log.definition.columns_definition, "treatment")
     }

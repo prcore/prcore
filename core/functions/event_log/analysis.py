@@ -143,3 +143,25 @@ def get_activities_count(df: DataFrame, definition: dict[str, ColumnDefinition])
         logger.warning(f"Get activities count error: {e}", exc_info=True)
 
     return result
+
+
+def get_resources_count(df: DataFrame, definition: dict[str, ColumnDefinition]) -> dict[str, int]:
+    # Get resources count
+    result = {}
+
+    try:
+        resource_column_name = get_defined_column_name(definition, ColumnDefinition.RESOURCE)
+
+        if not resource_column_name:
+            return result
+
+        transition_column_name = get_defined_column_name(definition, ColumnDefinition.TRANSITION)
+
+        if transition_column_name != "":
+            df = df[df[transition_column_name].str.lower() == "complete"]
+
+        result = df[resource_column_name].value_counts().to_dict()
+    except Exception as e:
+        logger.warning(f"Get resources count error: {e}", exc_info=True)
+
+    return result
