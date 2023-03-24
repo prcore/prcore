@@ -1,5 +1,7 @@
 import logging
+from typing import Any
 
+import pandas as pd
 from fastapi import HTTPException
 
 import core.models.project as project_model
@@ -7,6 +9,7 @@ from core.enums.definition import ColumnDefinition
 from core.enums.error import ErrorType
 from core.enums.status import ProjectStatus
 from core.schemas.definition import ProjectDefinition
+from core.functions.common.etc import convert_to_seconds
 from core.functions.definition.util import is_supported_operator
 
 # Enable logging
@@ -43,6 +46,33 @@ def validate_unit_project_definition(project_definition: ProjectDefinition,
             detail=(f"Operator '{project_definition.operator}' not supported "
                     f"for column '{project_definition.column}'")
         )
+
+    validate_project_definition_value(project_definition.column, column_definition, project_definition.value)
+
+
+def validate_project_definition_value(column: str, column_definition: ColumnDefinition, value: Any) -> None:
+    # Check if the value is valid
+    if column_definition == ColumnDefinition.NUMBER:
+        try:
+            float(value)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail=f"Invalid number value for {column}")
+
+    if column_definition == ColumnDefinition.DATETIME:
+        value_datetime = pd.to_datetime(value, errors="coerce")
+        if pd.isnull(value_datetime):
+            raise HTTPException(status_code=400, detail=f"Invalid datetime value for {column}")
+
+    if column_definition == ColumnDefinition.CATEGORICAL:
+        if not isinstance(value, str):
+            raise HTTPException(status_code=400, detail=f"Invalid categorical value for {column},"
+                                                        f"value must be a string")
+
+    if column_definition == ColumnDefinition.DURATION:
+        try:
+            convert_to_seconds(value)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid duration value for {column}")
 
 
 def validate_project_status(db_project: project_model.Project) -> None:

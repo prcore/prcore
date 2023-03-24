@@ -66,7 +66,7 @@ class CausalLiftAlgorithm(Algorithm):
             treatment_duration = None
 
         if not available_resources or not treatment_duration:
-            return self.get_null_output("The available resources or the treatment duration is not provided")
+            return self.get_null_output("The available resources or the treatment duration is invalid")
 
         length = len(prefix)
         training_df = self.get_data()["training_dfs"].get(length)

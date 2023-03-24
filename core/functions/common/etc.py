@@ -85,13 +85,13 @@ def thread(target: Callable, args: Tuple, kwargs: dict = None, daemon: bool = Tr
 def convert_to_seconds(time_str: Any):
     time_str = str(time_str).strip().lower()
     if time_str.isdigit():
-        return int(time_str)
+        return float(time_str)
 
-    match = re.match(r"^(\d+)\s*(\w+)$", time_str)
+    match = re.match(r"^(\d+(?:\.\d{0,2}(?!\d))?)\s*(\w+)$", time_str)
     if not match:
         raise ValueError("Invalid input")
 
-    value = int(match.group(1))
+    value = float(match.group(1))
     unit = match.group(2)
 
     if unit in ["months", "month", "mo", "m"]:
