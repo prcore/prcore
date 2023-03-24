@@ -41,5 +41,6 @@ class UpdateEventLogResponse(BaseModel):
     event_log_id: int
     received_definition: dict[str, ColumnDefinition]
     activities_count: dict[str, int]
+    resources_count: dict[str, int]
     outcome_options: list[str]
     treatment_options: list[str]
