@@ -14,6 +14,9 @@ from processor.message import callback
 
 # Enable logging
 logger = logging.getLogger(__name__)
+for _ in logging.root.manager.loggerDict:
+    if _.startswith("pika"):
+        logging.getLogger(_).setLevel(logging.CRITICAL)
 
 
 def processor_scheduler() -> None:
