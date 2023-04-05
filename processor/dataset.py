@@ -193,6 +193,9 @@ def get_labelled_dataframe(df: DataFrame, definition: definition_schema.Definiti
 def label_outcome_and_treatment(group: DataFrame, definition: definition_schema.Definition) -> DataFrame:
     # Label outcome and treatment, and get resource
     outcome, treatment, resource = get_labels(group, definition)
+    outcome_reverse = definition.outcome_definition_negative
+    if outcome_reverse:
+        outcome = not outcome
     outcome_label = pd.Series(1 if outcome else 0, index=group.index)
     treatment_label = pd.Series(1 if treatment else 0, index=group.index)
     resource = pd.Series(resource, index=group.index, dtype="object")

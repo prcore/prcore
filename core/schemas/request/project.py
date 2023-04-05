@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class CreateProjectRequest(BaseModel):
     event_log_id: int
     positive_outcome: list[list[ProjectDefinition]] | None = None
+    negative_outcome: list[list[ProjectDefinition]] | None = None
     treatment: list[list[ProjectDefinition]] | None = None
     parameters: dict[str, dict[str, Any]] = {}
     additional_info: dict[str, dict[str, Any]] = {}
@@ -19,6 +20,7 @@ class CreateProjectRequest(BaseModel):
 
 class UpdateProjectRequest(BaseModel):
     positive_outcome: list[list[ProjectDefinition]] | None = None
+    negative_outcome: list[list[ProjectDefinition]] | None = None
     treatment: list[list[ProjectDefinition]] | None = None
     parameters: dict[str, dict[str, Any]] = {}
     additional_info: dict[str, dict[str, Any]] = {}

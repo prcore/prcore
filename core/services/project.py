@@ -14,6 +14,7 @@ import core.crud.event as event_crud
 import core.crud.event_log as event_log_crud
 import core.crud.plugin as plugin_crud
 import core.crud.project as project_crud
+import core.models.event_log as event_log_model
 import core.models.project as project_model
 import core.schemas.request.project as project_request
 import core.schemas.definition as definition_schema
@@ -49,19 +50,16 @@ def process_project_creation(create_body: project_request.CreateProjectRequest, 
     if db_project:
         raise HTTPException(status_code=400, detail=ErrorType.PROJECT_EXISTED)
 
-    # Validate the user's input
-    columns_definition = db_event_log.definition.columns_definition
-    positive_outcome = create_body.positive_outcome
-    treatment = create_body.treatment
-    positive_outcome and validate_project_definition(positive_outcome, columns_definition)
-    treatment and validate_project_definition(treatment, columns_definition)
+    # Validate and get the user's input
+    outcome_definition, outcome_negative, treatment = get_definitions_from_request(create_body, db_event_log)
 
     # Create the project
     definition_crud.set_project_level_definition(
         db=db,
         db_definition=db_event_log.definition,
-        outcome=create_body.positive_outcome,
-        treatment=create_body.treatment
+        outcome=outcome_definition,
+        outcome_negative=outcome_negative,
+        treatment=treatment
     )
     db_project = project_crud.create_project(
         db=db,
@@ -90,6 +88,31 @@ def process_project_creation(create_body: project_request.CreateProjectRequest, 
         "project": db_project,
         "result_key": result_key
     }
+
+
+def get_definitions_from_request(
+        request_body: project_request.CreateProjectRequest | project_request.UpdateProjectRequest,
+        db_event_log: event_log_model.EventLog
+) -> tuple[list[list[definition_schema.ProjectDefinition]] | None,
+           bool,
+           list[definition_schema.ProjectDefinition] | None]:
+    columns_definition = db_event_log.definition.columns_definition
+    positive_outcome = request_body.positive_outcome
+    negative_outcome = request_body.negative_outcome
+    outcome_definition: list[list[definition_schema.ProjectDefinition]] | None = None
+    outcome_negative = False
+    treatment = request_body.treatment
+    if positive_outcome and negative_outcome:
+        raise HTTPException(status_code=400, detail=ErrorType.PROJECT_DEFINITION_CONFLICT)
+    elif positive_outcome:
+        validate_project_definition(positive_outcome, columns_definition)
+        outcome_definition = positive_outcome
+    elif negative_outcome:
+        validate_project_definition(negative_outcome, columns_definition)
+        outcome_definition = negative_outcome
+        outcome_negative = True
+    treatment and validate_project_definition(treatment, columns_definition)
+    return outcome_definition, outcome_negative, treatment
 
 
 def process_projects_reading(db: Session):
@@ -137,20 +160,17 @@ def process_project_definition_update(project_id: int, update_body: project_requ
     if not db_event_log:
         raise HTTPException(status_code=400, detail=ErrorType.EVENT_LOG_NOT_FOUND)
 
-    # Validate the user's input
-    columns_definition = db_event_log.definition.columns_definition
-    positive_outcome = update_body.positive_outcome
-    treatment = update_body.treatment
-    positive_outcome and validate_project_definition(positive_outcome, columns_definition)
-    treatment and validate_project_definition(treatment, columns_definition)
+    # Validate and get the user's input
+    outcome_definition, outcome_negative, treatment = get_definitions_from_request(update_body, db_event_log)
     disable_streaming(db, db_project, True)
 
     # Update the project
     definition_crud.set_project_level_definition(
         db=db,
         db_definition=db_event_log.definition,
-        outcome=update_body.positive_outcome,
-        treatment=update_body.treatment
+        outcome=outcome_definition,
+        outcome_negative=outcome_negative,
+        treatment=treatment
     )
 
     # Start the pre-processing

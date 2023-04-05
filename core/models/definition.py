@@ -24,4 +24,5 @@ class Definition(Base):
     complete_transition = Column(String, default=Transition.COMPLETE)
     abort_transition = Column(String, default=Transition.ATE_ABORT)
     outcome_definition = Column(JSONB, nullable=True)
+    outcome_definition_negative = Column(Boolean, default=False)
     treatment_definition = Column(JSONB, nullable=True)

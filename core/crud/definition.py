@@ -40,10 +40,12 @@ def update_definition(db: Session, definition: schema.Definition) -> model.Defin
 
 
 def set_project_level_definition(db: Session, db_definition: model.Definition,
-                                 outcome: list[list[schema.ProjectDefinition]],
-                                 treatment: list[list[schema.ProjectDefinition]]) -> model.Definition:
+                                 outcome: list[list[schema.ProjectDefinition]] | None,
+                                 outcome_negative: bool,
+                                 treatment: list[list[schema.ProjectDefinition]] | None) -> model.Definition:
     # Set project level definition
     db_definition.outcome_definition = [[d.dict() for d in data] for data in outcome] if outcome else None
+    db_definition.outcome_definition_negative = outcome_negative
     db_definition.treatment_definition = [[d.dict() for d in data] for data in treatment] if treatment else None
     db.commit()
     db.refresh(db_definition)

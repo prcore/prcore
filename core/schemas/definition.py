@@ -22,6 +22,7 @@ class DefinitionBase(BaseModel):
     complete_transition: Transition = Transition.COMPLETE
     abort_transition: Transition = Transition.ATE_ABORT
     outcome_definition: list[list[ProjectDefinition]] | None = None
+    outcome_definition_negative: bool = False
     treatment_definition: list[list[ProjectDefinition]] | None = None
 
 
