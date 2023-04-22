@@ -51,7 +51,9 @@ def get_processed_dataset_path(db_event_log: event_log_model.EventLog) -> str:
 
     try:
         temp_path = get_new_path(path.TEMP_PATH, suffix=".csv")
-        training_df = pd.read_pickle(f"{path.EVENT_LOG_TRAINING_DF_PATH}/{db_event_log.training_df_name}.pkl")
+        training_df = pd.read_pickle(
+            filepath_or_buffer=f"{path.EVENT_LOG_TRAINING_DF_PATH}/{db_event_log.training_df_name}.pkl"
+        )  # nosec B301
         training_df.to_csv(temp_path, index=False)
         result = temp_path
     except Exception as e:
@@ -66,7 +68,9 @@ def get_ongoing_dataset_path(db_event_log: event_log_model.EventLog) -> str:
 
     try:
         temp_path = get_new_path(path.TEMP_PATH, suffix=".csv")
-        simulation_df = pd.read_pickle(f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{db_event_log.simulation_df_name}")
+        simulation_df = pd.read_pickle(
+            filepath_or_buffer=f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{db_event_log.simulation_df_name}"
+        )  # nosec B301
         case_id_column = get_defined_column_name(db_event_log.definition.columns_definition, ColumnDefinition.CASE_ID)
         grouped_df = simulation_df.groupby(case_id_column)
         ongoing_cases = []
@@ -92,7 +96,9 @@ def get_simulation_dataset_path(db_event_log: event_log_model.EventLog) -> str:
 
     try:
         temp_path = get_new_path(path.TEMP_PATH, suffix=".csv")
-        simulation_df = pd.read_pickle(f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{db_event_log.simulation_df_name}")
+        simulation_df = pd.read_pickle(
+            filepath_or_buffer=f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{db_event_log.simulation_df_name}"
+        )  # nosec B301
         simulation_df.to_csv(temp_path, index=False)
         result = temp_path
     except Exception as e:
