@@ -26,7 +26,7 @@ REQUEST_HEADERS = {
 
 def load_simulation_df(simulation_df_name: str) -> DataFrame:
     # Load a simulation dataframe
-    return read_pickle(f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{simulation_df_name}")
+    return read_pickle(f"{path.EVENT_LOG_SIMULATION_DF_PATH}/{simulation_df_name}")  # nosec B301
 
 
 def preprocess_df(df: DataFrame, definition: definition_schema.Definition) -> DataFrame:

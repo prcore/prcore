@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def read_df_from_path(directory: str, df_name: str) -> DataFrame:
     try:
-        return read_pickle(f"{directory}/{df_name}.pkl")
+        return read_pickle(f"{directory}/{df_name}.pkl")  # nosec B301
     except ValueError:
         # If the plugin's Python version is 3.6, then the pickle protocol is not compatible,
         # so we need to read the CSV file

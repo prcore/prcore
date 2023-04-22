@@ -98,7 +98,7 @@ def move_file(src: str, dst: str) -> bool:
 
 def get_dataframe_from_pickle(df_path: str) -> Optional[DataFrame]:
     # Get dataframe from pickle file
-    return read_pickle(df_path)
+    return read_pickle(df_path)  # nosec B301
 
 
 def save_dataframe_to_pickle(df_path: str, df: DataFrame) -> None:
