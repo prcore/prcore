@@ -48,7 +48,7 @@ def run_simulation(simulation_df_name: str, finished: ProcessEventType, project_
     try:
         df = load_simulation_df(simulation_df_name)
         df = preprocess_df(df, definition)
-        post_url = f"{BASE_URL}/event/{project_id}"
+        post_url = f"{BASE_URL}/project/{project_id}/stream/event"
         df_rows_count = len(df.index)
         i = 0
         for index, row in df.iterrows():

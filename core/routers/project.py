@@ -5,10 +5,12 @@ from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 
 import core.schemas.request.project as project_request
+import core.schemas.response.event as event_response
 import core.schemas.response.project as project_response
 import core.schemas.project as project_schema
 from core.functions.common.request import get_real_ip, get_db
 from core.security.token import validate_token
+from core.services.event import process_new_event
 from core.services.project import (process_project_creation, process_projects_reading, process_project_reading,
                                    process_project_update, process_project_definition_update, process_project_deletion,
                                    process_ongoing_dataset_uploading, process_ongoing_dataset_result,
@@ -99,6 +101,14 @@ def streaming_stop(request: Request, project_id: int, db: Session = Depends(get_
 def stream_clear(request: Request, project_id: int, db: Session = Depends(get_db), _: bool = Depends(validate_token)):
     logger.warning(f"Clear stream data of project {project_id} - from IP {get_real_ip(request)}")
     return process_stream_clearing(project_id, db)
+
+
+@router.post("/{project_id}/stream/event", response_model=event_response.PostEventResponse)
+async def receive_event(request: Request, project_id: int, db: Session = Depends(get_db),
+                        _: bool = Depends(validate_token)):
+    logger.warning(f"Receive event for project {project_id} - from IP {get_real_ip(request)}")
+    request_body = await request.json()
+    return process_new_event(request_body, project_id, db)
 
 
 @router.get("/{project_id}/stream/result")
