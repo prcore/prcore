@@ -21,6 +21,9 @@ from plugins.common.sender import send_online_report
 
 # Enable logging
 logger = logging.getLogger(__name__)
+for _ in logging.root.manager.loggerDict:
+    if _.startswith("pika"):
+        logging.getLogger(_).setLevel(logging.CRITICAL)
 
 
 def plugin_scheduler(basic_info: dict) -> None:
