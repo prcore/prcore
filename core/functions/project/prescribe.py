@@ -26,7 +26,7 @@ from core.starters.database import SessionLocal
 logger = logging.getLogger(__name__)
 
 
-def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: str,
+def get_ongoing_dataset_result_key(file: BinaryIO | bytes, extension: str, seperator: str,
                                    db_project: project_model.Project) -> str:
     # Get the result key of the ongoing dataset
     result = ""
@@ -34,7 +34,10 @@ def get_ongoing_dataset_result_key(file: BinaryIO, extension: str, seperator: st
     try:
         temp_path = get_new_path(f"{path.TEMP_PATH}/", suffix=f".{extension}")
         with open(temp_path, "wb") as f:
-            f.write(file.read())
+            if isinstance(file, bytes):
+                f.write(file)
+            else:
+                f.write(file.read())
 
         # Get dataframe from file
         try:

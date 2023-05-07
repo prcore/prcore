@@ -251,6 +251,8 @@ def process_ongoing_dataset_result(project_id: int, result_key: str, background_
     logger.warning("Start to merge the result")
     for plugin_result in result["results"].values():
         for case_id, case_result in plugin_result.items():
+            if case_id not in result["cases"]:
+                continue
             result["cases"][case_id]["prescriptions"].append(case_result)
     logger.warning("Merge the result successfully")
 

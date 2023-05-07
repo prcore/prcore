@@ -48,9 +48,10 @@ def process_uploaded_event_log(file: UploadFile, separator: str, test: UploadFil
 
     # Save test file to memory
     if test and test.file:
+        content = test.file.read()
         memory.log_tests[db_event_log.id] = {
             "date": datetime.now(),
-            "file": deepcopy(test.file),
+            "file": content,
             "extension": get_extension(test.filename),
             "separator": separator
         }

@@ -113,15 +113,24 @@ class CausalLiftAlgorithm(Algorithm):
 
         # Get the result for each length
         threads = []
-        for length, test_df in test_dfs.items():
-            training_df = self.get_data()["training_dfs"].get(length)
-            if training_df is None:
-                continue
-            t = Thread(target=self.get_result_thread, args=(self, result_dfs, length, training_df, test_df))
-            t.start()
-            threads.append(t)
-        for t in threads:
-            t.join()
+        count_of_length = len(test_dfs)
+        if count_of_length <= 50:
+            for length, test_df in test_dfs.items():
+                training_df = self.get_data()["training_dfs"].get(length)
+                if training_df is None:
+                    continue
+                t = Thread(target=self.get_result_thread, args=(self, result_dfs, length, training_df, test_df))
+                t.start()
+                threads.append(t)
+            for t in threads:
+                t.join()
+        else:
+            for length, test_df in test_dfs.items():
+                training_df = self.get_data()["training_dfs"].get(length)
+                if training_df is None:
+                    continue
+                result_df = self.get_result(training_df, test_df)
+                result_dfs[length] = result_df
 
         # Merge the result
         if len(result_dfs) <= 0:
